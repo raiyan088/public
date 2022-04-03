@@ -16,7 +16,5 @@ const puppeteer = require("puppeteer")
 
     console.log(ip)
 
-    page.close()
-
     browser.close()
 })()
