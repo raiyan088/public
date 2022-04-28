@@ -331,7 +331,7 @@ async function browserStart(start) {
         try {
             if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
                 let url = response.url()
-                if(url.startsWith('https://www.googleapis.com/drive/')) {
+                if(url.includes('.com/drive/')) {
                     if(!mFinish) {
                         statusRun++
                         mFinish = true
