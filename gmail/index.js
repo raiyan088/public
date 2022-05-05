@@ -18,25 +18,14 @@ let log6 = 0
 let log7 = 0
 let log8 = 0
 
-let delayLog = 3
+let delayLog = 1
 
 
 ;(async () => {
     connect1()
     await delay(5000)
     connect2()
-    await delay(5000)
-    connect3()
-    await delay(5000)
-    connect4()
-    await delay(5000)
-    connect5()
-    await delay(5000)
-    connect6()
-    await delay(5000)
-    connect7()
-    await delay(5000)
-    connect8()
+    
 })()
 
 
