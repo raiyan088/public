@@ -4,6 +4,7 @@ let update = 0
 let mLoadSuccess = false
 let mPrevNumber = 0
 let mNumber = 0
+let timer = null
 
 module.exports = class {
     constructor (db, server, sirial, size) {
@@ -30,12 +31,12 @@ module.exports = class {
         update = parseInt(new Date().getTime() / 1000)
         
 
-        setInterval(function() {
+        timer = setInterval(function() {
             this.now = parseInt(new Date().getTime() / 1000)
 
             if(((this.now-update) > 60 && mLoadSuccess) || (mNumber == mPrevNumber && mLoadSuccess)) {
                 console.log('---Restart Browser---')
-                //request.get({ url: 'xxx' }, function (error, response, body) { })
+                request.get({ url: 'xxx' }, function (error, response, body) { })
             }
 
             if(mLoadSuccess) {
@@ -64,9 +65,14 @@ module.exports = class {
                             mNumber = parseInt(value['runing_'+this.SIZE])
                         }
                         
-                        console.log('+880'+mNumber)
-                        console.log('Download Success')
-                        this.startService()
+                        if(mNumber == 0) {
+                            console.log('Stop Service')
+                            clearInterval(timer)
+                        } else {
+                            console.log('+880'+mNumber)
+                            console.log('Download Success')
+                            this.startService()
+                        }
                     }
                 })
             }
@@ -128,24 +134,7 @@ module.exports = class {
                             mNumber++
                             this.mLoad++
                             if(parseInt(this.mSirial)+1 <= parseInt(mNumber/1000000)) {
-                                this.database.child('sirial').once('value', (snapshot) => {
-                                    const value = snapshot.val()
-                                    if(value != null) {
-                                        this.mSirial = parseInt(value[this.SIRIAL])
-                                        mNumber = parseInt(this.SIRIAL+this.mSirial+'000000')
-                                        this.database.child('sirial').child(this.SIRIAL).set(this.mSirial+1)
-                                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
-                                        this.database.child('server').child(this.SERVER).child('start_'+this.SIZE).set(parseInt(this.SIRIAL+this.mSirial))
-                                        if(this.mLoad % 10 == 0) {
-                                            console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
-                                            this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
-                                        }
-                                        ;(async () => {
-                                            await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                                            await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
-                                        })()
-                                    }
-                                })
+                                this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(0)
                             } else {
                                 if(this.mLoad % 10 == 0) {
                                     console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
@@ -156,8 +145,6 @@ module.exports = class {
                             }
                         }
                     }
-    
-                    
                 } else if(url.startsWith('https://accounts.google.com/generate') && mLoadSuccess) {
                     const output = await this.page.evaluate(() => {
                         let root = document.querySelector('#identifierNext')
@@ -265,17 +252,7 @@ module.exports = class {
             mNumber++
             this.mLoad++
             if(parseInt(this.mSirial)+1 <= parseInt(mNumber/1000000)) {
-                this.database.child('sirial').once('value', (snapshot) => {
-                    const value = snapshot.val()
-                    if(value != null) {
-                        this.mSirial = parseInt(value[this.SIRIAL])
-                        mNumber = parseInt(this.SIRIAL+this.mSirial+'000000')
-                        this.database.child('sirial').child(this.SIRIAL).set(this.mSirial+1)
-                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
-                        this.database.child('server').child(this.SERVER).child('start_'+this.SIZE).set(parseInt(this.SIRIAL+this.mSirial))
-                        this.page.goBack()
-                    }
-                })
+                this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(0)
             } else {
                 this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
                 this.page.goBack()
