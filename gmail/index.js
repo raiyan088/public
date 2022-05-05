@@ -60,7 +60,7 @@ async function connect2() {
             console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
-            connect1()
+            connect2()
         }
         log2++
     })
@@ -76,7 +76,7 @@ async function connect3() {
             console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
-            connect1()
+            connect3()
         }
         log3++
     })
@@ -92,11 +92,78 @@ async function connect4() {
             console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
-            connect1()
+            connect4()
         }
         log4++
     })
 }
+
+
+async function connect5() {
+    GMAIL_5 = exec('node server5.js')
+
+    log5 = 0
+
+    GMAIL_5.stdout.on('data', (data) => {
+        if(log5 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect5()
+        }
+        log5++
+    })
+}
+
+
+async function connect6() {
+    GMAIL_6 = exec('node server6.js')
+
+    log6 = 0
+
+    GMAIL_6.stdout.on('data', (data) => {
+        if(log6 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect6()
+        }
+        log6++
+    })
+}
+
+async function connect7() {
+    GMAIL_7 = exec('node server7.js')
+
+    log7 = 0
+
+    GMAIL_7.stdout.on('data', (data) => {
+        if(log7 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect7()
+        }
+        log7++
+    })
+}
+
+async function connect8() {
+    GMAIL_8 = exec('node server8.js')
+
+    log8 = 0
+
+    GMAIL_8.stdout.on('data', (data) => {
+        if(log8 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect8()
+        }
+        log8++
+    })
+}
+
 
 async function delay(time) {
     return new Promise(function(resolve) { 
