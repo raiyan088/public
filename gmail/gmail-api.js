@@ -91,6 +91,7 @@ module.exports = class {
             
             this.page.on('request', async request => {
                 const url = request.url
+                //console.log(url)
                 update = parseInt(new Date().getTime() / 1000)
                 if(url.startsWith('https://fonts.gstatic.com/s/') || url.startsWith('https://accounts.google.com/_/kids/signup/eligible') || url.startsWith('https://accounts.google.com/generate')) {
                     request.abort()
@@ -108,11 +109,15 @@ module.exports = class {
                             return false
                         }
                     })
+
+                    if(!this.page.url().startsWith('https://accounts.google.com/ServiceLogin?')) {
+                        console.log('2: '+this.page.url())
+                    }
     
                     if(output) {
                         mNumber++
                         this.mLoad++
-                        if(this.mSirial+1 <= parseInt(mNumber/1000000)) {
+                        if(parseInt(this.mSirial)+1 <= parseInt(mNumber/1000000)) {
                             this.database.child('sirial').once('value', (snapshot) => {
                                 const value = snapshot.val()
                                 if(value != null) {
@@ -151,6 +156,10 @@ module.exports = class {
                     })
     
                     this.mCapture = false
+
+                    if(!this.page.url().startsWith('https://accounts.google.com/ServiceLogin?')) {
+                        console.log('1: '+this.page.url())
+                    }
     
                     if(output) {
                         await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
@@ -229,7 +238,7 @@ module.exports = class {
             this.mPasswordTry = 0
             mNumber++
             this.mLoad++
-            if(this.mSirial+1 <= parseInt(mNumber/1000000)) {
+            if(parseInt(this.mSirial)+1 <= parseInt(mNumber/1000000)) {
                 this.database.child('sirial').once('value', (snapshot) => {
                     const value = snapshot.val()
                     if(value != null) {
