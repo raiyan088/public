@@ -25,7 +25,7 @@ let log6 = 0
 let log7 = 0
 let log8 = 0
 
-let delayLog = 2
+let delayLog = 1
 
 
 ;(async () => {

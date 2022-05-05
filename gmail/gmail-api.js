@@ -1,4 +1,4 @@
-const puppeteer = require('./puppeteer/Puppeteer.js')
+const puppeteer = require('./Puppeteer.js')
 
 let update = 0
 let mLoadSuccess = false
