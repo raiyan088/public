@@ -8,6 +8,10 @@ let GMAIL_5 = null
 let GMAIL_6 = null
 let GMAIL_7 = null
 let GMAIL_8 = null
+let GMAIL_9 = null
+let GMAIL_10 = null
+let GMAIL_11 = null
+let GMAIL_12 = null
 
 let log1 = 0
 let log2 = 0
@@ -17,6 +21,10 @@ let log5 = 0
 let log6 = 0
 let log7 = 0
 let log8 = 0
+let log9 = 0
+let log10 = 0
+let log11 = 0
+let log12 = 0
 
 let delayLog = 6
 
