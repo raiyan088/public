@@ -1,11 +1,4 @@
 const { exec } = require('child_process')
-const express = require("express")
-
-const app = express()
-
-app.listen(process.env.PORT || 3000, () => {
-    console.log('Listening on port 3000 ...')
-})
 
 let GMAIL_1 = null
 let GMAIL_2 = null
@@ -105,9 +98,3 @@ async function delay(time) {
         setTimeout(resolve, time)
     });
   }
-
-app.get('/', async function (req, res) {
-    res.writeHeader(200, { "Content-Type": "text/html" })
-    res.write('Success')
-    res.end()
-})
