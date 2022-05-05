@@ -29,7 +29,14 @@ let delayLog = 3
     connect3()
     await delay(5000)
     connect4()
-    
+    await delay(5000)
+    connect5()
+    await delay(5000)
+    connect6()
+    await delay(5000)
+    connect7()
+    await delay(5000)
+    connect8()
 })()
 
 
