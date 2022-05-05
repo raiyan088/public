@@ -125,8 +125,10 @@ module.exports = class {
                                         console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
                                         this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
                                     }
-                                    await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                                    await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
+                                    ;(async () => {
+                                        await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
+                                        await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
+                                    })()
                                 }
                             })
                         } else {
