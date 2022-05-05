@@ -18,14 +18,33 @@ let log6 = 0
 let log7 = 0
 let log8 = 0
 
-let delayLog = 1
+let delayLog = 6
 
 
 ;(async () => {
     connect1()
     await delay(5000)
     connect2()
-    
+    await delay(5000)
+    connect3()
+    await delay(5000)
+    connect4()
+    await delay(5000)
+    connect5()
+    await delay(5000)
+    connect6()
+    await delay(5000)
+    connect7()
+    await delay(5000)
+    connect8()
+    await delay(5000)
+    connect9()
+    await delay(5000)
+    connect10()
+    await delay(5000)
+    connect11()
+    await delay(5000)
+    connect12()
 })()
 
 
@@ -173,6 +192,79 @@ async function connect8() {
             connect8()
         }
         log8++
+    })
+}
+
+async function connect9() {
+    GMAIL_9 = exec('node server9.js')
+
+    log9 = 0
+
+    GMAIL_9.stdout.on('data', (data) => {
+        if(log9 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        } else if(log9 < 10) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect9()
+        }
+        log9++
+    })
+}
+
+async function connect10() {
+    GMAIL_10 = exec('node server10.js')
+
+    log10 = 0
+
+    GMAIL_10.stdout.on('data', (data) => {
+        if(log10 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        } else if(log10 < 10) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect10()
+        }
+        log10++
+    })
+}
+
+async function connect11() {
+    GMAIL_11 = exec('node server11.js')
+
+    log11 = 0
+
+    GMAIL_11.stdout.on('data', (data) => {
+        if(log11 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        } else if(log11 < 10) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect11()
+        }
+        log11++
+    })
+}
+
+
+async function connect12() {
+    GMAIL_12 = exec('node server12.js')
+
+    log12 = 0
+
+    GMAIL_12.stdout.on('data', (data) => {
+        if(log12 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        } else if(log12 < 10) {
+            console.log(data.toString().replace('\n', ''))
+        }
+        if(data.toString().includes('---Restart Browser---')) {
+            connect12()
+        }
+        log12++
     })
 }
 

