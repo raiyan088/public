@@ -48,6 +48,8 @@ async function connect1() {
     GMAIL_1.stdout.on('data', (data) => {
         if(log1 % delayLog == 0) {
             console.log(data.toString().replace('\n', ''))
+        } else if(log1 < 10) {
+            console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
             connect1()
@@ -65,6 +67,8 @@ async function connect2() {
     GMAIL_2.stdout.on('data', (data) => {
         if(log2 % delayLog == 0) {
             console.log(data.toString().replace('\n', ''))
+        } else if(log2 < 10) {
+            console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
             connect2()
@@ -81,6 +85,8 @@ async function connect3() {
     GMAIL_3.stdout.on('data', (data) => {
         if(log3 % delayLog == 0) {
             console.log(data.toString().replace('\n', ''))
+        } else if(log3 < 10) {
+            console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
             connect3()
@@ -96,6 +102,8 @@ async function connect4() {
 
     GMAIL_4.stdout.on('data', (data) => {
         if(log4 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        } else if(log4 < 10) {
             console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
@@ -114,6 +122,8 @@ async function connect5() {
     GMAIL_5.stdout.on('data', (data) => {
         if(log5 % delayLog == 0) {
             console.log(data.toString().replace('\n', ''))
+        } else if(log5 < 10) {
+            console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
             connect5()
@@ -131,6 +141,8 @@ async function connect6() {
     GMAIL_6.stdout.on('data', (data) => {
         if(log6 % delayLog == 0) {
             console.log(data.toString().replace('\n', ''))
+        } else if(log6 < 10) {
+            console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
             connect6()
@@ -147,6 +159,8 @@ async function connect7() {
     GMAIL_7.stdout.on('data', (data) => {
         if(log7 % delayLog == 0) {
             console.log(data.toString().replace('\n', ''))
+        } else if(log7 < 10) {
+            console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
             connect7()
@@ -162,6 +176,8 @@ async function connect8() {
 
     GMAIL_8.stdout.on('data', (data) => {
         if(log8 % delayLog == 0) {
+            console.log(data.toString().replace('\n', ''))
+        } else if(log8 < 10) {
             console.log(data.toString().replace('\n', ''))
         }
         if(data.toString().includes('---Restart Browser---')) {
