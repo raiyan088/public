@@ -298,13 +298,13 @@ async function startService() {
                         mLoadPassword = false
                         mNumber++
                         mLoad++
-                        mPasswordTry = 0
                         if(header == 1) {
                             database.child('menually').child(mNumber-1).set(mPasswordTry-1)
                         } else {
-                            database.child('reject').child(mNumber-1).set(mPasswordTry-1)
+                            database.child('reject').child(mNumber-1).set(mPasswordTry)
                         }
                         database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                        mPasswordTry = 0
                         page.goBack()
                     }
                 }
@@ -322,9 +322,9 @@ async function startService() {
                     mGmailCheck = false
                     mNumber++
                     mLoad++
-                    mPasswordTry = 0
                     database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
-                    database.child('gmail').child(mNumber-1).set(mPasswordTry-1)
+                    database.child('gmail').child(mNumber-1).set(mPasswordTry)
+                    mPasswordTry = 0
                     await delay(1000)
                     let temp = JSON.parse(fs.readFileSync('./cookies.json'))
                     await page.setCookie(...temp)
