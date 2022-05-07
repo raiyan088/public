@@ -30,7 +30,7 @@ let delayLog = 6
 
 
 ;(async () => {
-    /*connect1()
+    connect1()
     await delay(5000)
     connect2()
     await delay(5000)
@@ -52,7 +52,7 @@ let delayLog = 6
     await delay(5000)
     connect11()
     await delay(5000)
-    connect12()*/
+    connect12()
 })()
 
 
