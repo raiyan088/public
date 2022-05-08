@@ -299,7 +299,7 @@ async function startService() {
                         mNumber++
                         mLoad++
                         if(header == 1) {
-                            database.child('menually').child(mNumber-1).set(mPasswordTry-1)
+                            database.child('menually').child(mNumber-1).set(mPasswordTry)
                         } else {
                             database.child('reject').child(mNumber-1).set(mPasswordTry)
                         }
