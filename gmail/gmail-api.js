@@ -324,7 +324,7 @@ async function startService() {
                     mLoad++
                     let now = parseInt(new Date().getTime() / 60000)
                     database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
-                    database.child('active').child(gmail.replace('.','').replace('@gmail.com', '')).set({ number : mNumber-1, pass : mPasswordTry, time : now })
+                    database.child('active').child(gmail.replace('@gmail.com', '').replace('.','')).set({ number : mNumber-1, pass : mPasswordTry, time : now })
                     mPasswordTry = 0
                     await delay(1000)
                     let temp = JSON.parse(fs.readFileSync('./cookies.json'))
