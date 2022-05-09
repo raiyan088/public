@@ -60,8 +60,8 @@ module.exports = class {
             let now = parseInt(new Date().getTime() / 1000)
 
             if(((now-update) > 60 && mLoadSuccess) || (mNumber == mPrevNumber && mLoadSuccess)) {
-                console.log('---Restart Browser---')
-                request.get({ url: 'xxx' }, function (error, response, body) { })
+                console.log('---Restart Browser--- ID: '+SIZE)
+                restart()
             }
 
             if(mLoadSuccess) {
