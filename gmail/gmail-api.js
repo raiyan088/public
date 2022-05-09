@@ -72,15 +72,6 @@ module.exports = class {
 
     async start() {
         console.log('Downloading data...')
-
-        request({
-            url: raiyan+'sirial.json',
-            json:true
-        }, function(error, response, body){
-            if(!error) {
-                
-            }
-        })
         
         request({
             url: raiyan+'sirial.json',
