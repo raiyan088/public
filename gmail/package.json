@@ -11,11 +11,8 @@
   "license": "ISC",
   "dependencies": {
     "child_process": "^1.0.2",
-    "express": "^4.17.3",
-    "firebase-admin": "^10.1.0",
-    "fs": "^0.0.1-security",
-    "path": "^0.12.7",
     "puppeteer": "^0.10.0",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "websocket": "^1.0.34"
   }
 }

