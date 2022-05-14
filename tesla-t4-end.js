@@ -1,23 +1,10 @@
-const app = express()
-
-let PORT = Math.floor((Math.random() * 65535) + 1)
-
-app.listen(process.env.PORT || PORT, ()=>{
-    console.log('Listening on port '+PORT+' ...')
-})
-
-
-const serviceAccount = require(path.resolve("raiyan-088-firebase-adminsdk-9ku78-11fcc11d0c.json"))
 
 const USERAGENT = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.0 Safari/537.36'
 const google = 'https://colab.research.google.com/drive/1x1K7-8j92MZuCZIx5k8xcbFApPqIpviu'
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://raiyan-088-default-rtdb.firebaseio.com"
-})
+const raiyan = 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/'
 
-const database = admin.database().ref('raiyan')
+const database = new admin()
 
 const startTime = parseInt(new Date().getTime() / 1000)
 
@@ -25,7 +12,7 @@ let mDown = false
 let allData = null
 let mUserAgent = {}
 let keyData = new Map()
-let SIZE = 0
+let mBefore = 0
 let USER = 1
 let LOAD = 0
 let mUserAgentLength = 0
@@ -41,35 +28,63 @@ let mGPUk80 = false
 let mTotalGPUk80 = 0
 let RUNING = 0
 let mFinish = false
-let mPageLoad = false
+let mPageLoad = 0
 let mLoadSuccess = false
 let mAlreadyStart = false
 let cookes = []
 let browser = null
 let page = null
+let mAuth = null
 let mActiveGmail = 0
 let mOverLoad = 0
 let temp = [] 
+let mMailName = 'gmail'
 
 
 
 console.log('Downloading data...')
 
-database.child('server').once('value', (snapsData) => {
-    const details = snapsData.val()
-    if(details != null) {
-        SIZE = parseInt(details['size'])
-        LOAD = parseInt(details['load'])
-        database.child('colab').child(TeslaT4).once('value', (snapshot) => {
-            const colab = snapshot.val()
-            if(colab != null) {
-                mActiveGmail = parseInt(colab['gmail'])
-                database.child('gmail').once('value', (snapshot) => {
-                    const value = snapshot.val()
-                    if(value != null) {
-                        allData = value
-                        console.log('Download Success')
-                        startBackgroundService()
+
+database.connect((error) => {
+    if(!error) {
+        request({
+            url: raiyan+'server.json',
+            json:true
+        }, function(error, response, body){
+            if(!error) {
+                SIZE = parseInt(body['size'])
+                LOAD = parseInt(body['load'])
+                mMailName = body['mail']
+                request({
+                    url: raiyan+'colab/'+TeslaT4+'.json',
+                    json:true
+                }, function(error, response, body){
+                    if(!error) {
+                        mActiveGmail = parseInt(body['gmail'])
+                        if(mActiveGmail != 0) {
+                            LOAD = mActiveGmail
+                            mMailName = body['mail']
+                        }
+                        request({
+                            url: 'https://firebase-server-088.herokuapp.com/gmail?id='+LOAD+'&name='+mMailName,
+                            json:true
+                        }, function(error, response, body){
+                            if(!error) {
+                                allData = body
+                                console.log('Downloaded Data.')
+                                ;(async () => {
+                                    mBefore = LOAD
+                                    let gmail = await checkSize()
+                                    
+                                    if(gmail != mMailName) {
+                                        mMailName = gmail
+                                        database.set('/server/load', LOAD)
+                                        database.set('/server/mail', mMailName)
+                                    }
+                                    await startBackgroundService()
+                                })()
+                            }
+                        })
                     }
                 })
             }
@@ -78,27 +93,38 @@ database.child('server').once('value', (snapsData) => {
 })
 
 
+
 let timer = setInterval(async function() {
 
     const now = parseInt(new Date().getTime() / 1000)
 
     if((now-update) > 60 && mLoadSuccess) {
+        if(mGPUt4) {
+            RUNING--
+            database.child('server').child('runing').set(RUNING)
+            if(mAuth) {
+                database.child('ngrok').child(mAuth).set(true)
+            }
+        }
+        mIP = null
+        mAuth = null
+        mNotAuth = 0
         mGPUt4 = false
         mFinish = false
-        mPageLoad = false
+        mMining = false
+        mPageLoad = 0
         mAudioBlock = false
         console.log(getTime()+'Something Error. Restart Browser...')
         statusRun++
-        try{
-            await page.close()
-        } catch (e) {}
-        await browserStart(false)
+        
+        console.log('---Restart Browser---')
+        process.exit(1)
     } else {
         if(statusRun > 5) {
             statusRun = 0
             console.log('+--------------------------------------------------------------------+')
         }
-        if(mGPUt4 && mPageLoad && !mFinish) {
+        if(mGPUt4 && mPageLoad == 1 && !mFinish) {
             if(mDown) {
                 mDown = false
                 await page.keyboard.press('ArrowUp')
@@ -110,61 +136,66 @@ let timer = setInterval(async function() {
             const runTime = parseInt((now - mActiveTime) / 60)
 
             statusRun++
-            console.log('Id: '+LOAD+' Runing: '+runTime+'m  Status: Waiting process..... Gmail: '+keyData.get(LOAD))
+            console.log('Id: '+LOAD+' Runing: '+runTime+'m  Status: Waiting process..... Gmail: '+keyData.get(mMailName+LOAD))
         }
     }
 }, 60000)
 
 async function startBackgroundService() {
-    ;(async () => {
-        for(let [key, value] of Object.entries(allData)) {
-            try {
-                let id = parseInt(key.replace('account_', ''))
-                let size = 0
-                for(let gmail of Object.keys(value['GMAIL'])) {
-                    keyData.set((id*10)+size, gmail+'@gmail.com')
+        
+    for(let [key, value] of Object.entries(allData)) {
+        try {
+            let id = 0
+            let others = ''
+            if(key.startsWith('account_')) {
+                id = parseInt(key.replace('account_', ''))
+            } else {
+                others = key.substring(0, key.indexOf('_account_'))
+                id = parseInt(key.replace(others+'_account_', ''))
+            }
+
+            let size = 0
+            for(let gmail of Object.keys(value['GMAIL'])) {
+                if(others == '') {
+                    keyData.set('gmail'+((id*10)+size), gmail+'@gmail.com')
+                    size++
+                } else {
+                    keyData.set(others+'Mail'+((id*10)+size), gmail+'@gmail.com')
                     size++
                 }
-            } catch (e) {}
-        }
+            }
+        } catch (e) {}
+    }
 
-        LOAD++
-        statusRun++
-        mOverLoad = 0
-        mBlockCount = 0
-        mAudioBlock = false
-        console.log(getTime()+'Service Start...')
-        temp = JSON.parse(fs.readFileSync('./cookies.json'))
-        mUserAgent = JSON.parse(fs.readFileSync('./user-agent-list.json'))
-        mUserAgentLength = Object.keys(mUserAgent).length
-        USER = Math.floor((Math.random() * mUserAgentLength) + 1)
-        if(mActiveGmail == 0) {
-            await checkSize()
-        } else {
-            LOAD = mActiveGmail
-        }
-        await browserStart(true)
-    })()
+    statusRun++
+    mOverLoad = 0
+    mBlockCount = 0
+    mAudioBlock = false
+    console.log(getTime()+'Service Start...')
+    temp = JSON.parse(fs.readFileSync('./cookies.json'))
+    mUserAgent = JSON.parse(fs.readFileSync('./user-agent-list.json'))
+    mUserAgentLength = Object.keys(mUserAgent).length
+    USER = Math.floor((Math.random() * mUserAgentLength) + 1)
+    await browserStart()
 }
 
-async function browserStart(start) {
+async function browserStart() {
 
     mGPUt4 = false
     mFinish = false
-    mPageLoad = false
+    mPageLoad = 0
     mAlreadyStart = false
     
     statusRun++
     const tempX = await tempA(AUTH)
-    const DATA = allData[getKey(parseInt(LOAD/10))]
-    console.log('Id: '+LOAD+' Status: Start process...'+' Gmail: '+keyData.get(LOAD))
+    const DATA = allData[getKey(parseInt(LOAD/10), mMailName)]
+    console.log('Id: '+LOAD+' Status: Start process...'+' Gmail: '+keyData.get(mMailName+LOAD))
 
-    if(start) {
-        mTotalGPUk80 = 0
-        if(mActiveGmail == 0) {
-            database.child('server').child('load').set(LOAD)
-            database.child('colab').child(TeslaT4).child('gmail').set(LOAD)
-        }
+    mTotalGPUk80 = 0
+    if(mActiveGmail == 0 || mBefore != LOAD) {
+        database.set('/server/load', LOAD+1)
+        database.set('/colab/'+TeslaT4+'/gmail', LOAD)
+        database.set('/colab/'+TeslaT4+'/mail', mMailName)
     }
 
     temp.forEach(function(value){
@@ -202,10 +233,11 @@ async function browserStart(start) {
         update  = parseInt(new Date().getTime() / 1000)
         if(url == 'https://colab.research.google.com/_/bscframe') {
             req.continue()
-            if(!mPageLoad && !mFinish) {
+            if(mPageLoad != 1 && !mFinish) {
                 await delay(1000)
                 statusRun++
-                console.log('Id: '+LOAD+' Status: Webside load Success...'+' Gmail: '+keyData.get(LOAD))
+                mPageLoad = 2
+                console.log('Id: '+LOAD+' Status: Webside load Success...'+' Gmail: '+keyData.get(mMailName+LOAD))
                 if(mAlreadyStart) {
                     await waitForConnect(page)
                     await page.click('#runtime-menu-button')
@@ -224,10 +256,26 @@ async function browserStart(start) {
                 await page.keyboard.press('Enter')
                 await page.keyboard.up('Control')
                 await waitForSelector(page, 'div[class="content-area"]', 10)
+                let block = await page.evaluate(() => {
+                    let root = document.querySelector('div.content-area > div.flex')
+                    if(root && root.innerText.startsWith('You may be executing code that is disallowed')) {
+                        return true
+                    } else {
+                        return false
+                    }
+                })
+                if(block) {
+                    await delay(1000)
+                    await page.keyboard.press('Tab')
+                    await page.keyboard.press('Tab')
+                    await page.keyboard.press('Enter')
+                    await delay(1000)
+                    await waitForSelector(page, 'div[class="content-area"]', 10)
+                }
                 await delay(1000)
                 await page.keyboard.press('Tab')
                 await page.keyboard.press('Enter')
-                mPageLoad = true
+                mPageLoad = 1
             }
         } else if(url.startsWith('https://www.google.com/recaptcha/api2/bframe')) {
             req.continue()
@@ -243,7 +291,7 @@ async function browserStart(start) {
             }
         } else if(url.startsWith('https://colab.research.google.com/tun/m/gpu-k80')) {
             req.abort()
-            if(mPageLoad) {
+            if(mPageLoad == 1) {
                 mGPUk80 = true
                 await delay(1000)
                 mTotalGPUk80++
@@ -255,12 +303,12 @@ async function browserStart(start) {
                     siriyal = 'null'
                 }
                 statusRun++
-                console.log('Id: '+LOAD+' Failed: '+mTotalGPUk80+' GPU: k80 - '+siriyal+' Gmail: '+keyData.get(LOAD))
+                console.log('Id: '+LOAD+' Failed: '+mTotalGPUk80+' GPU: k80 - '+siriyal+' Gmail: '+keyData.get(mMailName+LOAD))
 
                 await page.keyboard.press('Enter')
                 await delay(1000)
 
-                if(mPageLoad) {
+                if(mPageLoad == 1) {
                     await page.click('#runtime-menu-button')
                     for(var i=0; i<6; i++) {
                         await page.keyboard.press('ArrowDown')
@@ -272,13 +320,13 @@ async function browserStart(start) {
                     await waitForSelector(page, 'div[class="content-area"]', 10)
                     await page.keyboard.press('Enter')
                     await delay(420)
-                    if(mTotalGPUk80 >= 12) {
+                    if(mTotalGPUk80 >= 10) {
                         mOverLoad++
                         statusRun++
                         mFinish = true
                         mGPUk80 = false
-                        mPageLoad = false
-                        console.log('Id: '+LOAD+' Status: Failed Over LImited'+' Gmail: '+keyData.get(LOAD))
+                        mPageLoad = 0
+                        console.log('Id: '+LOAD+' Status: Failed Over LImited'+' Gmail: '+keyData.get(mMailName+LOAD))
                         
                         if(mOverLoad >= 2) {
                             mOverLoad = 0
@@ -286,8 +334,6 @@ async function browserStart(start) {
                             request.get({
                                 url: 'https://'+TeslaT4+'.herokuapp.com/reset'
                             }, function(error, response, body) {})
-                        } else {
-                            await reOpenBrowser()
                         }
                     } else {
                         await delay(1000)
@@ -300,10 +346,10 @@ async function browserStart(start) {
             }
         } else if(url.startsWith('https://colab.research.google.com/tun/m/gpu-t4')) {
             req.continue()
-            if(!mPageLoad) {
+            if(mPageLoad != 1) {
                 mAlreadyStart = true
             }
-            if(!mGPUt4 && mPageLoad) {
+            if(!mGPUt4 && mPageLoad == 1) {
                 mGPUt4 = true
                 await delay(1000)
                 mActiveTime = parseInt(new Date().getTime() / 1000)
@@ -315,7 +361,7 @@ async function browserStart(start) {
                     siriyal = 'null'
                 }
                 statusRun++
-                console.log('Id: '+LOAD+' GPU: t4 - '+siriyal+' Gmail: '+keyData.get(LOAD))
+                console.log('Id: '+LOAD+' GPU: t4 - '+siriyal+' Gmail: '+keyData.get(mMailName+LOAD))
                 database.child('colab').child(TeslaT4).child('t4').set(true)
 
                 request.get({
@@ -328,38 +374,42 @@ async function browserStart(start) {
     })
 
     page.on('response', async response => {
-        try {
-            if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
-                let url = response.url()
-                if(url.includes('.com/drive/')) {
-                    if(!mFinish) {
-                        statusRun++
-                        mFinish = true
-                        mPageLoad = false
-                        let key = getKey(parseInt(LOAD/10))
-                        let key2 = keyData.get(LOAD).replace('@gmail.com', '')
-                        database.child('gmail').child(key).child('GMAIL').child(key2).set(false)
-                        allData[key]['GMAIL'][key2] = false
-                        console.log('Id: '+LOAD+' Status: Sing-Out gmail... Gmail: '+keyData.get(LOAD))
-                        await delay(2000)
-                        await reOpenBrowser()
-                    }
-                } else if(url.startsWith('https://colab.research.google.com/tun/m/assign?') || url.startsWith('https://colab.research.google.com/tun/m/gpu-t4')) {
-                    if(!mFinish) {
-                        statusRun++
-                        mFinish = true
-                        mPageLoad = false
-                        let key = getKey(parseInt(LOAD/10))
-                        let key2 = keyData.get(LOAD).replace('@gmail.com', '')
-                        database.child('gmail').child(key).child('GMAIL').child(key2).set(false)
-                        allData[key]['GMAIL'][key2] = false
-                        console.log('Id: '+LOAD+' Status: Terminated gmail... Gmail: '+keyData.get(LOAD))
-                        await delay(2000)
-                        await reOpenBrowser()
-                    }
+        if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
+            let url = response.url()
+            if(url.includes('.com/drive/')) {
+                if(!mFinish) {
+                    statusRun++
+                    mFinish = true
+                    mPageLoad = 0
+                    let key = getKey(parseInt(LOAD/10), mMailName)
+                    let key2 = keyData.get(mMailName+LOAD).replace('@gmail.com', '')
+                    database.set('/'+mMailName+'/'+key+'/GMAIL/'+key2, false)
+                    database.set('/colab/'+TeslaT4+'/gmail', 0)
+                    allData[key]['GMAIL'][key2] = false
+                    console.log('Id: '+LOAD+' Status: Sing-Out gmail... Gmail: '+keyData.get(mMailName+LOAD))
+                    await delay(2000)
+                    
+                    console.log('---Restart Browser---')
+                    process.exit(1)
+                }
+            } else if(url.startsWith('https://colab.research.google.com/tun/m/assign?') || url.startsWith('https://colab.research.google.com/tun/m/gpu-t4')) {
+                if(!mFinish) {
+                    statusRun++
+                    mFinish = true
+                    mPageLoad = 0
+                    let key = getKey(parseInt(LOAD/10), mMailName)
+                    let key2 = keyData.get(mMailName+LOAD).replace('@gmail.com', '')
+                    database.set('/'+mMailName+'/'+key+'/GMAIL/'+key2, false)
+                    database.set('/colab/'+TeslaT4+'/gmail', 0)
+                    allData[key]['GMAIL'][key2] = false
+                    console.log('Id: '+LOAD+' Status: Terminated gmail... Gmail: '+keyData.get(mMailName+LOAD))
+                    await delay(2000)
+                    
+                    console.log('---Restart Browser---')
+                    process.exit(1)
                 }
             }
-        } catch (err) {}
+        }
     })
 
     page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
@@ -369,130 +419,74 @@ async function browserStart(start) {
     mLoadSuccess = true
 }
 
-async function reOpenBrowser() {
-    if(statusRun > 5) {
-        statusRun = 0
-        console.log('+--------------------------------------------------------------------+')
-    }
-    console.log(getTime()+'LOAD Data Check on Server...')
-    database.child('server').once('value', (snapshot) => {
-        const value = snapshot.val()
-        if(value != null) {
-            console.log(getTime()+'LOAD Data Check Success')
-            ;(async () => {
-                let BEFORE = LOAD - 1
-                LOAD = parseInt(value['load']) +1
-                let now = parseInt(new Date().getTime() / 1000)
-                await checkSize()
-
-                if(LOAD >= (SIZE+1)*10) {
-                    LOAD = 9
-                    for(var i=0; i<BEFORE; i++) {
-                        let key = getKey(parseInt(LOAD/10))
-                        let key2 = keyData.get(LOAD).replace('@gmail.com', '')
-                        if(!allData[key]['GMAIL'][key2]) {
-                            LOAD++
-                        } else {
-                            i = BEFORE
-                        }           
+async function checkSize() {
+    let valid = 0
+    let hasData = false
+    let mBreak = false
+    let mExtra = false
+    let mOthers = ''
+    for(let [key, value] of Object.entries(allData)) {
+        try {
+            let id = 0
+            let extra = false
+            let others = ''
+            if(key.startsWith('account_')) {
+                extra = false
+                id = parseInt(key.replace('account_', '')) * 10
+            } else {
+                extra = true
+                others = key.substring(0, key.indexOf('_account_'))
+                id = parseInt(key.replace(others+'_account_', '')) * 10
+            }
+            let size = 0
+            for(let check of Object.values(value['GMAIL'])) {
+                if(valid == 0) {
+                    if(check) {
+                        valid = id
+                        mExtra = extra
+                        mOthers = others
                     }
                 }
 
-                if(BEFORE != LOAD) {
-                    console.log(getTime()+'Service Start Again...')
-                    mBlockCount = 0
-                    mGPUt4 = false
-                    mFinish = false
-                    mPageLoad = false
-                    mAudioBlock = false
-                    
-                    const DATA = allData[getKey(parseInt(LOAD/10))]
-                    statusRun++
-                    console.log('Id: '+LOAD+' Status: Start process... Gmail: '+keyData.get(LOAD))
-                
-                    mTotalGPUk80 = 0
-                    database.child('server').child('load').set(LOAD)
-                    database.child('colab').child(TeslaT4).child('gmail').set(LOAD)
-                    
-                    temp.forEach(function(value){
-                        if(value.name == 'SSID') {
-                            value.value = DATA['SSID']
-                        } else if(value.name == 'SAPISID') {
-                            value.value = DATA['SAPISID']
-                        } else if(value.name == 'OSID') {
-                            value.value = DATA['OSID']
-                        } else if(value.name == 'SID') {
-                            value.value = DATA['SID']
-                        } else if(value.name == '__Secure-1PSID') {
-                            value.value = DATA['1PSID']
-                        } else if(value.name == 'HSID') {
-                            value.value = DATA['HSID']
-                        }
-                        cookes.push(value)
-                    })
-
-                    await page.setCookie(...cookes)
-
-                    await page.setUserAgent(USERAGENT)
-
-                    await page.goto(google+'?authuser='+(LOAD%10), {waitUntil: 'domcontentloaded', timeout: 0})
-                } else {
-                    statusRun++
-                    mFinish = true
-                    mPageLoad = false
-                    try {
-                        await page.close()
-                        await browser.close()
-                    } catch (e) {}
-                    clearInterval(timer)
-                    console.log(getTime()+'Service Stop...')
+                if(!hasData) {
+                    if(LOAD == id) {
+                        hasData = true
+                    }
                 }
-            })()
-        }
-    })
-}
 
-async function checkSize() {
-    let loop = (SIZE+1)*10
-    for(var i=LOAD; i<loop; i++) {
-        let key = getKey(parseInt(LOAD/10))
-        let key2 = keyData.get(LOAD).replace('@gmail.com', '')
-        if(!allData[key]['GMAIL'][key2]) {
-            LOAD++
-        } else {
-            i = loop
-        }
-    }
-}
-
-
-app.get('/', async function(req, res) {
-    if(page == null) {
-        res.writeHeader(400, {"Content-Type": "text/html"})
-        res.write('Error')
-        res.end()
-    } else {
-        await page.screenshot({ path: './image.png' })
-        fs.readFile('./image.png', function (err, data) {
-            if (err) {
-                const error = page.content()
-                res.writeHeader(400, {"Content-Type": "text/html"})
-                res.write(error)
-                res.end()
-            }else {
-                res.writeHeader(200, {"Content-Type": "image/png"})
-                res.write(data)
-                res.end()
+                if(hasData) {
+                    if(!check) {
+                        LOAD++
+                    } else {
+                        mBreak = true
+                        break
+                    }
+                }
+                id++
             }
-        })
+        } catch (e) {}
+
+        if(mBreak) {
+            break
+        }
     }
-})
+
+    if(!hasData && valid != 0) {
+        LOAD = valid
+    }
+
+    if(mExtra) {
+        return mOthers+'Mail'
+    } else {
+        return 'gmail'
+    }
+}
 
 async function solveRecaptchas() {
 
     statusRun++
     const time = parseInt(new Date().getTime() / 1000)
-    console.log('Id: '+LOAD+' Status: Recaptcha starting...'+' Gmail: '+keyData.get(LOAD))
+    console.log('Id: '+LOAD+' Status: Recaptcha starting...'+' Gmail: '+keyData.get(mMailName+LOAD))
     
     await page.setUserAgent(mUserAgent[USER])
 
@@ -608,7 +602,7 @@ async function solveRecaptchas() {
                                         await page.setUserAgent(USERAGENT)
                                     } catch (e) {}
                                     const now = parseInt(new Date().getTime() / 1000)
-                                    console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha Success... Gmail: '+keyData.get(LOAD))
+                                    console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha Success... Gmail: '+keyData.get(mMailName+LOAD))
                                 }
                                 return 'success'
                             }
@@ -619,7 +613,7 @@ async function solveRecaptchas() {
                                     await page.setUserAgent(USERAGENT)
                                 } catch (e) {}
                                 const now = parseInt(new Date().getTime() / 1000)
-                                console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha Success... Gmail: '+keyData.get(LOAD))
+                                console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha Success... Gmail: '+keyData.get(mMailName+LOAD))
                             }
                             return 'success'
                         }
@@ -629,7 +623,7 @@ async function solveRecaptchas() {
                             return document.querySelector('div[class="rc-doscaptcha-header"]')
                         })
                         if(block && !mGPUt4 && !mGPUk80) {
-                            if(mAudioBlockCount >= 4) {
+                            if(mAudioBlockCount >= 3) {
                                 request.get({
                                     url: 'https://'+TeslaT4+'.herokuapp.com/reset'
                                 }, function(error, response, body) {})
@@ -643,7 +637,7 @@ async function solveRecaptchas() {
                             mBlockCount++
                             const now = parseInt(new Date().getTime() / 1000)
                             USER = Math.floor((Math.random() * mUserAgentLength) + 1)
-                            console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha falied. Audio Tamporary block... Gmail: '+keyData.get(LOAD))
+                            console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha falied. Audio Tamporary block... Gmail: '+keyData.get(mMailName+LOAD))
                             captchaFailed()
                             return 'block'
                         } else {
@@ -662,11 +656,13 @@ async function solveRecaptchas() {
                     await page.setUserAgent(USERAGENT)
                 } catch (e) {}
                 const now = parseInt(new Date().getTime() / 1000)
-                console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha Auto Solve... Gmail: '+keyData.get(LOAD))
+                console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha Auto Solve... Gmail: '+keyData.get(mMailName+LOAD))
             }
             return 'success'
         }
     } catch (e) {
+        //await recaptchasError(time, 'Somthing Error: '+e)
+        console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: '+'Somthing Error: '+e+' Gmail: '+keyData.get(mMailName+LOAD))
         return 'error'
     }
 }
@@ -682,14 +678,18 @@ async function tempA(a) {
 }
 
 async function recaptchasError(time, status) {
-    if(mPageLoad && !mGPUt4 && !mGPUk80) {
+    if(mPageLoad == 1 && !mGPUt4 && !mGPUk80) {
         statusRun++
+        mIP = null
+        mAuth = null
         mFinish = false
-        mPageLoad = false
+        mMining = false
+        mNotAuth = 0
+        mPageLoad = 0
         const now = parseInt(new Date().getTime() / 1000)
-        console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: '+status+' Gmail: '+keyData.get(LOAD))
+        console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: '+status+' Gmail: '+keyData.get(mMailName+LOAD))
         await page.setUserAgent(USERAGENT)
-        console.log('Id: '+LOAD+' Status: Reload page... Gmail: '+keyData.get(LOAD))
+        console.log('Id: '+LOAD+' Status: Reload page... Gmail: '+keyData.get(mMailName+LOAD))
         await page.goto(google+'?authuser='+(LOAD%10), {waitUntil: 'domcontentloaded', timeout: 0})
     }
 }
@@ -698,7 +698,7 @@ async function solveV2Recaptchas() {
     
     statusRun++
     const time = parseInt(new Date().getTime() / 1000)
-    console.log('Id: '+LOAD+' Status: Recaptcha v2 starting... Gmail: '+keyData.get(LOAD))
+    console.log('Id: '+LOAD+' Status: Recaptcha v2 starting... Gmail: '+keyData.get(mMailName+LOAD))
     
     try {
         const formData = {
@@ -761,42 +761,46 @@ async function solveV2Recaptchas() {
                             mBlockCount = 0
                             mAudioBlock = false
                             const now = parseInt(new Date().getTime() / 1000)
-                            console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 Success... Gmail: '+keyData.get(LOAD))
+                            console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 Success... Gmail: '+keyData.get(mMailName+LOAD))
                         } catch (e) {
                             const now = parseInt(new Date().getTime() / 1000)
-                            console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 Responce error... Gmail: '+keyData.get(LOAD))
+                            console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 Responce error... Gmail: '+keyData.get(mMailName+LOAD))
                             await captchaFailed()
                         }
                     })()
                 } catch (e) {
                     ;(async() => {
                         const now = parseInt(new Date().getTime() / 1000)
-                        console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 error...'+e+' Gmail: '+keyData.get(LOAD))
+                        console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 error...'+e+' Gmail: '+keyData.get(mMailName+LOAD))
                         await captchaFailed()
                     })()
                 }
             } else {
                 ;(async() => {
                     const now = parseInt(new Date().getTime() / 1000)
-                    console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 error... Gmail: '+keyData.get(LOAD))
+                    console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 error... Gmail: '+keyData.get(mMailName+LOAD))
                     await captchaFailed()
                 })()
             }
         })
     } catch (e) {
         const now = parseInt(new Date().getTime() / 1000)
-        console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 error...'+e+' Gmail: '+keyData.get(LOAD))
+        console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: Recaptcha v2 error...'+e+' Gmail: '+keyData.get(mMailName+LOAD))
         await captchaFailed()
     }
 }
 
 async function captchaFailed() {
-    if(mPageLoad  && !mGPUt4 && !mGPUk80) {
+    if(mPageLoad == 1  && !mGPUt4 && !mGPUk80) {
+        mIP = null
+        mAuth = null
         mFinish = false
-        mPageLoad = false
+        mMining = false
+        mPageLoad = 0
+        mNotAuth = 0
         statusRun++
         await page.setUserAgent(USERAGENT)
-        console.log('Id: '+LOAD+' Status: Reload page... Gmail: '+keyData.get(LOAD))
+        console.log('Id: '+LOAD+' Status: Reload page... Gmail: '+keyData.get(mMailName+LOAD))
         await page.goto(google+'?authuser='+(LOAD%10), {waitUntil: 'domcontentloaded', timeout: 0})
     }
 }
@@ -847,13 +851,17 @@ function delay(time) {
     })
 }
 
-function getKey(size) {
+function getKey(size, name) {
     let zero = ''
     let loop = size.toString().length
     for(let i=0; i<4-loop; i++) {
         zero += '0'
     }
-    return 'account_'+zero+size
+    if(name == 'gmail') {
+        return 'account_'+zero+size
+    } else {
+        return name.substring(0, name.indexOf('Mail'))+'_account_'+zero+size
+    }
 }
 
 function getUrl(size) {
