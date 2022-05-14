@@ -26,7 +26,6 @@ let mAudioBlock = false
 let mGPUt4 = false
 let mGPUk80 = false
 let mTotalGPUk80 = 0
-let RUNING = 0
 let mFinish = false
 let mPageLoad = 0
 let mLoadSuccess = false
@@ -100,8 +99,6 @@ let timer = setInterval(async function() {
 
     if((now-update) > 60 && mLoadSuccess) {
         if(mGPUt4) {
-            RUNING--
-            database.child('server').child('runing').set(RUNING)
             if(mAuth) {
                 database.child('ngrok').child(mAuth).set(true)
             }
@@ -330,10 +327,18 @@ async function browserStart() {
                         
                         if(mOverLoad >= 2) {
                             mOverLoad = 0
-                            database.child('colab').child(TeslaT4).child('gmail').set(0)
-                            request.get({
-                                url: 'https://'+TeslaT4+'.herokuapp.com/reset'
-                            }, function(error, response, body) {})
+                            database.set('/colab/'+TeslaT4+'/gmail', 0)
+                            request({
+                                url: raiyan+'colab/'+TeslaT4+'.json',
+                                json:true
+                            }, function(error, response, body){
+                                if(!error) {
+                                    let active = parseInt(body['active'])
+                                    request.get({
+                                        url: 'https://' + body['url_'+active] + '.herokuapp.com/reset'
+                                    }, function (error, response, body) { })
+                                }
+                            })
                         }
                     } else {
                         await delay(1000)
@@ -362,11 +367,19 @@ async function browserStart() {
                 }
                 statusRun++
                 console.log('Id: '+LOAD+' GPU: t4 - '+siriyal+' Gmail: '+keyData.get(mMailName+LOAD))
-                database.child('colab').child(TeslaT4).child('t4').set(true)
+                database.set('/colab/'+TeslaT4+'/t4', true)
 
-                request.get({
-                    url: 'https://'+TeslaT4+'.herokuapp.com/mining'
-                }, function(error, response, body) {})
+                request({
+                    url: raiyan+'colab/'+TeslaT4+'.json',
+                    json:true
+                }, function(error, response, body){
+                    if(!error) {
+                        let active = parseInt(body['active'])
+                        request.get({
+                            url: 'https://' + body['url_'+active] + '.herokuapp.com/mining'
+                        }, function (error, response, body) { })
+                    }
+                })
             }
         } else {
             req.continue()
@@ -624,9 +637,17 @@ async function solveRecaptchas() {
                         })
                         if(block && !mGPUt4 && !mGPUk80) {
                             if(mAudioBlockCount >= 3) {
-                                request.get({
-                                    url: 'https://'+TeslaT4+'.herokuapp.com/reset'
-                                }, function(error, response, body) {})
+                                request({
+                                    url: raiyan+'colab/'+TeslaT4+'.json',
+                                    json:true
+                                }, function(error, response, body){
+                                    if(!error) {
+                                        let active = parseInt(body['active'])
+                                        request.get({
+                                            url: 'https://' + body['url_'+active] + '.herokuapp.com/reset'
+                                        }, function (error, response, body) { })
+                                    }
+                                })
                             } else {
                                 if(mBlockCount >= 2) {
                                     mAudioBlock = true
