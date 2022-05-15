@@ -230,7 +230,7 @@ async function browserStart() {
         update  = parseInt(new Date().getTime() / 1000)
         if(url == 'https://colab.research.google.com/_/bscframe') {
             req.continue()
-            if(mPageLoad != 1 && !mFinish) {
+            if(mPageLoad == 0 && !mFinish) {
                 await delay(1000)
                 statusRun++
                 mPageLoad = 2
