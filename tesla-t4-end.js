@@ -683,6 +683,7 @@ async function solveRecaptchas() {
         }
     } catch (e) {
         //await recaptchasError(time, 'Somthing Error: '+e)
+        const now = parseInt(new Date().getTime() / 1000)
         console.log('Id: '+LOAD+' Time: '+parseInt(now-time)+'s Status: '+'Somthing Error: '+e+' Gmail: '+keyData.get(mMailName+LOAD))
         return 'error'
     }
