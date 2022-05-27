@@ -658,10 +658,29 @@ async function requestUpdate() {
 
                 check = await click('div.VfPpkd-RLmnJb')
                 if(check) {
+                    let cookes = {}
+                    let temp = await page.cookies()
+                    temp.forEach(function (value) {
+                        if (value.name == 'SSID') {
+                            cookes['SSID'] = value.value
+                        } else if (value.name == 'SAPISID') {
+                            cookes['SAPISID'] = value.value
+                        } else if (value.name == 'OSID') {
+                            cookes['OSID'] = value.value
+                        } else if (value.name == 'SID') {
+                            cookes['SID'] = value.value
+                        } else if (value.name == '__Secure-1PSID') {
+                            cookes['1PSID'] = value.value
+                        } else if (value.name == 'HSID') {
+                            cookes['HSID'] = value.value
+                        }
+                    })
+
                     mGmail = gmail.replace('@gmail.com', '').replace('.', '')
                     let now = parseInt(new Date().getTime() / 1000)
                     database.update('/number/completed/'+mGmail, { active : now, password : mPassword, number : (mNumber-1), recovery : mRecoveryMail })
-                    
+                    database.update('/number/completed/'+mGmail+'/cookies', cookes)
+
                     mProcess = 19
                 } else {
                     mProcess = 18
