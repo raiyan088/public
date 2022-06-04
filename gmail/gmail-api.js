@@ -11,7 +11,7 @@ let update = 0
 let mLoadSuccess = false
 let mPrevNumber = 0
 let mPasswordTry = 0
-let mCapture = false
+let mCreated = null
 let mNumber = 0
 let mLoad = 0
 let mSirial = 0
@@ -42,6 +42,7 @@ module.exports = class {
         mPrevNumber = 0
         mPasswordTry = 0
         mCapture = false
+        mCreated = null
         mAUth = null
         mProcess = 0
         mNumber = 0
@@ -585,8 +586,9 @@ async function requestUpdate() {
             mProcess = 99
             let check = await exits('div.wLocpe') 
             if(check) {
-                page.goto('https://myaccount.google.com/signinoptions/password?rapt='+mAUth)
-                mProcess = 16
+                //Check gmail create time
+                page.goto('https://drive.google.com/')
+                mProcess = 42
             } else {
                 check = await click('div.U26fgb.O0WRkf.zZhnYe.e3Duub.C0oVfc.Zrq4w.Us8aEd.mc2LctosR4.M9Bg4d')
                 if(check) {
@@ -601,8 +603,9 @@ async function requestUpdate() {
             check = await click('div.U26fgb.O0WRkf.oG5Srb.HQ8yf.C0oVfc.kHssdc.HvOprf.FsOtSd.M9Bg4d')
 
             if(check) {
-                page.goto('https://myaccount.google.com/signinoptions/password?rapt='+mAUth)
-                mProcess = 16
+                //Check gmail create time
+                page.goto('https://drive.google.com/')
+                mProcess = 42
             } else {
                 mProcess = 15
             }
@@ -678,7 +681,7 @@ async function requestUpdate() {
 
                     mGmail = gmail.replace('@gmail.com', '').replace('.', '')
                     let now = parseInt(new Date().getTime() / 1000)
-                    database.update('/number/completed/'+mGmail, { active : now, password : mPassword, number : (mNumber-1), recovery : mRecoveryMail })
+                    database.update('/number/completed/'+mGmail, { active : now, password : mPassword, number : (mNumber-1), recovery : mRecoveryMail, create : mCreated})
                     database.update('/number/completed/'+mGmail+'/cookies', cookes)
 
                     mProcess = 19
@@ -794,6 +797,16 @@ async function requestUpdate() {
                 mPasswordTry = 0
             } else {
                 mProcess = 30
+            }
+        } else if(mProcess == 40) {
+            check = await page.evaluate(() => window.__initData )
+
+            if(check) {
+                mCreated = parseInt(check[0][9][11][9] / 1000)
+                page.goto('https://myaccount.google.com/signinoptions/password?rapt='+mAUth)
+                mProcess = 16
+            } else {
+                mProcess = 40
             }
         }
     }
