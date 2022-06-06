@@ -82,6 +82,14 @@ module.exports = class {
         } catch (e) {}
     }
 
+    remove(path) {
+        try{
+            if(isConected == 1 && mConnnection != null) {
+                mConnnection.sendUTF(path+'★★★'+'3'+'★★★'+'XxX')
+            }
+        } catch (e) {}
+    }
+
     isConected() {
         return isConected
     }
