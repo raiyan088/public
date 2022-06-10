@@ -3,6 +3,7 @@ const request = require('request')
 
 let mConnnection = null
 let isConected = 0
+let mConnect = false
 
 module.exports = class {
 
@@ -10,9 +11,14 @@ module.exports = class {
 
         const client = new WebSocketClient()
 
+        mConnect = true
+
         client.on('connectFailed', function(error) {
             isConected = 2
-            callback(error)
+            if(mConnect) {
+                mConnect = false
+                callback(error)
+            }
         })
         
         client.on('connect', function(connection) {
@@ -34,7 +40,10 @@ module.exports = class {
                 }
             })
         
-            callback(null)
+            if(mConnect) {
+                mConnect = false
+                callback(null)
+            }
         })
         
         isConected = 0
@@ -78,14 +87,6 @@ module.exports = class {
         try{
             if(isConected == 1 && mConnnection != null) {
                 mConnnection.sendUTF(path+'★★★'+'2'+'★★★'+JSON.stringify(data))
-            }
-        } catch (e) {}
-    }
-
-    remove(path) {
-        try{
-            if(isConected == 1 && mConnnection != null) {
-                mConnnection.sendUTF(path+'★★★'+'3'+'★★★'+'XxX')
             }
         } catch (e) {}
     }

