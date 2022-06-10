@@ -41,7 +41,6 @@ module.exports = class {
         mLoadSuccess = false
         mPrevNumber = 0
         mPasswordTry = 0
-        mCapture = false
         mCreated = null
         mAUth = null
         mProcess = 0
