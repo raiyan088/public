@@ -3,8 +3,8 @@ const express = require('express')
 
 const app = express()
 
-app.listen(process.env.PORT || 3000, ()=>{
-    console.log('Listening on port 3000 ...')
+app.listen(process.env.PORT || 3030, ()=>{
+    console.log('Listening on port 3030 ...')
     startMining()
 })
 
@@ -37,7 +37,7 @@ async function startMining() {
     
         let page = await browser.newPage()
 
-        await page.goto('http://127.0.0.1:3000/')
+        await page.goto('http://127.0.0.1:3030/')
     })()
 }
 
