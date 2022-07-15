@@ -96,7 +96,7 @@ client.connect('wss://webminer.moneroocean.stream/')
 
 setInterval(function() {
     if(mJob) {
-        console.log(((totalHashRate - prevHashRate) /60)+' H/S')
+        console.log(((totalHashRate - prevHashRate) /20)+' H/S')
         prevHashRate = totalHashRate
     }
-}, 60000)
+}, 20000)
