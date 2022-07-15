@@ -1,6 +1,6 @@
 const { parentPort } = require('worker_threads')
 const { performance } = require('perf_hooks')
-const Module = require('./worker.cn')
+const Module = require('./cn.min.js')
 
 var cn = Module.cwrap("hash_cn", "string", ["string", "number", "number", "number"]);
 
