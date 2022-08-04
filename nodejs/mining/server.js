@@ -29,7 +29,7 @@ console.log('Service Starting...')
 fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
     if(!err) {
         try {
-            mGmail = getChild(parseInt(val))
+            mGmail = getChild(parseInt(data))
             request({
                 url: raiyan+'gmail/mining/'+mGmail+'.json',
                 json:true
