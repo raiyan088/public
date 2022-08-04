@@ -1,6 +1,8 @@
 const COLAB_API = require('./colab-api')
 const puppeteer = require('puppeteer')
 const request = require('request')
+const fs = require('fs')
+
 
 const raiyan = 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/'
 
@@ -14,219 +16,18 @@ let colab5 = '1E9ULDh8InEbsc6hTksEKrhg2iJV7GuVp'
 let DATA = null
 let mGmail = null
 let mLoadSuccess = false
+let temp = []
 let cookies = []
 
 let browser = null
 let pages = {}
 
-let temp = [
-    {
-      name: 'NID',
-      value: '511=eQ7kVrY9v-XpBWqs8xyqCruy7jS1pMWY4Bpq47timd1Ah-IMg7zrOgBw3GxwNIC9b9hBpXOBGu23uL5qKynw_a2C7vzgZILc-GNqsBCzkHJLq0HFQaX-d1Ud-Hfxo0wsMRj4vn4vPzW_Maos8WBgm17B_FlF9RX9xqbIhbqDUi6pCpE',
-      domain: '.google.com',
-      path: '/',
-      expires: 1662303164.34413,
-      size: 182,
-      httpOnly: true,
-      secure: true,
-      session: false,
-      sameSite: 'None',
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: 'SSID',
-      value: 'Autct2L0r20F_E6rv',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.134954,
-      size: 21,
-      httpOnly: true,
-      secure: true,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: '__Secure-3PAPISID',
-      value: 'FkDnGWT1SLbfDb7l/A8zdZDRKEZ3EsFtWt',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.135092,
-      size: 51,
-      httpOnly: false,
-      secure: true,
-      session: false,
-      sameSite: 'None',
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: 'HSID',
-      value: 'A-5om8WvV-CMvaWK6',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.134906,
-      size: 21,
-      httpOnly: true,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: '__Secure-3PSID',
-      value: 'HwiYwkC5Kw4LVGokoHrh-nqOUL_1aP26mHX8kZ_24J_92mzxXHDSjpVbqOJadn2hetVBlA.',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.134771,
-      size: 85,
-      httpOnly: true,
-      secure: true,
-      session: false,
-      sameSite: 'None',
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: '__Secure-1PAPISID',
-      value: 'FkDnGWT1SLbfDb7l/A8zdZDRKEZ3EsFtWt',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.135056,
-      size: 51,
-      httpOnly: false,
-      secure: true,
-      session: false,
-      sameParty: true,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: 'SID',
-      value: 'HwiYwkC5Kw4LVGokoHrh-nqOUL_1aP26mHX8kZ_24J_92mzxzTvoxsoC0v8zLhLVUy-WjQ.',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.13458,
-      size: 74,
-      httpOnly: false,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: '__Secure-1PSID',
-      value: 'HwiYwkC5Kw4LVGokoHrh-nqOUL_1aP26mHX8kZ_24J_92mzxAKIR7nmMcfjAnnUAUXEHvA.',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.134658,
-      size: 85,
-      httpOnly: true,
-      secure: true,
-      session: false,
-      sameParty: true,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: '__Secure-3PSIDCC',
-      value: 'AJi4QfFo2WAunp7tUkC_uFPijtQGRQwR5bEGDA4uulBpxWN4MnSNWrKwFSIiLEloMC2RsUVO',
-      domain: '.google.com',
-      path: '/',
-      expires: 1678027964.344321,
-      size: 88,
-      httpOnly: true,
-      secure: true,
-      session: false,
-      sameSite: 'None',
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: 'SAPISID',
-      value: 'FkDnGWT1SLbfDb7l/A8zdZDRKEZ3EsFtWt',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.135019,
-      size: 41,
-      httpOnly: false,
-      secure: true,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: 'APISID',
-      value: 'Oy9TBQh1kPVCO4Dx/AzlW5Uh7GaHtq9q5z',
-      domain: '.google.com',
-      path: '/',
-      expires: 1709563852.134986,
-      size: 40,
-      httpOnly: false,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: 'SIDCC',
-      value: 'AJi4QfFSLNwuz-wtj-aeQonMUAo2eOrtrPYmO1Zu1dC38x6ZP2QPoUovOzeYS0gkRYfJRnuI',
-      domain: '.google.com',
-      path: '/',
-      expires: 1678027964.344271,
-      size: 77,
-      httpOnly: false,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: '_gid',
-      value: 'GA1.4.1851426654.1646491773',
-      domain: '.colab.research.google.com',
-      path: '/',
-      expires: 1646578255,
-      size: 31,
-      httpOnly: false,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    },
-    {
-      name: '_ga',
-      value: 'GA1.4.499267320.1646491773',
-      domain: '.colab.research.google.com',
-      path: '/',
-      expires: 1709563855,
-      size: 29,
-      httpOnly: false,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    }
-  ]
 
 
 console.log('Service Starting...')
 
-process.argv.slice(2).forEach(function (val, index) {
-    if(index == 0) {
+fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
+    if(!err) {
         try {
             mGmail = getChild(parseInt(val))
             request({
@@ -238,16 +39,22 @@ process.argv.slice(2).forEach(function (val, index) {
                     startBackgroundService()
                 }
             })
-        } catch (e) {}
+        } catch (e) {
+            console.log(e)
+        }
+    } else {
+        console.log(err)
     }
 })
-
 
 async function startBackgroundService() {
     ;(async () => {
         
         console.log(getTime() + 'Service Start...')
         console.log('Status: Start process...' + ' ID: ' + mGmail)
+
+        temp = JSON.parse(fs.readFileSync('./cookies.json'))
+
         temp.forEach(function (value) {
             if (value.name == 'SSID') {
                 value.value = DATA['SSID']
