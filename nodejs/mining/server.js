@@ -1,11 +1,10 @@
-const COLAB_API = require('./colab-api')
 const puppeteer = require('puppeteer')
 const request = require('request')
 const fs = require('fs')
 
-
 const raiyan = 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/'
 
+let url ='https://colab.research.google.com/drive/'
 let colab1 = '1vKu6N9ZfG0H9t8oe1sAkMgoB387cSr1p'
 let colab2 = '1m_GiOpqYSOges7z6ELapMRT5bz6ULPsM'
 let colab3 = '1QJGvYumh900DjBbdPCr9rz8RDT_dfd0g'
@@ -50,6 +49,8 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
 async function startBackgroundService() {
     ;(async () => {
         
+        let mSize = 10
+
         console.log(getTime() + 'Service Start...')
         console.log('Status: Start process...' + ' ID: ' + mGmail)
 
@@ -72,73 +73,159 @@ async function startBackgroundService() {
     
         browser = await puppeteer.launch({
             executablePath : "/usr/lib/chromium-browser/chromium-browser",
+            //headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
     
-        loadColabData(1)
+        let page = (await browser.pages())[0]
+        let map = {}
+        map['page'] = page
+        map['load'] = false
+        map['status'] = 0
+        pages[1] = map
 
-    })()
-}
+        await page.setCookie(...cookies)
 
-function loadColabData(position) {
-    let colab = null
-    if(position == 1 || position == 6) {
-        colab = colab1
-    } else if(position == 2 || position == 7) {
-        colab = colab2
-    } else if(position == 3 || position == 8) {
-        colab = colab3
-    } else if(position == 4 || position == 9) {
-        colab = colab4
-    } else if(position == 5 || position == 10) {
-        colab = colab5
-    }
+        page.goto(url+colab1+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
 
-    if(position <= 10) {
-        new COLAB_API().connect(browser, position, colab, cookies, false, (type, data) => {
-            if(type == 'page') {
-                let map = {}
-                map['page'] = data
-                pages[position] = map
-            } else if(type == 'completed') {
-                pages[position]['time'] = data
-                pages[position]['down'] = false
-
-                ;(async () => {
-                    if(position == 5) {
-                        await delay(1000)
-                        await pageCheckResponce(1)
-                        await pageCheckResponce(2)
-                        await pageCheckResponce(3)
-                        await pageCheckResponce(4)
-                        await pageCheckResponce(5)
-                        await delay(1000)
-                    }
-                    loadColabData(position+1)
-                })()
+        for(let i=2; i<=mSize; i++) {
+            let colab = null
+            if(i == 1 || i == 6) {
+                colab = colab1
+            } else if(i == 2 || i == 7) {
+                colab = colab2
+            } else if(i == 3 || i == 8) {
+                colab = colab3
+            } else if(i == 4 || i == 9) {
+                colab = colab4
+            } else if(i == 5 || i == 10) {
+                colab = colab5
             }
-        })
-    } else {
-        mLoadSuccess = true
-    }
-}
-
-async function pageCheckResponce(position) {
-    let data = pages[position]
-    if(data && data['page']) {
-        await data['page'].bringToFront()
-        await delay(1000)
-
-        if(data['down'] != null && data['down'] == true) {
-            data['down'] = false
-            await data['page'].keyboard.press('ArrowUp')
-        } else if(data['down'] != null && data['down'] == false) {
-            data['down'] = true
-            await data['page'].keyboard.press('ArrowDown')
+            page = await browser.newPage()
+            map = {}
+            map['page'] = page
+            map['load'] = false
+            map['status'] = 0
+            pages[i] = map
+            if(i > 5) {
+                page.goto(url+colab+'?authuser=1', { waitUntil: 'domcontentloaded', timeout: 0 })
+            } else {
+                page.goto(url+colab+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
+            }
         }
-        await delay(1000)
-    }
-    return true
+
+        await delay(5000)
+
+        while(true) {
+            try {
+                let active = false
+                for(let i=1; i<=mSize; i++) {
+                    await delay(500)
+                    if(pages[i]['load'] == false) {
+                        let output = await pages[i]['page'].evaluate(() => {
+                            if(document && document.querySelector('colab-connect-button')) {
+                                return true
+                            } else {
+                                return false
+                            }
+                        })
+                        if(output == false) {
+                            active = true
+                        } else {
+                            console.log('Status: Webside load Success... ID: '+i)
+                            pages[i]['load'] = true
+                        }
+                    }
+                }
+                
+                if(active) {
+                    await delay(1000)
+                } else {
+                    break
+                }
+            } catch (err) {}
+        }
+
+        console.log(getTime() + 'Website Load Success '+mGmail)
+        await delay(5000)
+
+        while(true) {
+            try {
+                let active = false
+                for(let i=1; i<=mSize; i++) {
+                    let page = pages[i]['page']
+                    await page.bringToFront()
+                    await delay(1000)
+                    if(pages[i]['status'] == 0) {
+                        const value = await page.evaluate(() => {
+                            let colab = document.querySelector('colab-connect-button')
+                            if(colab) {
+                                let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
+                                if (display) {
+                                    let ram = display.querySelector('.ram')
+                                    if (ram) {
+                                        let output = ram.shadowRoot.querySelector('.label').innerText
+                                        if(output) {
+                                            return 'RAM'
+                                        }
+                                    }
+                                } else {
+                                    let connect = colab.shadowRoot.querySelector('#connect')
+                                    if (connect) {
+                                        let output = connect.innerText
+                                        if(output == 'Busy') {
+                                            return 'Busy'
+                                        } else if(output == 'Connect') {
+                                            return 'Connect'
+                                        }
+                                    }
+                                }
+                            }
+                            return null
+                        })
+            
+                        if(value && (value == 'Connect' || value == 'RAM' || value == 'Busy')) {
+                            if(value == 'Busy' || value == 'RAM') {
+                                await page.click('#runtime-menu-button')
+                                for (var j = 0; j < 9; j++) {
+                                    await page.keyboard.press('ArrowDown')
+                                }
+                                await delay(420)
+                                await page.keyboard.down('Control')
+                                await page.keyboard.press('Enter')
+                                await page.keyboard.up('Control')
+                                await waitForSelector(page, 'div[class="content-area"]', 10)
+                                await page.keyboard.press('Enter')
+                                await delay(1000)
+                            }
+                            await page.keyboard.down('Control')
+                            await page.keyboard.press('Enter')
+                            await page.keyboard.up('Control')
+                            await waitForSelector(page, 'div[class="content-area"]', 10)
+                            await page.keyboard.press('Tab')
+                            await page.keyboard.press('Enter')
+                            await delay(2000)
+                            console.log('Status: Connected. ID: '+i)
+                            pages[i]['down'] = false
+                            pages[i]['status'] = 1
+                        }
+                        active = true
+                    }
+                }
+                
+                if(active) {
+                    await delay(1000)
+                } else {
+                    break
+                }
+            } catch (err) {}
+        }
+
+        console.log(getTime() + 'Mining Start '+mGmail)
+        await delay(5000)
+
+        mLoadSuccess = true
+    })()
 }
 
 let position = 0
@@ -180,6 +267,15 @@ async function delay(time) {
     return new Promise(function (resolve) {
         setTimeout(resolve, time)
     })
+}
+
+async function waitForSelector(page, command, loop) {
+    for (let i = 0; i < loop; i++) {
+        await delay(500)
+        const value = await page.evaluate((command) => { return document.querySelector(command) }, command)
+        if (value) i = loop
+    }
+    await delay(1000)
 }
 
 function getTime() {
