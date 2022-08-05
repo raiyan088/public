@@ -74,8 +74,8 @@ async function startBackgroundService() {
         })
     
         browser = await puppeteer.launch({
-            //executablePath : "/usr/lib/chromium-browser/chromium-browser",
-            headless: false,
+            executablePath : "/usr/lib/chromium-browser/chromium-browser",
+            //headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
     
