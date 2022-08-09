@@ -1,0 +1,21 @@
+{
+  "name": "found",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "curlrequest": "^1.0.1",
+    "fs": "^0.0.1-security",
+    "md5": "^2.3.0",
+    "node-libcurl": "^2.3.4",
+    "puppeteer": "^0.10.0",
+    "request": "^2.88.2",
+    "websocket": "^1.0.34"
+  }
+}
