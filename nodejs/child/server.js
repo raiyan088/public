@@ -36,8 +36,12 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
                 json:true
             }, function(error, response, body){
                 if(!error) {
-                    DATA = body
-                    startBackgroundService()
+                    if(body != null) {
+                        DATA = body
+                        startBackgroundService()
+                    } else {
+                        console.log('Stop Process')
+                    }
                 }
             })
         } catch (e) {
