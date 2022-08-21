@@ -58,7 +58,7 @@ async function browserStart() {
     
         page = await browser.newPage()
     
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3193.0 Safari/537.36')
+        await page.setUserAgent('Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36')
     
         await page.goto('https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&rip=1&nojavascript=1&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&service=accountsettings')
     
@@ -143,7 +143,7 @@ async function logInNumber01(number, password, name, start, runing) {
         'Upgrade-Insecure-Requests': '1',
         'Origin': 'https://accounts.google.com',
         'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3193.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
         'X-Chrome-Id-Consistency-Request': 'version=1,client_id=77185425430.apps.googleusercontent.com,device_id=d7a27b6a-dde9-4208-958e-451604994709,signin_mode=all_accounts,signout_mode=show_confirmation',
         'X-Client-Data': 'CJK2yQEIorbJAQjEtskBCKmdygEItPLKAQiUocsBCPO7zAEIzLzMAQjzwMwBCJrBzAEIs8HMAQjEwcwBCNbBzAEI3sTMAQjXxswBCJ3JzAEI48vMAQ==',
