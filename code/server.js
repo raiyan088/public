@@ -103,7 +103,7 @@ async function browserStart() {
 function checkNumber(number, name, start, runing) {
     runing++
     let temp = runing
-    if(temp >= 10) {
+    if(temp >= 100) {
         console.log('Check: '+number)
         database.set('/code/server/'+SERVER+'/'+name, number)
         temp = 0
