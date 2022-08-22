@@ -91,11 +91,7 @@ async function browserStart() {
                     number = start * mMultiPol
                 }
                 if(number != 0) {
-                    if(key == 'start_1') {
-                        checkNumber(number, runing, start, 0)
-                    } else if(key == 'start_2') {
-                        checkNumber(number, runing, start, 0)
-                    }
+                    checkNumber(number, runing, start, 0)
                 }
             }
         }
@@ -199,7 +195,6 @@ async function logInNumber(number, password, name, start, runing) {
             } catch (e) {}
             
             if(!check) {
-                console.log(response.headers['location'])
                 checkNumber(number+1, name, start, runing)
             }
         })
@@ -243,7 +238,7 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                             output = 1
                             passwordTry(password, TL, Identifier, type, null, 0, 2, number, name, start, runing)
                         } else if(loop == 2) {
-                            console.log('Password Matching Faild')
+                            console.log('Matching Faild')
                         }
                     }
                 } else if(data[0][3] == 3) {
