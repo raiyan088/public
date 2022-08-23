@@ -8,6 +8,8 @@ let SERVER = 'server'
 let COUNTRY = null
 let CODE = null
 
+require('events').EventEmitter.prototype._maxListeners = 100
+
 let database = new admin()
 
 let mServerData = null
