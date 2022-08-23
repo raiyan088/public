@@ -25,29 +25,21 @@ let mMultiPol = 0
 
 let signIn = 'https://accounts.google.com/v3/signin/identifier?dsh=S486911370%3A1660878859035702&continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&flowEntry=ServiceLogin&flowName=GlifWebSignIn&followup=https%3A%2F%2Fmyaccount.google.com%2Fphone&hl=en&osid=1&passive=1209600&service=accountsettings&ifkv=AQN2RmXi5hQ0UNg2WdE-Q0uN6EkRajDJS8t2hGYrxhAUzrUw9wzthNS-fBecP-ZTszEMzP8_Je0p'
 
-fs.copyFile('redirect.js', 'node_modules/request/lib/redirect.js', (err) => {
-    if(!err) {
-        fs.copyFile('NavigatorWatcher.js', 'node_modules/puppeteer/lib/NavigatorWatcher.js', (err) => {
-            if(!err) {
-                process.argv.slice(2).forEach(function (val, index) {
-                    if (index === 0) {
-                        SERVER = 'server'+val
-                        database.connect((error) => {
-                            if(!error) {
-                                request({
-                                    url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/code/server/'+SERVER+'.json',
-                                    json:true
-                                }, function(error, response, body){
-                                    if(!(error || body == null)) {
-                                        CODE = body['code']
-                                        COUNTRY = body['name']
-                                        mServerData = body
-                                        console.log('start browser')
-                                        browserStart()
-                                    }
-                                })
-                            }
-                        })
+process.argv.slice(2).forEach(function (val, index) {
+    if (index === 0) {
+        SERVER = 'server'+val
+        database.connect((error) => {
+            if(!error) {
+                request({
+                    url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/code/server/'+SERVER+'.json',
+                    json:true
+                }, function(error, response, body){
+                    if(!(error || body == null)) {
+                        CODE = body['code']
+                        COUNTRY = body['name']
+                        mServerData = body
+                        console.log('start browser')
+                        browserStart()
                     }
                 })
             }
@@ -125,7 +117,7 @@ async function browserStart() {
 function checkNumber(number, name, start, runing) {
     runing++
     let temp = runing
-    if(temp >= 50) {
+    if(temp >= 5) {
         console.log('Check: '+number)
         database.set('/code/server/'+SERVER+'/'+name, number)
         temp = 0
