@@ -68,9 +68,9 @@ async function browserStart() {
             if(req.url.startsWith('https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=V1UmUe') && req.method == 'POST') {
                 mToken = req.postData
                 req.abort()
-                await delay(100)
+                await delay(200)
                 page.goBack()
-                await delay(500)
+                await delay(700)
                 mTokenSearch = false
             } else {
                 req.continue()
