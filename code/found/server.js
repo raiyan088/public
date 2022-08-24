@@ -65,9 +65,7 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
                                                 number = start * mMultiPoll
                                             }
                                             if(number != 0) {
-                                                //if(key == 'start_1') {
-                                                    checkNumber(number, runing, start, 0)
-                                                //}
+                                                checkNumber(number, runing, start, 0)
                                             }
                                         }
                                     }
@@ -84,7 +82,7 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
 
 function checkNumber(number, name, start, runing) {
     runing++
-    if(runing >= 10) {
+    if(runing >= 100) {
         console.log('Check: '+number)
         database.set('/code/server/'+SERVER+'/'+name, number)
         runing = 0
@@ -106,8 +104,8 @@ function checkNumber(number, name, start, runing) {
                 if(data[0][1] == 16) {
                     console.log('Found: '+data[0][4])
                     mList[number] = 0
-                    if(Object.keys(mList).length >= 10) {
-                        mSize += 10
+                    if(Object.keys(mList).length >= 50) {
+                        mSize += 50
                         database.update('/code/gmail/found/'+COUNTRY+'/'+mName, mList)
                         if(mSize >= 1000) {
                             mSize = 0
