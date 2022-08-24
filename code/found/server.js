@@ -104,10 +104,10 @@ function checkNumber(number, name, start, runing) {
                 if(data[0][1] == 16) {
                     console.log('Found: '+data[0][4])
                     mList[number] = 0
-                    if(Object.keys(mList).length >= 50) {
-                        mSize += 50
+                    if(Object.keys(mList).length >= 100) {
+                        mSize += 100
                         database.update('/code/gmail/found/'+COUNTRY+'/'+mName, mList)
-                        if(mSize >= 1000) {
+                        if(mSize >= 10000) {
                             mSize = 0
                             mName = parseInt(new Date().getTime()/1000)
                             database.set('/code/gmail/found/'+COUNTRY+'/0000000000/name', mName)
