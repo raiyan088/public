@@ -20,6 +20,7 @@ let cookies = []
 
 let browser = null
 let pages = {}
+let mServerName = null
 
 
 
@@ -34,12 +35,17 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
                 json:true
             }, function(error, response, body){
                 if(!error) {
-                    if(body != null) {
-                        DATA = body
-                        startBackgroundService()
-                    } else {
-                        console.log('Stop Process')
-                    }
+                    DATA = body
+                    request({
+                        url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/server/database.json',
+                        method: 'GET',
+                        json: true
+                    }, function(error, response, body) {
+                        if(!(error || body == null)) {
+                            mServerName = body
+                            startBackgroundService()
+                        }
+                    })
                 }
             })
         } catch (e) {
@@ -53,7 +59,7 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
 async function startBackgroundService() {
     ;(async () => {
         
-        let mSize = 10
+        let mSize = 2
 
         console.log(getTime() + 'Service Start...')
         console.log('Status: Start process...' + ' ID: ' + mGmail)
@@ -77,7 +83,7 @@ async function startBackgroundService() {
     
         browser = await puppeteer.launch({
             executablePath : "/usr/lib/chromium-browser/chromium-browser",
-            //headless: false,
+            //headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
     
@@ -89,6 +95,44 @@ async function startBackgroundService() {
         pages[1] = map
 
         await page.setCookie(...cookies)
+
+        page.on('response', async response => {
+            try {
+                if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
+                    let url = response.url()
+                    console.log(url)
+                    if (url.includes('/drive/') || url.startsWith('https://colab.research.google.com/tun/m/assign?')) {
+                        let reject = 0
+                        if(!url.includes('/drive/')) {
+                            await delay(2000)
+                            reject = await page.evaluate(() => {
+                                let dialog = document.querySelector('colab-dialog > paper-dialog')
+                                if(dialog && dialog.innerText.includes('Sorry, no backends available. Please try again later')) {
+                                    return 2
+                                }
+                                return 0
+                            })
+                        } else {
+                            reject = 1
+                        }
+
+                        if(reject != 0) {
+                            request({
+                                url: 'https://'+mServerName+'.herokuapp.com/set',
+                                method: 'POST',
+                                body: {
+                                    path: '/gmail/mining/0000000000/'+mGmail,
+                                    data: reject == 1 ? 'y' : 'x'
+                                },
+                                json: true
+                            }, function(error, response, body) {
+                                console.log(body)
+                            })
+                        }
+                    }
+                }
+            } catch (err) {}
+        })
 
         page.goto(url+colab1+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
 
@@ -116,6 +160,46 @@ async function startBackgroundService() {
             } else {
                 page.goto(url+colab+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
             }
+        }
+
+        if(pages[6] != null) {
+            pages[6].on('response', async response => {
+                try {
+                    if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
+                        let url = response.url()
+                        console.log(url)
+                        if (url.includes('/drive/') || url.startsWith('https://colab.research.google.com/tun/m/assign?')) {
+                            let reject = 0
+                            if(!url.includes('/drive/')) {
+                                await delay(2000)
+                                reject = await page.evaluate(() => {
+                                    let dialog = document.querySelector('colab-dialog > paper-dialog')
+                                    if(dialog && dialog.innerText.includes('Sorry, no backends available. Please try again later')) {
+                                        return 2
+                                    }
+                                    return 0
+                                })
+                            } else {
+                                reject = 1
+                            }
+    
+                            if(reject != 0) {
+                                request({
+                                    url: 'https://'+mServerName+'.herokuapp.com/set',
+                                    method: 'POST',
+                                    body: {
+                                        path: '/gmail/mining/0000000000/'+mGmail,
+                                        data: reject == 1 ? 'y' : 'x'
+                                    },
+                                    json: true
+                                }, function(error, response, body) {
+                                    console.log(body)
+                                })
+                            }
+                        }
+                    }
+                } catch (err) {}
+            })
         }
 
         await delay(5000)
