@@ -72,7 +72,8 @@ async function browserStart() {
 
         await page.goto(signIn)
         
-    
+        await delay(1000)
+
         let cookie = await page.cookies()
 
         cookie.forEach(function (value) {
@@ -83,7 +84,8 @@ async function browserStart() {
 
         if(mHostGPS == null) mHostGPS = '1:bJ6IzDkUblOirycmWnLX29tiwNVKNg:EO4prJJbfARXxVTU'
         
-       logInNumber(mServerData[mNumber])
+
+        logInNumber(mServerData[mNumber])
 
     })()
 }
@@ -135,7 +137,7 @@ async function logInNumber(number) {
                                     console.log('Reload Page')
                                     mReloadPage = true
                                     await page.goto(signIn)
-                                    await delay(100)
+                                    await delay(1000)
                                     mReloadPage = false
                                     mNumber++
                                     console.log(mNumber, mReject, mCaptcha)
@@ -196,19 +198,13 @@ async function getIdentifierToken(number) {
             let root = document.querySelector('#Email')
             if(root) {
                 root.value = number
-                try {
-                    return document.bg.low(function(response) {
-                        return response
-                    })
-                } catch (err) {
-                    root.value = ''
-                }
+                return true
             }
-            return null
+            return false
         }, number)
 
         if(check) {
-            await page.evaluate(async () => {
+            return await page.evaluate(async () => {
                 let root = document.querySelector('#Email')
                 if(root) {
                     try {
