@@ -22,7 +22,7 @@ let mToken = null
 
 let mTimeToken = null
 let mMultiPol = 0
-let mNumber = 3724
+let mNumber = 0
 let mCaptcha = 0
 let mReject = 0
 
@@ -85,8 +85,16 @@ async function browserStart() {
         if(mHostGPS == null) mHostGPS = '1:bJ6IzDkUblOirycmWnLX29tiwNVKNg:EO4prJJbfARXxVTU'
         
 
-        logInNumber(mServerData[mNumber])
-
+        logInNumber(100)
+        logInNumber(1100)
+        logInNumber(2100)
+        logInNumber(3100)
+        logInNumber(4100)
+        logInNumber(5100)
+        logInNumber(6100)
+        logInNumber(7100)
+        logInNumber(8100)
+        logInNumber(9100)
     })()
 }
 
@@ -94,7 +102,7 @@ async function browserStart() {
 async function logInNumber(number) {
     ;(async () => {
         if(!mReloadPage) {
-            let Identifier = await getIdentifierData(CODE+number)
+            let Identifier = await getIdentifierData(CODE+mServerData[number])
             
             let headers = {
                 'Host': 'accounts.google.com',
@@ -123,7 +131,7 @@ async function logInNumber(number) {
                 url: 'https://accounts.google.com/signin/v1/lookup',
                 method: 'POST',
                 headers: headers,
-                body: getNumberData(CODE+number, Identifier)
+                body: getNumberData(CODE+mServerData[number], Identifier)
             }, function(error, responce, body) {
                 let next = true
                 try {
@@ -141,15 +149,20 @@ async function logInNumber(number) {
                                     mReloadPage = false
                                     //mNumber++
                                     console.log(mNumber, mReject, mCaptcha)
-                                    logInNumber(mServerData[mNumber])
+                                    logInNumber(number)
                                 })()
                             } else {
                                 let index = url.indexOf('TL=')
                                 if(index != -1) {
                                     let tl = url.substring(index+3, url.length).split('&')[0]
                                     console.log(tl)
+                                } else {
+                                    console.log(url)
+                                    mReject++
                                 }
                             }
+                        } else {
+                            mReject++
                         }
                     }
                 } catch (e) {}
@@ -157,7 +170,7 @@ async function logInNumber(number) {
                 if(next) {
                     mNumber++
                     console.log(mNumber, mReject, mCaptcha)
-                    logInNumber(mServerData[mNumber])
+                    logInNumber(number+1)
                 }
             })
         } else {
