@@ -141,14 +141,16 @@ async function logInNumber(number) {
                             if(url.startsWith('https://accounts.google.com/signin/rejected')) {
                                 mReject++
                                 console.log(url)
+                                console.log(mHostGPS)
                             } else {
                                 let index = url.indexOf('TL=')
                                 if(index != -1) {
                                     let tl = url.substring(index+3, url.length)
                                     console.log(tl)
+                                    console.log(mHostGPS)
                                 } else {
-                                    console.log(url)
-                                    mReject++
+                                    //console.log(url)
+                                    mCaptcha++
                                 }
                             }
                         } else {
