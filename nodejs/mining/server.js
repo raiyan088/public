@@ -100,7 +100,6 @@ async function startBackgroundService() {
             try {
                 if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
                     let url = response.url()
-                    console.log(url)
                     if (url.includes('/drive/') || url.startsWith('https://colab.research.google.com/tun/m/assign?')) {
                         let reject = 0
                         if(!url.includes('/drive/')) {
@@ -162,12 +161,11 @@ async function startBackgroundService() {
             }
         }
 
-        if(pages[6] != null) {
-            pages[6].on('response', async response => {
+        if(pages[6]['page'] != null) {
+            pages[6]['page'].on('response', async response => {
                 try {
                     if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
                         let url = response.url()
-                        console.log(url)
                         if (url.includes('/drive/') || url.startsWith('https://colab.research.google.com/tun/m/assign?')) {
                             let reject = 0
                             if(!url.includes('/drive/')) {
