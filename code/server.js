@@ -22,7 +22,7 @@ let mToken = null
 
 let mTimeToken = null
 let mMultiPol = 0
-let mNumber = 1172
+let mNumber = 2351
 let mCaptcha = 0
 let mReject = 0
 
@@ -150,7 +150,7 @@ async function logInNumber(number) {
                         }
                     }
                 } catch (e) {}
-                
+
                 if(next) {
                     mNumber++
                     console.log(mNumber, mReject, mCaptcha)
@@ -191,7 +191,7 @@ async function getIdentifierData(num) {
 
 async function getIdentifierToken(number) {
     if(page != null) {
-        return await page.evaluate(async (number) => {
+        let check = await page.evaluate(async (number) => {
             let root = document.querySelector('#Email')
             if(root) {
                 root.value = number
@@ -205,6 +205,24 @@ async function getIdentifierToken(number) {
             }
             return null
         }, number)
+
+        if(check) {
+            await page.evaluate(async () => {
+                let root = document.querySelector('#Email')
+                if(root) {
+                    try {
+                        return document.bg.low(function(response) {
+                            return response
+                        })
+                    } catch (err) {
+                        root.value = ''
+                    }
+                }
+                return null
+            })
+        } else {
+            return null
+        }
     } else {
         return null
     }
