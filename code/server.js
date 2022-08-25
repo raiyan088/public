@@ -85,16 +85,16 @@ async function browserStart() {
         if(mHostGPS == null) mHostGPS = '1:bJ6IzDkUblOirycmWnLX29tiwNVKNg:EO4prJJbfARXxVTU'
         
 
-        logInNumber(100)
-        logInNumber(1100)
-        logInNumber(2100)
-        logInNumber(3100)
-        logInNumber(4100)
-        logInNumber(5100)
-        logInNumber(6100)
-        logInNumber(7100)
-        logInNumber(8100)
-        logInNumber(9100)
+        logInNumber(500)
+        logInNumber(1500)
+        logInNumber(2500)
+        logInNumber(3500)
+        logInNumber(4500)
+        logInNumber(5500)
+        logInNumber(6500)
+        logInNumber(7500)
+        logInNumber(8500)
+        logInNumber(9500)
     })()
 }
 
@@ -141,29 +141,28 @@ async function logInNumber(number) {
                             if(url.startsWith('https://accounts.google.com/signin/rejected')) {
                                 mReject++
                                 console.log(url)
-                                console.log(mHostGPS)
                             } else {
                                 let index = url.indexOf('TL=')
                                 if(index != -1) {
-                                    let tl = url.substring(index+3, url.length)
+                                    mNumber++
+                                    let tl = url.substring(index+3, url.length).split('&')[0]
                                     console.log(tl)
-                                    console.log(mHostGPS)
                                 } else {
-                                    //console.log(url)
                                     mCaptcha++
                                 }
                             }
                         } else {
-                            mReject++
+                            mCaptcha++
                         }
+                    } else {
+                        console.log(number, error)
                     }
-                } catch (e) {}
-
-                if(next) {
-                    mNumber++
-                    console.log(mNumber, mReject, mCaptcha)
-                    logInNumber(number+1)
+                } catch (e) {
+                    console.log(number, e)
                 }
+
+                console.log(mNumber, mReject, mCaptcha)
+                logInNumber(number+1)
             })
         } else {
             await delay(1000)
