@@ -59,7 +59,7 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
 async function startBackgroundService() {
     ;(async () => {
         
-        let mSize = 2
+        let mSize = 10
 
         console.log(getTime() + 'Service Start...')
         console.log('Status: Start process...' + ' ID: ' + mGmail)
