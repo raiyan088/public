@@ -22,7 +22,7 @@ let mToken = null
 
 let mTimeToken = null
 let mMultiPol = 0
-let mNumber = 2351
+let mNumber = 3724
 let mCaptcha = 0
 let mReject = 0
 
@@ -139,7 +139,7 @@ async function logInNumber(number) {
                                     await page.goto(signIn)
                                     await delay(1000)
                                     mReloadPage = false
-                                    mNumber++
+                                    //mNumber++
                                     console.log(mNumber, mReject, mCaptcha)
                                     logInNumber(mServerData[mNumber])
                                 })()
