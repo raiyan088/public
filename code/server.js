@@ -139,18 +139,8 @@ async function logInNumber(number) {
                         let url = responce.headers['location']
                         if(url != null) {
                             if(url.startsWith('https://accounts.google.com/signin/rejected')) {
-                                next = false
-                                ;(async () => {
-                                    mReject++
-                                    console.log('Reload Page')
-                                    mReloadPage = true
-                                    await page.goto(signIn)
-                                    await delay(1000)
-                                    mReloadPage = false
-                                    //mNumber++
-                                    console.log(mNumber, mReject, mCaptcha)
-                                    logInNumber(number)
-                                })()
+                                mReject++
+                                console.log(url)
                             } else {
                                 let index = url.indexOf('TL=')
                                 if(index != -1) {
