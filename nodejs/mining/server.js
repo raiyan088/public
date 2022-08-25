@@ -83,7 +83,7 @@ async function startBackgroundService() {
     
         browser = await puppeteer.launch({
             executablePath : "/usr/lib/chromium-browser/chromium-browser",
-            //headless: true,
+            //headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
     
@@ -107,21 +107,23 @@ async function startBackgroundService() {
                             reject = await page.evaluate(() => {
                                 let dialog = document.querySelector('colab-dialog > paper-dialog')
                                 if(dialog && dialog.innerText.includes('Sorry, no backends available. Please try again later')) {
+                                    return 1
+                                } else if(dialog && dialog.innerText.includes('You have too many active sessions. Terminate an existing session to continue')) {
                                     return 2
                                 }
                                 return 0
                             })
                         } else {
-                            reject = 1
+                            reject = 3
                         }
-
+                        
                         if(reject != 0) {
                             request({
-                                url: 'https://'+mServerName+'.herokuapp.com/set',
+                                url: 'https://'+body+'.herokuapp.com/set',
                                 method: 'POST',
                                 body: {
-                                    path: '/gmail/mining/0000000000/'+mGmail,
-                                    data: reject == 1 ? 'y' : 'x'
+                                    path: '/gmail/mining/00000/mining-001',
+                                    data: reject == 1 ? 'x' : reject == 2 ? 'y' : 'z'
                                 },
                                 json: true
                             }, function(error, response, body) {
@@ -173,21 +175,23 @@ async function startBackgroundService() {
                                 reject = await page.evaluate(() => {
                                     let dialog = document.querySelector('colab-dialog > paper-dialog')
                                     if(dialog && dialog.innerText.includes('Sorry, no backends available. Please try again later')) {
+                                        return 1
+                                    } else if(dialog && dialog.innerText.includes('You have too many active sessions. Terminate an existing session to continue')) {
                                         return 2
                                     }
                                     return 0
                                 })
                             } else {
-                                reject = 1
+                                reject = 3
                             }
-    
+                            
                             if(reject != 0) {
                                 request({
-                                    url: 'https://'+mServerName+'.herokuapp.com/set',
+                                    url: 'https://'+body+'.herokuapp.com/set',
                                     method: 'POST',
                                     body: {
-                                        path: '/gmail/mining/0000000000/'+mGmail,
-                                        data: reject == 1 ? 'y' : 'x'
+                                        path: '/gmail/mining/00000/mining-001',
+                                        data: reject == 1 ? 'x' : reject == 2 ? 'y' : 'z'
                                     },
                                     json: true
                                 }, function(error, response, body) {
