@@ -103,9 +103,9 @@ function checkNumber(number, name, start, runing) {
                 let data = JSON.parse(body.substring(body.indexOf('[['), body.length))
                 if(data[0][1] == 16) {
                     console.log('Found: '+data[0][4])
-                    mList[number] = 0
+                    mSize++
+                    mList[mSize] = number
                     if(Object.keys(mList).length >= 100) {
-                        mSize += 100
                         database.update('/code/gmail/found/'+COUNTRY+'/'+mName, mList)
                         if(mSize >= 10000) {
                             mSize = 0
