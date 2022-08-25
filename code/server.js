@@ -144,7 +144,7 @@ async function logInNumber(number) {
                             } else {
                                 let index = url.indexOf('TL=')
                                 if(index != -1) {
-                                    let tl = url.substring(index+3, url.length).split('&')[0]
+                                    let tl = url.substring(index+3, url.length)
                                     console.log(tl)
                                 } else {
                                     console.log(url)
