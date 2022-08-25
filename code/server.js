@@ -135,6 +135,7 @@ async function logInNumber(number) {
                                     console.log('Reload Page')
                                     mReloadPage = true
                                     await page.goto(signIn)
+                                    await delay(100)
                                     mReloadPage = false
                                     mNumber++
                                     console.log(mNumber, mReject, mCaptcha)
