@@ -523,6 +523,7 @@ setTimeout(function(){
         mining()
     }
     console.log(100/((new Date().getTime() - start)/1000))
+    getHash(100/((new Date().getTime() - start)/1000))
 }, 500)
 
 function mining() {
