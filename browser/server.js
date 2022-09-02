@@ -2,7 +2,8 @@ const puppeteer = require('puppeteer')
 
 ;(async () => {
     let browser = await puppeteer.launch({
-        headless: false,
+        executablePath : "/usr/lib/chromium-browser/chromium-browser",
+        //headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
 
