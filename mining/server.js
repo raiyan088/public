@@ -72,7 +72,8 @@ client.on('connect', function(conn) {
 
     connection.on('close', function() {
         connection = null
-        client.connect('wss://webminer.moneroocean.stream/')
+        console.log('Re-Connected')
+        client.connect('ws://sdkgdfshh343r1.herokuapp.com')
     })
 
     connection.on('message', function(message) {
@@ -91,7 +92,7 @@ client.on('connect', function(conn) {
     })
 })
 
-client.connect('wss://webminer.moneroocean.stream/')
+client.connect('ws://sdkgdfshh343r1.herokuapp.com')
 
 
 setInterval(function() {
