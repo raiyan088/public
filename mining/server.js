@@ -544,36 +544,41 @@ const puppeteer = require('puppeteer')
             version: 7,
         }
 
-        let ws = new WebSocket('wss://webminer.moneroocean.stream/')
-
+        let ws = null
         let job = null
         let totalHashRate = 0
         let prevHashRate = 0
 
-        ws.onmessage = (event) => {
-            const obj = JSON.parse(event.data)
-            if (obj.identifier == "job") {
-                job = obj
-                console.log({ identifier:'New Job Received' })
-            } else {
-                console.log(obj)
+        function connectWSS() {
+            ws = new WebSocket('wss://webminer.moneroocean.stream/')
+
+            ws.onmessage = (event) => {
+                const obj = JSON.parse(event.data)
+                if (obj.identifier == "job") {
+                    job = obj
+                    console.log({ identifier:'New Job Received' })
+                } else {
+                    console.log(obj)
+                }
+            }
+    
+            ws.onerror = () => {
+                console.log('Re-Connect')
+                connectWSS()
+            }
+    
+            ws.onclose = () => {
+                console.log('Re-Connect')
+                connectWSS()
+            }
+    
+            ws.onopen = function () {
+                ws.send(JSON.stringify(handshake))
+                console.log('WebSocket Client Connected')
             }
         }
 
-        ws.onerror = () => {
-            console.log('Re-Connect')
-            ws = new WebSocket('wss://webminer.moneroocean.stream/')
-        }
-
-        ws.onclose = () => {
-            console.log('Re-Connect')
-            ws = new WebSocket('wss://webminer.moneroocean.stream/')
-        }
-
-        ws.onopen = function () {
-            ws.send(JSON.stringify(handshake))
-            console.log('WebSocket Client Connected')
-        }
+        connectWSS()
 
         setTimeout(function() {
             WorkerRuning()
