@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer')
 ;(async () => {
     let browser = await puppeteer.launch({
         executablePath : "/usr/lib/chromium-browser/chromium-browser",
-        //headless: false,
+        //headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
 
@@ -564,12 +564,9 @@ const puppeteer = require('puppeteer')
     
             ws.onerror = () => {
                 console.log('Re-Connect')
-                connectWSS()
-            }
-    
-            ws.onclose = () => {
-                console.log('Re-Connect')
-                connectWSS()
+                setTimeout(function() {
+                    connectWSS()
+                }, 1000)
             }
     
             ws.onopen = function () {
