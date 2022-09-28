@@ -1,13 +1,6 @@
 const { Worker, MessageChannel, isMainThread, setEnvironmentData, getEnvironmentData } = require('worker_threads')
 const WebSocketClient = require('websocket').client
 const { port1 } = new MessageChannel()
-const express = require('express')
-
-const app = express()
-
-app.listen(process.env.PORT || 3000, () => {
-    console.log('Listening on port 3000 ...')
-})
 
 let client = new WebSocketClient()
 
@@ -108,9 +101,3 @@ setInterval(function() {
         prevHashRate = totalHashRate
     }
 }, 20000)
-
-app.get('/', async function(req, res) {
-    res.writeHeader(200, {"Content-Type": "text/html"})
-    res.write('Total Hash: '+totalHashRate)
-    res.end()
-})
