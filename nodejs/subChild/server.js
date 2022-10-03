@@ -47,6 +47,8 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
                             if(!(error || body == null)) {
                                 mServerName = body
                                 startBackgroundService()
+                            } else {
+                                console.log('Stop Process')
                             }
                         })
                     } else {
