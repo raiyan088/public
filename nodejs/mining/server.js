@@ -67,16 +67,16 @@ async function startBackgroundService() {
         temp = JSON.parse(fs.readFileSync('./cookies.json'))
 
         temp.forEach(function (value) {
-            if (value.name == 'SSID') {
-                value.value = DATA['SSID']
+           if (value.name == 'SSID') {
+                value.value = 'Ap8F_DZxdAVEkElZe'
             } else if (value.name == 'SAPISID') {
-                value.value = DATA['SAPISID']
+                value.value = 'KiqXzI2l-TTWUkE5/APrAwryF5UcTZrQIs'
             } else if (value.name == 'SID') {
-                value.value = DATA['SID']
+                value.value = 'OQj7AXQykVHMSg6_RRMlfxOKMRwsWxI3GP5dC8FvTZ6ia4fcKe4zKftvL_fJuJWoewJOIA.'
             } else if (value.name == '__Secure-1PSID') {
-                value.value = DATA['1PSID']
+                value.value = 'OQj7AXQykVHMSg6_RRMlfxOKMRwsWxI3GP5dC8FvTZ6ia4fcOBvbzRFYpJkyugWL5RaY6w.'
             } else if (value.name == 'HSID') {
-                value.value = DATA['HSID']
+                value.value = 'ATMnfDB6yXrj8G2tL'
             }
             cookies.push(value)
         })
