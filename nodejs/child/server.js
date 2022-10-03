@@ -35,13 +35,11 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
                 url: raiyan+'gmail/child/'+mGmail+'.json',
                 json:true
             }, function(error, response, body){
-                if(!error) {
-                    if(body != null) {
-                        DATA = body
-                        startBackgroundService()
-                    } else {
-                        console.log('Stop Process')
-                    }
+                if(!error && body != null) {
+                    DATA = body
+                    startBackgroundService()
+                } else {
+                    console.log('Stop Process')
                 }
             })
         } catch (e) {
