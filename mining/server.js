@@ -562,7 +562,7 @@ const puppeteer = require('puppeteer')
                 }
             }
     
-            ws.onerror = () => {
+            ws.onclose = () => {
                 console.log('Re-Connect')
                 setTimeout(function() {
                     connectWSS()
