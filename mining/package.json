@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "nude",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -7,17 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
-  "keywords": [],
   "author": "",
   "license": "ISC",
-  "engines": {
-    "node": "^14"
-  },
   "dependencies": {
-    "chrome-aws-lambda": "^6",
-    "express": "^4.17.2",
-    "puppeteer": "^12.0.1",
-    "puppeteer-core": "^6.0.0",
-    "request": "^2.88.2"
+    "puppeteer": "^12.0.1"
   }
 }
