@@ -19,7 +19,8 @@ let cookies = [
 
 ;(async () => {
     let browser = await puppeteer.launch({
-        headless: true,
+        executablePath : "/usr/lib/chromium-browser/chromium-browser",
+        //headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
 
