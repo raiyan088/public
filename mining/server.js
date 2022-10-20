@@ -8,7 +8,7 @@ let client = new WebSocketClient()
 let WSS = 'wss://proxy-server-088.onrender.com/'
 
 let connection = null
-let mThread = 8
+let mThread = 2
 
 let mJob = null
 let totalHashRate = 0
