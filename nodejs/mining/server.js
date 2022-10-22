@@ -25,27 +25,20 @@ let pages = {}
 
 console.log('Service Starting...')
 
-fs.readFile('./size.json', {encoding: 'utf-8'}, function(err,data){
-    if(!err) {
-        try {
-            let json = JSON.parse(data)
-            mGmail = getChild(parseInt(json['size']))
-            request({
-                url: raiyan+'gmail/mining/'+mGmail+'.json',
-                json:true
-            }, function(error, response, body){
-                if(!(error || body == null)) {
-                    DATA = body
-                    startBackgroundService()
-                }
-            })
-        } catch (e) {
-            console.log(e)
+try {
+    mGmail = getChild(1)
+    request({
+        url: raiyan+'gmail/mining/'+mGmail+'.json',
+        json:true
+    }, function(error, response, body){
+        if(!(error || body == null)) {
+            DATA = body
+            startBackgroundService()
         }
-    } else {
-        console.log(err)
-    }
-})
+    })
+} catch (e) {
+    console.log(e)
+}
 
 async function startBackgroundService() {
     ;(async () => {
