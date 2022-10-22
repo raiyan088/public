@@ -82,20 +82,7 @@ async function startBackgroundService() {
 
         page.goto(url+'?authuser=0')
 
-        for(let i=2; i<=mSize; i++) {
-            
-            page = await browser.newPage()
-            map = {}
-            map['page'] = page
-            map['load'] = false
-            map['status'] = 0
-            pages[i] = map
-            if(i > 5) {
-                page.goto(url+'?authuser=1', { waitUntil: 'domcontentloaded', timeout: 0 })
-            } else {
-                page.goto(url+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
-            }
-        }
+        
 
         
         console.log(getTime() + 'Website Load Success '+mGmail)
