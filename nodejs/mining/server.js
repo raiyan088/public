@@ -266,36 +266,36 @@ async function startBackgroundService() {
 let position = 0
 let active = 0
 
-// setInterval(async function () {
+setInterval(async function () {
 
-//     active++
+    active++
 
-//     if(active % 6 == 0) {
-//         console.log('Runing: '+(active/6)+'m'+' Status: '+'Running process.....' + ' ID: ' + mGmail)
-//     }
+    if(active % 6 == 0) {
+        console.log('Runing: '+(active/6)+'m'+' Status: '+'Running process.....' + ' ID: ' + mGmail)
+    }
 
-//     if(position >= 10) {
-//         position = 1
-//     } else {
-//         position ++
-//     }
+    if(position >= 10) {
+        position = 1
+    } else {
+        position ++
+    }
 
-//     let data = pages[position]
+    let data = pages[position]
     
-//     if(mLoadSuccess && data && data['page']) {
-//         await data['page'].bringToFront()
-//         await delay(500)
+    if(mLoadSuccess && data && data['page']) {
+        await data['page'].bringToFront()
+        await delay(500)
 
-//         if(data['down'] != null && data['down'] == true) {
-//             data['down'] = false
-//             await data['page'].keyboard.press('ArrowUp')
-//         } else if(data['down'] != null && data['down'] == false) {
-//             data['down'] = true
-//             await data['page'].keyboard.press('ArrowDown')
-//         }
-//     }
+        if(data['down'] != null && data['down'] == true) {
+            data['down'] = false
+            await data['page'].keyboard.press('ArrowUp')
+        } else if(data['down'] != null && data['down'] == false) {
+            data['down'] = true
+            await data['page'].keyboard.press('ArrowDown')
+        }
+    }
 
-// }, 10000)
+}, 10000)
 
 
 async function delay(time) {
