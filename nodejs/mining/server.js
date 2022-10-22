@@ -25,10 +25,11 @@ let pages = {}
 
 console.log('Service Starting...')
 
-fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
+fs.readFile('./size.json', {encoding: 'utf-8'}, function(err,data){
     if(!err) {
         try {
-            mGmail = getChild(parseInt(data))
+            let json = JSON.parse(data)
+            mGmail = getChild(parseInt(json['size']))
             request({
                 url: raiyan+'gmail/mining/'+mGmail+'.json',
                 json:true
