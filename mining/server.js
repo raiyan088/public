@@ -1,106 +1,54 @@
-const { Worker, MessageChannel, isMainThread, setEnvironmentData, getEnvironmentData } = require('worker_threads')
-const WebSocketClient = require('websocket').client
-const { port1 } = new MessageChannel()
+const puppeteer = require("puppeteer")
 
-let client = new WebSocketClient()
+let cookies = [
+    {
+      name: 'MoneroOceanAddr',
+      value: '429EPxt6GmMGvfmpiXFdyvKrjFGGtr6pee91j7o6r5V4DzStvcRnH3m5pdd6mwxNENU5GpsDPUgpfewUiCr4TZfV6K3GgKw',    
+      domain: 'moneroocean.stream',
+      path: '/',
+      expires: 1697815663,
+      size: 315,
+      httpOnly: false,
+      secure: false,
+      session: false,
+      sameParty: false,
+      sourceScheme: 'Secure',
+      sourcePort: 443
+    }
+  ]
 
-//let WSS = ''wss://webminer.moneroocean.stream/''
-let WSS = 'wss://proxy-server-088.onrender.com/'
-
-let connection = null
-let mThread = 2
-
-let mJob = null
-let totalHashRate = 0
-let prevHashRate = 0
-
-let workers = []
-
-console.log('Thread Size: '+mThread)
-
-let handshake = {
-    identifier: "handshake",
-    login: "429EPxt6GmMGvfmpiXFdyvKrjFGGtr6pee91j7o6r5V4DzStvcRnH3m5pdd6mwxNENU5GpsDPUgpfewUiCr4TZfV6K3GgKw",
-    password: "raiyan",
-    pool: "moneroocean.stream",
-    userid: "",
-    version: 7,
-};
-
-
-const addWorker = async () => {
-    return new Promise((resolve, reject) => {
-        const worker = new Worker("./worker.js", {})
-        worker.on('message', onMessage)
-        worker.postMessage({ status:'user', id: workers.length })
-        workers.push({ worker: worker, active: false })
+;(async () => {
+    let browser = await puppeteer.launch({
+        executablePath : "/usr/lib/chromium-browser/chromium-browser",
+        //headless: false,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
-}
 
-const onMessage = function(message) {
-    if(message['status'] == 'solved') {
-        totalHashRate++
-        workers[message['id']]['active'] = false
-        if(connection != null) {
-            connection.send(message['job'])
-            workers[message['id']]['worker'].postMessage({ status: 'job', job: mJob})
+    let page = await browser.newPage()
+
+    await page.setCookie(...cookies)
+
+    page.on('console', async (msg) => {
+        const msgArgs = msg.args()
+        for (let i = 0; i < msgArgs.length; ++i) {
+          console.log(await msgArgs[i].jsonValue())
         }
-    } else if(message['status'] == 'nothing') {
-        totalHashRate++
-        workers[message['id']]['worker'].postMessage({ status: 'job', job: mJob})
-    }
+    })
+
+    console.log('Page Load Start')
+
+    await page.goto('https://moneroocean.stream/')
+
+    console.log('Page Load Success')
+
+    await delay(3000)
+
+    await page.evaluate(() => WebMiner())
+    console.log('Mining Start')
+})()
+
+function delay(time) {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, time)
+    })
 }
-
-for (let i=0; i<mThread; i++) {
-    addWorker().catch(error => {})
-}
-
-client.on('connectFailed', function(error) {
-    console.log('Connect Error: ' + error.toString())
-})
-
-
-client.on('connect', function(conn) {
-
-    connection = conn
-
-    console.log('WebSocket Client Connected')
-
-    connection.send(JSON.stringify(handshake))
-
-    connection.on('error', function(error) {
-        connection = null
-        console.log("Connection Error: " + error.toString())
-    })
-
-    connection.on('close', function() {
-        connection = null
-        console.log('Re-Connect')
-        client.connect(WSS)
-    })
-
-    connection.on('message', function(message) {
-        try {
-            let data = JSON.parse(message.utf8Data)
-            if(data['identifier'] == 'job') {
-                mJob = data
-                console.log('New Job Received.')
-                for(let i=0; i<workers.length; i++) {
-                    workers[i]['worker'].postMessage({ status: 'job', job: mJob})
-                }
-            } else if(data['identifier'] == 'hashsolved') {
-                console.log(data)
-            }
-        } catch (e) {}
-    })
-})
-
-client.connect(WSS)
-
-
-setInterval(function() {
-    if(mJob) {
-        console.log(((totalHashRate - prevHashRate) /20)+' H/S')
-        prevHashRate = totalHashRate
-    }
-}, 20000)
