@@ -268,7 +268,7 @@ async function startBackgroundService() {
 
         mLoadSuccess = true
 
-        process.exit(2)
+        process.exit(0)
     })()
 }
 
