@@ -4,7 +4,7 @@ const fs = require('fs')
 
 const raiyan = 'https://database088-default-rtdb.firebaseio.com/raiyan088/'
 
-let url ='https://google.com/'
+let url ='https://mybinder.org/'
 let colab1 = '1vKu6N9ZfG0H9t8oe1sAkMgoB387cSr1p'
 let colab2 = '1m_GiOpqYSOges7z6ELapMRT5bz6ULPsM'
 let colab3 = '1QJGvYumh900DjBbdPCr9rz8RDT_dfd0g'
