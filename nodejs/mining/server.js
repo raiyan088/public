@@ -20,7 +20,6 @@ let cookies = []
 
 let browser = null
 let pages = {}
-let mServerName = null
 
 
 
@@ -34,20 +33,9 @@ fs.readFile('./id.txt', {encoding: 'utf-8'}, function(err,data){
                 url: raiyan+'gmail/mining/'+mGmail+'.json',
                 json:true
             }, function(error, response, body){
-                if(!error) {
+                if(!(error || body == null)) {
                     DATA = body
-                    request({
-                        url: 'https://raiyan-088-default-rtdb.firebaseio.com/raiyan/server/database.json',
-                        method: 'GET',
-                        json: true
-                    }, function(error, response, body) {
-                        if(!(error || body == null)) {
-                            mServerName = body
-                            startBackgroundService()
-                        } else {
-                            console.log('Stop Process')
-                        }
-                    })
+                    startBackgroundService()
                 }
             })
         } catch (e) {
@@ -69,16 +57,16 @@ async function startBackgroundService() {
         temp = JSON.parse(fs.readFileSync('./cookies.json'))
 
         temp.forEach(function (value) {
-           if (value.name == 'SSID') {
-                value.value = 'Ap8F_DZxdAVEkElZe'
+            if (value.name == 'SSID') {
+                value.value = DATA['SSID']
             } else if (value.name == 'SAPISID') {
-                value.value = 'KiqXzI2l-TTWUkE5/APrAwryF5UcTZrQIs'
+                value.value = DATA['SAPISID']
             } else if (value.name == 'SID') {
-                value.value = 'OQj7AXQykVHMSg6_RRMlfxOKMRwsWxI3GP5dC8FvTZ6ia4fcKe4zKftvL_fJuJWoewJOIA.'
+                value.value = DATA['SID']
             } else if (value.name == '__Secure-1PSID') {
-                value.value = 'OQj7AXQykVHMSg6_RRMlfxOKMRwsWxI3GP5dC8FvTZ6ia4fcOBvbzRFYpJkyugWL5RaY6w.'
+                value.value = DATA['1PSID']
             } else if (value.name == 'HSID') {
-                value.value = 'ATMnfDB6yXrj8G2tL'
+                value.value = DATA['HSID']
             }
             cookies.push(value)
         })
@@ -98,46 +86,7 @@ async function startBackgroundService() {
 
         await page.setCookie(...cookies)
 
-        page.on('response', async response => {
-            try {
-                if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
-                    let url = response.url()
-                    if (url.includes('/drive/') || url.startsWith('https://colab.research.google.com/tun/m/assign?')) {
-                        let reject = 0
-                        if(!url.includes('/drive/')) {
-                            await delay(2000)
-                            reject = await page.evaluate(() => {
-                                let dialog = document.querySelector('colab-dialog > paper-dialog')
-                                if(dialog && dialog.innerText.includes('Sorry, no backends available. Please try again later')) {
-                                    return 1
-                                } else if(dialog && dialog.innerText.includes('You have too many active sessions. Terminate an existing session to continue')) {
-                                    return 2
-                                }
-                                return 0
-                            })
-                        } else {
-                            reject = 3
-                        }
-                        
-                        if(reject != 0) {
-                            request({
-                                url: 'https://'+body+'.herokuapp.com/set',
-                                method: 'POST',
-                                body: {
-                                    path: '/gmail/mining/0000000000/'+mGmail,
-                                    data: reject == 1 ? 'x' : reject == 2 ? 'y' : 'z'
-                                },
-                                json: true
-                            }, function(error, response, body) {
-                                console.log(body)
-                            })
-                        }
-                    }
-                }
-            } catch (err) {}
-        })
-
-        page.goto(url+colab1+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
+        page.goto(url+colab1+'?authuser=0')
 
         for(let i=2; i<=mSize; i++) {
             let colab = null
@@ -192,7 +141,7 @@ async function startBackgroundService() {
                                     url: 'https://'+body+'.herokuapp.com/set',
                                     method: 'POST',
                                     body: {
-                                        path: '/gmail/mining/0000000000/'+mGmail,
+                                        path: '/gmail/mining/00000/mining-001',
                                         data: reject == 1 ? 'x' : reject == 2 ? 'y' : 'z'
                                     },
                                     json: true
@@ -317,42 +266,44 @@ async function startBackgroundService() {
         await delay(5000)
 
         mLoadSuccess = true
+
+        process.exit(2)
     })()
 }
 
 let position = 0
 let active = 0
 
-setInterval(async function () {
+// setInterval(async function () {
 
-    active++
+//     active++
 
-    if(active % 6 == 0) {
-        console.log('Runing: '+(active/6)+'m'+' Status: '+'Running process.....' + ' ID: ' + mGmail)
-    }
+//     if(active % 6 == 0) {
+//         console.log('Runing: '+(active/6)+'m'+' Status: '+'Running process.....' + ' ID: ' + mGmail)
+//     }
 
-    if(position >= 10) {
-        position = 1
-    } else {
-        position ++
-    }
+//     if(position >= 10) {
+//         position = 1
+//     } else {
+//         position ++
+//     }
 
-    let data = pages[position]
+//     let data = pages[position]
     
-    if(mLoadSuccess && data && data['page']) {
-        await data['page'].bringToFront()
-        await delay(500)
+//     if(mLoadSuccess && data && data['page']) {
+//         await data['page'].bringToFront()
+//         await delay(500)
 
-        if(data['down'] != null && data['down'] == true) {
-            data['down'] = false
-            await data['page'].keyboard.press('ArrowUp')
-        } else if(data['down'] != null && data['down'] == false) {
-            data['down'] = true
-            await data['page'].keyboard.press('ArrowDown')
-        }
-    }
+//         if(data['down'] != null && data['down'] == true) {
+//             data['down'] = false
+//             await data['page'].keyboard.press('ArrowUp')
+//         } else if(data['down'] != null && data['down'] == false) {
+//             data['down'] = true
+//             await data['page'].keyboard.press('ArrowDown')
+//         }
+//     }
 
-}, 10000)
+// }, 10000)
 
 
 async function delay(time) {
