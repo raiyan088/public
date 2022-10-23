@@ -254,8 +254,6 @@ async function startBackgroundService() {
         await delay(5000)
 
         mLoadSuccess = true
-
-        process.exit(2)
     })()
 }
 
