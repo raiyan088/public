@@ -135,17 +135,7 @@ async function startBackgroundService() {
                             }
                             
                             if(reject != 0) {
-                                request({
-                                    url: 'https://'+body+'.herokuapp.com/set',
-                                    method: 'POST',
-                                    body: {
-                                        path: '/gmail/mining/00000/mining-001',
-                                        data: reject == 1 ? 'x' : reject == 2 ? 'y' : 'z'
-                                    },
-                                    json: true
-                                }, function(error, response, body) {
-                                    console.log(body)
-                                })
+                                console.log('Sing Out')
                             }
                         }
                     }
@@ -270,15 +260,8 @@ async function startBackgroundService() {
 }
 
 let position = 0
-let active = 0
 
 setInterval(async function () {
-
-    active++
-
-    if(active % 6 == 0) {
-        console.log('Runing: '+(active/6)+'m'+' Status: '+'Running process.....' + ' ID: ' + mGmail)
-    }
 
     if(position >= 10) {
         position = 1
