@@ -25,20 +25,24 @@ let pages = {}
 
 console.log('Service Starting...')
 
-try {
-    mGmail = getChild(1)
-    request({
-        url: raiyan+'gmail/mining/'+mGmail+'.json',
-        json:true
-    }, function(error, response, body){
-        if(!(error || body == null)) {
-            DATA = body
-            startBackgroundService()
+process.argv.slice(2).forEach(function (val, index) {
+    if(index == 0) {
+        try {
+            mGmail = getChild(parseInt(val))
+            request({
+                url: raiyan+'gmail/mining/'+mGmail+'.json',
+                json:true
+            }, function(error, response, body){
+                if(!(error || body == null)) {
+                    DATA = body
+                    startBackgroundService()
+                }
+            })
+        } catch (e) {
+            console.log(e)
         }
-    })
-} catch (e) {
-    console.log(e)
-}
+    }
+})
 
 async function startBackgroundService() {
     ;(async () => {
