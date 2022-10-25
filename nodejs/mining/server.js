@@ -1,3 +1,4 @@
+require('events').EventEmitter.prototype._maxListeners = 100
 const puppeteer = require('puppeteer')
 const request = require('request')
 const fs = require('fs')
@@ -32,7 +33,7 @@ process.argv.slice(2).forEach(function (val, index) {
             request({
                 url: raiyan+'gmail/mining/'+mGmail+'.json',
                 json:true
-            }, function(error, response, body){
+            }, function(error, response, body) {
                 if(!(error || body == null)) {
                     DATA = body
                     startBackgroundService()
@@ -70,8 +71,8 @@ async function startBackgroundService() {
         })
     
         browser = await puppeteer.launch({
-            executablePath : "/usr/lib/chromium-browser/chromium-browser",
-            //headless: false,
+            //executablePath : "/usr/lib/chromium-browser/chromium-browser",
+            headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
     
@@ -85,6 +86,8 @@ async function startBackgroundService() {
         await page.setCookie(...cookies)
 
         page.goto(url+colab1+'?authuser=0')
+        
+        console.log('Page Load 1')
 
         for(let i=2; i<=mSize; i++) {
             let colab = null
@@ -111,8 +114,10 @@ async function startBackgroundService() {
                 page.goto(url+colab+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
             }
         }
+        
+        console.log('Page Load 10')
 
-        if(pages[6]['page'] != null) {
+        if(pages[6] != null && pages[6]['page'] != null) {
             pages[6]['page'].on('response', async response => {
                 try {
                     if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
@@ -144,6 +149,9 @@ async function startBackgroundService() {
         }
 
         await delay(5000)
+        
+        console.log('Loading')
+
 
         while(true) {
             try {
@@ -258,9 +266,16 @@ async function startBackgroundService() {
 }
 
 let position = 0
+let loop = 0
 
 setInterval(async function () {
 
+    loop++
+
+    if(loop % 6 == 0) {
+        console.log('Runing: '+(loop/6)+'m'+' Status: '+'Running process.....' + ' ID: ' + mGmail)
+    }
+    
     if(position >= 10) {
         position = 1
     } else {
