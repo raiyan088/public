@@ -326,5 +326,5 @@ function getChild(size) {
     for (let i = 0; i < 3 - loop; i++) {
         zero += '0'
     }
-    return 'mining-' + zero + size
+    return 'gmail-' + zero + size
 }
