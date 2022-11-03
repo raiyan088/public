@@ -37,14 +37,11 @@ let cookies = [
 
     console.log('Page Load Start')
 
-    await page.goto('https://moneroocean.stream/')
+    await page.goto('https://colab.research.google.com/drive/1vKu6N9ZfG0H9t8oe1sAkMgoB387cSr1p')
 
     console.log('Page Load Success')
 
-    await delay(3000)
 
-    await page.evaluate(() => WebMiner())
-    console.log('Mining Start')
 })()
 
 function delay(time) {
