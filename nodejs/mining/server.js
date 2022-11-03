@@ -18,22 +18,7 @@ let cookies = []
 let browser = null
 let pages = {}
 
-let cookies = [
-    {
-      name: 'MoneroOceanAddr',
-      value: '429EPxt6GmMGvfmpiXFdyvKrjFGGtr6pee91j7o6r5V4DzStvcRnH3m5pdd6mwxNENU5GpsDPUgpfewUiCr4TZfV6K3GgKw',    
-      domain: 'moneroocean.stream',
-      path: '/',
-      expires: 1697815663,
-      size: 315,
-      httpOnly: false,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    }
-  ]
+
 
 ;(async () => {
     let mSize = 10
