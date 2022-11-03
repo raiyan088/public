@@ -8,6 +8,15 @@ let colab3 = '1PvtWshX9XPoif-BZKfSN1KQCDhe9hB8R'
 let colab4 = '1suavUZtqZutUb0AXWGFqwKfxE3IsSR8P'
 let colab5 = '1Zoo8FZ8CyTnjUGfVDkEpIRlFZfjGT6tC'
 
+let DATA = null
+let mGmail = null
+let mId = 1
+let mLoadSuccess = false
+let temp = []
+let cookies = []
+
+let browser = null
+let pages = {}
 
 let cookies = [
     {
@@ -29,13 +38,18 @@ let cookies = [
 ;(async () => {
     let mSize = 10
     
-    let browser = await puppeteer.launch({
+    browser = await puppeteer.launch({
         executablePath : "/usr/lib/chromium-browser/chromium-browser",
         //headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
 
-    let page = await browser.newPage()
+    let page = (await browser.pages())[0]
+        let map = {}
+        map['page'] = page
+        map['load'] = false
+        map['status'] = 0
+        pages[1] = map
 
     await page.setCookie(...cookies)
 
