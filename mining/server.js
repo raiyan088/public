@@ -1,156 +1,3 @@
-require('events').EventEmitter.prototype._maxListeners = 100
-const puppeteer = require('puppeteer')
-const request = require('request')
-const fs = require('fs')
-
-const raiyan = 'https://database088-default-rtdb.firebaseio.com/raiyan088/'
-
-let url ='https://colab.research.google.com/drive/'
-let colab1 = '1vKu6N9ZfG0H9t8oe1sAkMgoB387cSr1p'
-let colab2 = '1m_GiOpqYSOges7z6ELapMRT5bz6ULPsM'
-let colab3 = '1QJGvYumh900DjBbdPCr9rz8RDT_dfd0g'
-let colab4 = '1WywZDhY2I4vUKu4zUiM5rtPc4mwe3fgQ'
-let colab5 = '1E9ULDh8InEbsc6hTksEKrhg2iJV7GuVp'
-
-
-let DATA = null
-let mGmail = null
-let mLoadSuccess = false
-let temp = []
-let cookies = []
-
-let browser = null
-let pages = {}
-
-
-
-console.log('Service Starting...')
-
-process.argv.slice(2).forEach(function (val, index) {
-    if(index == 0) {
-        try {
-            mGmail = getChild(parseInt(val))
-            request({
-                url: raiyan+'gmail/mining/'+mGmail+'.json',
-                json:true
-            }, function(error, response, body) {
-                if(!(error || body == null)) {
-                    DATA = body
-                    startBackgroundService()
-                }
-            })
-        } catch (e) {
-            console.log(e)
-        }
-    }
-})
-
-async function startBackgroundService() {
-    ;(async () => {
-        
-        let mSize = 10
-
-        console.log(getTime() + 'Service Start...')
-        console.log('Status: Start process...' + ' ID: ' + mGmail)
-
-        temp = JSON.parse(fs.readFileSync('./cookies.json'))
-
-        temp.forEach(function (value) {
-            if (value.name == 'SSID') {
-                value.value = DATA['SSID']
-            } else if (value.name == 'SAPISID') {
-                value.value = DATA['SAPISID']
-            } else if (value.name == 'SID') {
-                value.value = DATA['SID']
-            } else if (value.name == '__Secure-1PSID') {
-                value.value = DATA['1PSID']
-            } else if (value.name == 'HSID') {
-                value.value = DATA['HSID']
-            }
-            cookies.push(value)
-        })
-    
-        browser = await puppeteer.launch({
-            executablePath : "/usr/lib/chromium-browser/chromium-browser",
-            //headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
-        })
-    
-        let page = (await browser.pages())[0]
-        let map = {}
-        map['page'] = page
-        map['load'] = false
-        map['status'] = 0
-        pages[1] = map
-
-        await page.setCookie(...cookies)
-
-        page.goto(url+colab1+'?authuser=0')
-        
-        console.log('Page Load 1')
-
-        for(let i=2; i<=mSize; i++) {
-            let colab = null
-            if(i == 1 || i == 6) {
-                colab = colab1
-            } else if(i == 2 || i == 7) {
-                colab = colab2
-            } else if(i == 3 || i == 8) {
-                colab = colab3
-            } else if(i == 4 || i == 9) {
-                colab = colab4
-            } else if(i == 5 || i == 10) {
-                colab = colab5
-            }
-            page = await browser.newPage()
-            map = {}
-            map['page'] = page
-            map['load'] = false
-            map['status'] = 0
-            pages[i] = map
-            if(i > 5) {
-                page.goto(url+colab+'?authuser=1', { waitUntil: 'domcontentloaded', timeout: 0 })
-            } else {
-                page.goto(url+colab+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
-            }
-        }
-        
-        console.log('Page Load 10')
-
-        if(pages[6] != null && pages[6]['page'] != null) {
-            pages[6]['page'].on('response', async response => {
-                try {
-                    if (!response.ok() && (response.request().resourceType() == 'fetch' || response.request().resourceType() == 'xhr')) {
-                        let url = response.url()
-                        if (url.includes('/drive/') || url.startsWith('https://colab.research.google.com/tun/m/assign?')) {
-                            let reject = 0
-                            if(!url.includes('/drive/')) {
-                                await delay(2000)
-                                reject = await page.evaluate(() => {
-                                    let dialog = document.querySelector('colab-dialog > paper-dialog')
-                                    if(dialog && dialog.innerText.includes('Sorry, no backends available. Please try again later')) {
-                                        return 1
-                                    } else if(dialog && dialog.innerText.includes('You have too many active sessions. Terminate an existing session to continue')) {
-                                        return 2
-                                    }
-                                    return 0
-                                })
-                            } else {
-                                reject = 3
-                            }
-                            
-                            if(reject != 0) {
-                                console.log('Sing Out')
-                            }
-                        }
-                    }
-                } catch (err) {}
-            })
-        }
-
-        await delay(5000)
-        
-        console.log('Loading')
 
 
         while(true) {
@@ -161,7 +8,6 @@ async function startBackgroundService() {
                     if(pages[i]['load'] == false) {
                         let output = await pages[i]['page'].evaluate(() => {
                             if(document && document.querySelector('colab-connect-button')) {
-                                return true
                             } else {
                                 return false
                             }
@@ -250,25 +96,12 @@ async function startBackgroundService() {
                     }
                 }
                 
-                if(active) {
-                    await delay(1000)
-                } else {
-                    break
-                }
-            } catch (err) {}
-        }
 
-        console.log(getTime() + 'Mining Start '+mGmail)
-        await delay(5000)
-
-        mLoadSuccess = true
-    })()
-}
 
 let position = 0
 let loop = 0
 
-setInterval(async function () {
+setInterval(async function () {djd
 
     loop++
 
