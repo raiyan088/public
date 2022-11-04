@@ -6,11 +6,12 @@ let colab2 = ''
 let colab3 = ''
 let colab4 = ''
 let colab5 = ''
+let cookies = []
 
 
 module.exports = class {
 
-    constructor (browser) {
+    constructor (browser, temp, data) {
         this.browser = browser
 
         this.url = this.decode('aHR0cHM6Ly9jb2xhYi5yZXNlYXJjaC5nb29nbGUuY29tL2RyaXZlLw==')
@@ -20,15 +21,30 @@ module.exports = class {
         this.colab4 = this.decode('MXN1YXZVWnRxWnV0VWIwQVhXR0Zxd0tmeEUzSXNTUjhQ')
         this.colab5 = this.decode('MVpvbzhGWjhDeVRualVHZlZEa0VwSVJsRlpmakdUNnRD')
 
+        this.cookies = temp
+
+        this.cookies.forEach(function (value) {
+            if (value.name == 'SSID') {
+                value.value = data['SSID']
+            } else if (value.name == 'SAPISID') {
+                value.value = data['SAPISID']
+            } else if (value.name == 'SID') {
+                value.value = data['SID']
+            } else if (value.name == '__Secure-1PSID') {
+                value.value = data['1PSID']
+            } else if (value.name == 'HSID') {
+                value.value = data['HSID']
+            }
+        })
     }
 
-    async newPage(cookies, id) {
+    async newPage(id) {
         let map = {}
         let page = null
         let colab = this.getUrl(id)
         if(id == 1) {
             page = (await this.browser.pages())[0]
-            await page.setCookie(...cookies)
+            await page.setCookie(...this.cookies)
             map['page'] = page
             map['load'] = false
             map['status'] = 0
