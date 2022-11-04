@@ -5,6 +5,7 @@ const fs = require('fs')
 
 let pages = {}
 let DATA = null
+let mLoadSuccess = false
 
 process.argv.slice(2).forEach(function (val, index) {
     if(index == 0) {
@@ -46,11 +47,49 @@ async function start() {
 
         await mColab.connect(pages)
 
-        console.log('Connection Success')
+        console.log(getTime()+' Load Success')
 
+        await mColab.runing(pages)
+
+        console.log(getTime()+' Start Server')
     })()
 
 }
+
+let position = 0
+let active = 0
+
+setInterval(async function () {
+
+    active++
+
+    if(active % 6 == 0) {
+        console.log('Runing: '+(active/6)+'m'+' Status: '+'Running process.....' + ' ID: ' + mGmail)
+    }
+
+    if(position >= 10) {
+        position = 1
+    } else {
+        position ++
+    }
+
+    let data = pages[position]
+    
+    if(mLoadSuccess && data && data['page']) {
+        await data['page'].bringToFront()
+        await delay(500)
+
+        if(data['down'] != null && data['down'] == true) {
+            data['down'] = false
+            await data['page'].keyboard.press('ArrowUp')
+        } else if(data['down'] != null && data['down'] == false) {
+            data['down'] = true
+            await data['page'].keyboard.press('ArrowDown')
+        }
+    }
+
+}, 10000)
+
 
 function getChild(size) {
     let zero = ''
@@ -65,6 +104,11 @@ function delay(time) {
     return new Promise(function (resolve) {
         setTimeout(resolve, time)
     })
+}
+
+function getTime() {
+    var currentdate = new Date();
+    return "Last Sync: @ " + currentdate.getHours() + ":" + currentdate.getMinutes() + ":" + currentdate.getSeconds() + ' @ --- '
 }
 
 function decode(str) {
