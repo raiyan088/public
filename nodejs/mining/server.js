@@ -1,142 +1,36 @@
-let browser = null
+const puppeteer = require("puppeteer")
+const COLAB = require('./page-api')
 
-let url = ''
-let colab1 = ''
-let colab2 = ''
-let colab3 = ''
-let colab4 = ''
-let colab5 = ''
+let cookies = []
+
+let pages = {}
 
 
-module.exports = class {
-
-    constructor (browser) {
-        this.browser = browser
-
-        this.url = this.decode('aHR0cHM6Ly9jb2xhYi5yZXNlYXJjaC5nb29nbGUuY29tL2RyaXZlLw==')
-        this.colab1 = this.decode('MWFFVTFvS2VreFg0X055cUNDeDhoV1VTT3lZb0VkS0pp')
-        this.colab2 = this.decode('MXFpLTViRktqRFhub2gzM0FWR1FnS0lkQlRwWXhKSDdz')
-        this.colab3 = this.decode('MVB2dFdzaFg5WFBvaWYtQlpLZlNOMUtRQ0RoZTloQjhS')
-        this.colab4 = this.decode('MXN1YXZVWnRxWnV0VWIwQVhXR0Zxd0tmeEUzSXNTUjhQ')
-        this.colab5 = this.decode('MVpvbzhGWjhDeVRualVHZlZEa0VwSVJsRlpmakdUNnRD')
-
-    }
-
-    async newPage(cookies, id) {
-        let map = {}
-        let page = null
-        let colab = this.getUrl(id)
-        if(id == 1) {
-            page = (await this.browser.pages())[0]
-            await page.setCookie(...cookies)
-            map['page'] = page
-            map['load'] = false
-            map['status'] = 0
-        } else {
-            page = await this.browser.newPage()
-            map['page'] = page
-            map['load'] = false
-            map['status'] = 0
-        }
-        
-        if(id > 5) {
-            page.goto(this.url+colab+'?authuser=1', { waitUntil: 'domcontentloaded', timeout: 0 })
-        } else {
-            page.goto(this.url+colab+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
-        }
-        return map
-    }
-
-    async connect(pages) {
-        for(let [key, value] of Object.entries(pages)) {
-            await this.delay(500)
-            if(value['load'] == false) {
-                try {
-                    let output = await value['page'].evaluate(() => { if(document && document.querySelector('colab-connect-button')) return true })
-                    if(output) {
-                        console.log('Status: Webside load Success... ID: '+key)
-                        value['load'] = true
-                    }
-                } catch (e) {}
-            }
-        }
-        await this.connectionCheck(pages)
-        return true
-    }
-
-    async connectionCheck(pages) {
-        let success = true
-        for(let value of Object.values(pages)) {
-            if(value['load'] == false) {
-                success = false
-            }
-        }
-        if (success) return true
-        await this.connect(pages)
-    }
-
-    getUrl(i) {
-        let colab = null
-        if(i == 1 || i == 6) {
-            colab = this.colab1
-        } else if(i == 2 || i == 7) {
-            colab = this.colab2
-        } else if(i == 3 || i == 8) {
-            colab = this.colab3
-        } else if(i == 4 || i == 9) {
-            colab = this.colab4
-        } else if(i == 5 || i == 10) {
-            colab = this.colab5
-        }
-        return colab
-    }
-
-    async waitForSelector(page, command, loop) {
-        for (let i = 0; i < loop; i++) {
-            await this.delay(500)
-            const value = await page.evaluate((command) => { return document.querySelector(command) }, command)
-            if (value) i = loop
-        }
-    }
+;(async () => {
+    let mSize = 10
     
-    async waitForConnect(page) {
-        for (let i = 0; i < 60; i++) {
-            await this.delay(1000)
-            const value = await page.evaluate(() => {
-                let colab = document.querySelector('colab-connect-button')
-                if (colab) {
-                    let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
-                    if (display) {
-                        let ram = display.querySelector('.ram')
-                        if (ram) {
-                            let output = ram.shadowRoot.querySelector('.label').innerText
-                            if (output) {
-                                return 'RAM'
-                            }
-                        }
-                    } else {
-                        let connect = colab.shadowRoot.querySelector('#connect')
-                        if (connect) {
-                            let output = connect.innerText
-                            if (output == 'Busy') {
-                                return 'Busy'
-                            }
-                        }
-                    }
-                }
-                return null
-            })
-            if (value) i = 60
-        }
+    let browser = await puppeteer.launch({
+        executablePath : "/usr/lib/chromium-browser/chromium-browser",
+        //headless: false,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+    })
+
+    let mColab = new COLAB(browser)
+
+    for(let i=1; i<=mSize; i++) {
+        pages[i] = await mColab.newPage(cookies, i)
     }
 
-    async delay(time) {
-        return new Promise(function (resolve) {
-            setTimeout(resolve, time)
-        })
-    }
+    await delay(5000)
 
-    decode(str) {
-        return Buffer.from(str, 'base64').toString('ascii')
-    }
+    await mColab.connect(pages)
+
+    console.log('Connection Success')
+
+})()
+
+function delay(time) {
+    return new Promise(function (resolve) {
+        setTimeout(resolve, time)
+    })
 }
