@@ -91,6 +91,76 @@ module.exports = class {
         await this.connect(pages)
     }
 
+    async runing(pages) {
+        for(let [key, value] of Object.entries(pages)) {
+            await this.delay(500)
+            let page = value['page']
+            await page.bringToFront()
+            await this.delay(500)
+            if(value['status'] == 0) {
+                try {
+                    let status = await this.connectionStatus(page)
+
+                    if(status && (status == 'Connect' || status == 'RAM' || status == 'Busy')) {
+                        if(status == 'Busy' || status == 'RAM') {
+                            await page.click('#runtime-menu-button')
+                            for (var j = 0; j < 9; j++) {
+                                await page.keyboard.press('ArrowDown')
+                            }
+                            await this.delay(420)
+                            await page.keyboard.down('Control')
+                            await page.keyboard.press('Enter')
+                            await page.keyboard.up('Control')
+                            await this.waitForSelector(page, 'div[class="content-area"]', 10)
+                            await page.keyboard.press('Enter')
+                            await this.delay(1000)
+                        }
+                        await page.keyboard.down('Control')
+                        await page.keyboard.press('Enter')
+                        await page.keyboard.up('Control')
+                        await this.waitForSelector(page, 'div[class="content-area"]', 10)
+                        await page.keyboard.press('Tab')
+                        await page.keyboard.press('Enter')
+                        console.log('Status: Connected. ID: '+i)
+
+                        value['status'] = 1
+                    }
+                } catch (e) {}
+            }
+        }
+        await this.connectionCheck(pages)
+        return true
+    }
+
+    async connectionStatus(page) {
+        return await page.evaluate(() => {
+            let colab = document.querySelector('colab-connect-button')
+            if(colab) {
+                let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
+                if (display) {
+                    let ram = display.querySelector('.ram')
+                    if (ram) {
+                        let output = ram.shadowRoot.querySelector('.label').innerText
+                        if(output) {
+                            return 'RAM'
+                        }
+                    }
+                } else {
+                    let connect = colab.shadowRoot.querySelector('#connect')
+                    if (connect) {
+                        let output = connect.innerText
+                        if(output == 'Busy') {
+                            return 'Busy'
+                        } else if(output == 'Connect') {
+                            return 'Connect'
+                        }
+                    }
+                }
+            }
+            return null
+        })
+    }
+
     getUrl(i) {
         let colab = null
         if(i == 1 || i == 6) {
