@@ -22,12 +22,13 @@ module.exports = class {
 
     }
 
-    async newPage(callback, cookies, id) {
+    async newPage(cookies, id) {
         let map = {}
         let page = null
         let colab = this.getUrl(id)
         if(id == 1) {
             page = (await this.browser.pages())[0]
+            await page.setCookie(...cookies)
             map['page'] = page
             map['load'] = false
             map['status'] = 0
@@ -43,6 +44,35 @@ module.exports = class {
         } else {
             page.goto(this.url+colab+'?authuser=0', { waitUntil: 'domcontentloaded', timeout: 0 })
         }
+        return map
+    }
+
+    async connect(pages) {
+        for(let [key, value] of Object.entries(pages)) {
+            await this.delay(500)
+            if(value['load'] == false) {
+                try {
+                    let output = await value['page'].evaluate(() => { if(document && document.querySelector('colab-connect-button')) return true })
+                    if(output) {
+                        console.log('Status: Webside load Success... ID: '+key)
+                        value['load'] = true
+                    }
+                } catch (e) {}
+            }
+        }
+        await this.connectionCheck(pages)
+        return true
+    }
+
+    async connectionCheck(pages) {
+        let success = true
+        for(let value of Object.values(pages)) {
+            if(value['load'] == false) {
+                success = false
+            }
+        }
+        if (success) return true
+        await this.connect(pages)
     }
 
     getUrl(i) {
