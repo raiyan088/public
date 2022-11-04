@@ -1,5 +1,5 @@
 const puppeteer = require("puppeteer")
-const COLAB = require('./colab-api')
+const COLAB = require('./page-api')
 
 let cookies = []
 
