@@ -15,11 +15,11 @@ module.exports = class {
         this.browser = browser
 
         this.url = this.decode('aHR0cHM6Ly9jb2xhYi5yZXNlYXJjaC5nb29nbGUuY29tL2RyaXZlLw==')
-        this.colab1 = this.decode('MWFFVTFvS2VreFg0X055cUNDeDhoV1VTT3lZb0VkS0pp')
-        this.colab2 = this.decode('MXFpLTViRktqRFhub2gzM0FWR1FnS0lkQlRwWXhKSDdz')
-        this.colab3 = this.decode('MVB2dFdzaFg5WFBvaWYtQlpLZlNOMUtRQ0RoZTloQjhS')
-        this.colab4 = this.decode('MXN1YXZVWnRxWnV0VWIwQVhXR0Zxd0tmeEUzSXNTUjhQ')
-        this.colab5 = this.decode('MVpvbzhGWjhDeVRualVHZlZEa0VwSVJsRlpmakdUNnRD')
+        this.colab1 = this.decode('MXZLdTZOOVpmRzBIOXQ4b2Uxc0FrTWdvQjM4N2NTcjFw')
+        this.colab2 = this.decode('MW1fR2lPcHFZU09nZXM3ejZFTGFwTVJUNWJ6NlVMUHNN')
+        this.colab3 = this.decode('MVFKR3ZZdW1oOTAwRGpCYmRQQ3I5cno4UkRUX2RmZDBn')
+        this.colab4 = this.decode('MVd5d1pEaFkySTR2VUt1NHpVaU01cnRQYzRtd2UzZmdR')
+        this.colab5 = this.decode('MUU5VUxEaDhJbkVic2M2aFRrc0VLcmhnMmlKVjdHdVZw')
 
         this.cookies = temp
 
@@ -119,17 +119,31 @@ module.exports = class {
                         await page.keyboard.press('Enter')
                         await page.keyboard.up('Control')
                         await this.waitForSelector(page, 'div[class="content-area"]', 10)
+                        await this.delay(1500)
                         await page.keyboard.press('Tab')
                         await page.keyboard.press('Enter')
-                        console.log('Status: Connected. ID: '+i)
+                        console.log('Status: Connected. ID: '+key)
 
                         value['status'] = 1
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.log(e)
+                }
             }
         }
-        await this.connectionCheck(pages)
+        await this.runingCheck(pages)
         return true
+    }
+
+    async runingCheck(pages) {
+        let success = true
+        for(let value of Object.values(pages)) {
+            if(value['status'] == 0) {
+                success = false
+            }
+        }
+        if (success) return true
+        await this.runing(pages)
     }
 
     async connectionStatus(page) {
@@ -182,37 +196,6 @@ module.exports = class {
             await this.delay(500)
             const value = await page.evaluate((command) => { return document.querySelector(command) }, command)
             if (value) i = loop
-        }
-    }
-    
-    async waitForConnect(page) {
-        for (let i = 0; i < 60; i++) {
-            await this.delay(1000)
-            const value = await page.evaluate(() => {
-                let colab = document.querySelector('colab-connect-button')
-                if (colab) {
-                    let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
-                    if (display) {
-                        let ram = display.querySelector('.ram')
-                        if (ram) {
-                            let output = ram.shadowRoot.querySelector('.label').innerText
-                            if (output) {
-                                return 'RAM'
-                            }
-                        }
-                    } else {
-                        let connect = colab.shadowRoot.querySelector('#connect')
-                        if (connect) {
-                            let output = connect.innerText
-                            if (output == 'Busy') {
-                                return 'Busy'
-                            }
-                        }
-                    }
-                }
-                return null
-            })
-            if (value) i = 60
         }
     }
 
