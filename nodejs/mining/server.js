@@ -18,12 +18,14 @@ let pages = {}
     let mColab = new COLAB(browser)
 
     for(let i=1; i<=mSize; i++) {
-        await mColab.newPage((data, position) => {
-            pages[position] = data
-        }, cookies, i)
+        pages[i] = await mColab.newPage(cookies, i)
     }
 
-    console.log('load Success')
+    await delay(5000)
+
+    await mColab.connect(pages)
+
+    console.log('Connection Success')
 
 })()
 
