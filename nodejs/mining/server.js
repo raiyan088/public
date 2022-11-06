@@ -12,6 +12,7 @@ process.argv.slice(2).forEach(function (val, index) {
     if(index == 0) {
         try {
             mGmail = getChild(parseInt(val))
+            console.log(getTime()+' Server Start. Id: '+mGmail)
             request({
                 url: decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dtYWlsL21pbmluZy8=')+mGmail+'.json',
                 json:true
@@ -45,6 +46,8 @@ async function start() {
         for(let i=1; i<=mSize; i++) {
             pages[i] = await mColab.newPage(i)
         }
+
+        console.log(getTime()+' Page Open Success')
 
         await delay(5000)
 
