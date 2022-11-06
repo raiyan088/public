@@ -5,6 +5,7 @@ const fs = require('fs')
 
 let pages = {}
 let DATA = null
+let mGmail = null
 let mLoadSuccess = false
 
 process.argv.slice(2).forEach(function (val, index) {
@@ -18,6 +19,8 @@ process.argv.slice(2).forEach(function (val, index) {
                 if(!(error || body == null)) {
                     DATA = body
                     start()
+                } else {
+                    console.log('Server Data Not Found')
                 }
             })
         } catch (e) {}
