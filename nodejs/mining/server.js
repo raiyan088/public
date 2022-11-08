@@ -4,6 +4,7 @@ const request = require('request')
 const fs = require('fs')
 
 let pages = {}
+let mId = 0
 let DATA = null
 let mGmail = null
 let mLoadSuccess = false
@@ -11,7 +12,8 @@ let mLoadSuccess = false
 process.argv.slice(2).forEach(function (val, index) {
     if(index == 0) {
         try {
-            mGmail = getChild(parseInt(val))
+            mId = parseInt(val)
+            mGmail = getChild(mId)
             console.log(getTime()+' Server Start. Id: '+mGmail)
             request({
                 url: decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dtYWlsL21pbmluZy8=')+mGmail+'.json',
@@ -51,11 +53,11 @@ async function start() {
 
         await delay(5000)
 
-        await mColab.connect(pages)
+        await mColab.connect()
 
         console.log(getTime()+' Load Success')
 
-        await mColab.runing(pages)
+        await mColab.runing(mId)
 
         console.log(getTime()+' Start Server')
     })()
