@@ -33,11 +33,11 @@ process.argv.slice(2).forEach(function (val, index) {
 async function start() {
 
     ;(async () => {
-        let mSize = 1
+        let mSize = 10
 
         let browser = await puppeteer.launch({
-            //executablePath : "/usr/lib/chromium-browser/chromium-browser",
-            headless: false,
+            executablePath : "/usr/lib/chromium-browser/chromium-browser",
+            //headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         })
 
