@@ -168,7 +168,6 @@ module.exports = class {
                         await this.delay(1500)
                         await page.keyboard.press('Tab')
                         await page.keyboard.press('Enter')
-                        console.log('Status: Connected. ID: '+key)
     
                         value['status'] = 3
                     }
@@ -185,7 +184,7 @@ module.exports = class {
 
                     if(check) {
                         let status = await this.connectionStatus(page)
-                        if(status && status == 'RAM') {
+                        if(status && (status == 'RAM' || status == 'Busy')) {
                             let output = '1'
                             if(mId == 1) {
                                 output = key.toString()
@@ -200,6 +199,8 @@ module.exports = class {
                             await this.delay(1000)
                             await value['page'].keyboard.type(output)
                             await value['page'].keyboard.press('Enter')
+
+                            console.log('Status: Connected. ID: '+key)
     
                             value['status'] = 4
                         }
