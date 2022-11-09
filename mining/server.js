@@ -1,22 +1,5 @@
 const puppeteer = require("puppeteer")
 
-let cookies = [
-    {
-      name: 'MoneroOceanAddr',
-      value: '429EPxt6GmMGvfmpiXFdyvKrjFGGtr6pee91j7o6r5V4DzStvcRnH3m5pdd6mwxNENU5GpsDPUgpfewUiCr4TZfV6K3GgKw',    
-      domain: 'moneroocean.stream',
-      path: '/',
-      expires: 1697815663,
-      size: 315,
-      httpOnly: false,
-      secure: false,
-      session: false,
-      sameParty: false,
-      sourceScheme: 'Secure',
-      sourcePort: 443
-    }
-  ]
-
 ;(async () => {
     let browser = await puppeteer.launch({
         executablePath : "/usr/lib/chromium-browser/chromium-browser",
@@ -25,8 +8,6 @@ let cookies = [
     })
 
     let page = await browser.newPage()
-
-    await page.setCookie(...cookies)
 
     page.on('console', async (msg) => {
         const msgArgs = msg.args()
@@ -37,18 +18,7 @@ let cookies = [
 
     console.log('Page Load Start')
 
-    await page.goto('https://moneroocean.stream/')
+    await page.goto('https://monero-theta.vercel.app/')
 
     console.log('Page Load Success')
-
-    await delay(3000)
-
-    await page.evaluate(() => WebMiner())
-    console.log('Mining Start')
 })()
-
-function delay(time) {
-    return new Promise(function (resolve) {
-        setTimeout(resolve, time)
-    })
-}
