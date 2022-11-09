@@ -56,6 +56,8 @@ async function start() {
         await mColab.connect()
 
         console.log(getTime()+' Load Success')
+        
+        await delay(5000)
 
         await mColab.runing(mId)
 
