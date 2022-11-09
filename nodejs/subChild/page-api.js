@@ -200,7 +200,7 @@ module.exports = class {
                             await value['page'].keyboard.type(output)
                             await value['page'].keyboard.press('Enter')
 
-                            console.log('Status: Connected. ID: '+key)
+                            console.log('Status: Connected. ID: '+output)
     
                             value['status'] = 4
                         }
