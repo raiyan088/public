@@ -128,7 +128,8 @@ module.exports = class {
             await page.bringToFront()
             await this.delay(500)
             try {
-                if(value['status'] == 1) {
+                let status = value['status']
+                if(status == 1) {
                     if(value['has']) {
                         let status = await this.connectionStatus(page)
                         if(status && (status == 'RAM' || status == 'Busy')) {
@@ -149,7 +150,7 @@ module.exports = class {
                     } else {
                         value['status'] = 2
                     }
-                } else if(value['status'] == 2) {
+                } else if(status == 2) {
                     let noWait = true
                     if(value['has']) {
                         let status = await this.connectionStatus(page)
@@ -171,7 +172,7 @@ module.exports = class {
     
                         value['status'] = 3
                     }
-                } else if(value['status'] == 3) {
+                } else if(status == 3) {
                     let check = await value['page'].evaluate(() => {
                         let output = document.querySelector('colab-static-output-renderer')
                         if (output) {
@@ -189,7 +190,7 @@ module.exports = class {
                             if(mId == 1) {
                                 output = key.toString()
                             } else {
-                                if(i == 10) {
+                                if(key == 10) {
                                     output = mId+'0'
                                 } else {
                                     output = (mId-1)+''+key
