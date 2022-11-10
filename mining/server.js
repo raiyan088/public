@@ -13,14 +13,12 @@ console.log('Service Starting...')
 
 
     browser = await puppeteer.launch({
-        //executablePath : "/usr/lib/chromium-browser/chromium-browser",
-        headless: false,
+        executablePath : "/usr/lib/chromium-browser/chromium-browser",
+        //headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     })
 
-    let page = (await browser.pages())[0]
-
-    let next = await browser.newPage()
+    let next = (await browser.pages())[0]
 
     next.on('console', async (msg) => {
         const msgArgs = msg.args()
@@ -40,6 +38,8 @@ console.log('Service Starting...')
     await delay(5000)
 
     //bindermining
+    
+    let page = await browser.newPage()
 
     await page.bringToFront()
 
