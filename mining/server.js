@@ -37,7 +37,7 @@ console.log('Service Starting...')
 
     await delay(5000)
 
-    //bindermining
+    //binder mining
     
     let page = await browser.newPage()
 
