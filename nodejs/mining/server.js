@@ -14,7 +14,7 @@ let colab2 = '1m_GiOpqYSOges7z6ELapMRT5bz6ULPsM'
 let colab3 = '1QJGvYumh900DjBbdPCr9rz8RDT_dfd0g'
 let colab4 = '1WywZDhY2I4vUKu4zUiM5rtPc4mwe3fgQ'
 let colab5 = '1E9ULDh8InEbsc6hTksEKrhg2iJV7GuVp'
-let pageStatusCode = `if(document && document.querySelector('colab-connect-button')) return true`
+
 let connectionCode = `let colab = document.querySelector('colab-connect-button')
 if(colab) {
     let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
@@ -167,12 +167,15 @@ async function start() {
                 await delay(500)
                 if(value['load'] == false) {
                     try {
-                        let output = await value['page'].evaluate((code) => { code }, pageStatusCode)
+                        let output = await value['page'].evaluate(() => { if(document && document.querySelector('colab-connect-button')) return true })
+                        console.log(output)
                         if(output) {
                             console.log('Status: Webside load Success... ID: '+key)
                             value['load'] = true
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.log(e)
+                    }
                 }
             }
 
@@ -240,7 +243,9 @@ async function start() {
                             value['status'] = 3
                         }
                     }
-                } catch (e) {}
+                } catch (e) {
+                    console.log(e)
+                }
             }
 
             let success = 0
