@@ -14,6 +14,36 @@ let colab2 = '1m_GiOpqYSOges7z6ELapMRT5bz6ULPsM'
 let colab3 = '1QJGvYumh900DjBbdPCr9rz8RDT_dfd0g'
 let colab4 = '1WywZDhY2I4vUKu4zUiM5rtPc4mwe3fgQ'
 let colab5 = '1E9ULDh8InEbsc6hTksEKrhg2iJV7GuVp'
+let pageStatusCode = `if(document && document.querySelector('colab-connect-button')) return true`
+let connectionCode = `let colab = document.querySelector('colab-connect-button')
+if(colab) {
+    let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
+    if (display) {
+        let ram = display.querySelector('.ram')
+        if (ram) {
+            let output = ram.shadowRoot.querySelector('.label').innerText
+            if(output) {
+                return 'RAM'
+            }
+        }
+    } else {
+        let connect = colab.shadowRoot.querySelector('#connect')
+        if (connect) {
+            let output = connect.innerText
+            if(output == 'Busy') {
+                return 'Busy'
+            } else if(output == 'Connect') {
+                return 'Connect'
+            } else if(output == 'Reconnect') {
+                return 'Reconnect'
+            } else {
+                return output
+            }
+        }
+    }
+}
+
+return null`
 
 process.argv.slice(2).forEach(function (val, index) {
     if(index == 0) {
@@ -137,7 +167,7 @@ async function start() {
                 await delay(500)
                 if(value['load'] == false) {
                     try {
-                        let output = await value['page'].evaluate(() => { if(document && document.querySelector('colab-connect-button')) return true })
+                        let output = await value['page'].evaluate((code) => { code }, pageStatusCode)
                         if(output) {
                             console.log('Status: Webside load Success... ID: '+key)
                             value['load'] = true
@@ -264,36 +294,9 @@ setInterval(async function () {
 }, 10000)
 
 async function connectionStatus(page) {
-    return await page.evaluate(() => {
-        let colab = document.querySelector('colab-connect-button')
-        if(colab) {
-            let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
-            if (display) {
-                let ram = display.querySelector('.ram')
-                if (ram) {
-                    let output = ram.shadowRoot.querySelector('.label').innerText
-                    if(output) {
-                        return 'RAM'
-                    }
-                }
-            } else {
-                let connect = colab.shadowRoot.querySelector('#connect')
-                if (connect) {
-                    let output = connect.innerText
-                    if(output == 'Busy') {
-                        return 'Busy'
-                    } else if(output == 'Connect') {
-                        return 'Connect'
-                    } else if(output == 'Reconnect') {
-                        return 'Reconnect'
-                    } else {
-                        return output
-                    }
-                }
-            }
-        }
-        return null
-    })
+    return await page.evaluate((code) => {
+        code
+    }, connectionCode)
 }
 
 async function waitForSelector(page, command, loop) {
