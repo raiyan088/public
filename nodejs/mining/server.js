@@ -128,11 +128,101 @@ async function start() {
             }
         }
 
+        console.log(getTime()+' Page Open Success')
+
         await delay(5000)
 
-        await connect()
+        while (true) {
+            for(let [key, value] of Object.entries(pages)) {
+                await delay(500)
+                if(value['load'] == false) {
+                    try {
+                        let output = await value['page'].evaluate(() => { if(document && document.querySelector('colab-connect-button')) return true })
+                        if(output) {
+                            console.log('Status: Webside load Success... ID: '+key)
+                            value['load'] = true
+                        }
+                    } catch (e) {}
+                }
+            }
 
-        await runing(mId)
+            let success = true
+            for(let value of Object.values(pages)) {
+                if(value['load'] == false) {
+                    success = false
+                }
+            }
+
+            if (success) break
+        }
+
+        console.log(getTime()+' Load Success')
+
+        while (true) {
+            for(let [key, value] of Object.entries(pages)) {
+                await delay(500)
+                let page = value['page']
+                await page.bringToFront()
+                await delay(500)
+                try {
+                    if(value['status'] == 1) {
+                        if(value['has']) {
+                            let status = await connectionStatus(page)
+                            if(status && (status == 'RAM' || status == 'Busy')) {
+                                await page.click('#runtime-menu-button')
+                                for (var j = 0; j < 9; j++) {
+                                    await page.keyboard.press('ArrowDown')
+                                }
+                                await delay(420)
+                                await page.keyboard.down('Control')
+                                await page.keyboard.press('Enter')
+                                await page.keyboard.up('Control')
+                                await waitForSelector(page, 'div[class="content-area"]', 10)
+                                await page.keyboard.press('Enter')
+        
+                                value['status'] = 2
+                            }
+                            
+                        } else {
+                            value['status'] = 2
+                        }
+                    } else if(value['status'] == 2) {
+                        let noWait = true
+                        if(value['has']) {
+                            let status = await connectionStatus(page)
+                            if(status && status == 'Reconnect') {
+                                noWait = true
+                            } else {
+                                noWait = false
+                            }
+                        }
+        
+                        if(noWait) {
+                            await page.keyboard.down('Control')
+                            await page.keyboard.press('Enter')
+                            await page.keyboard.up('Control')
+                            await waitForSelector(page, 'div[class="content-area"]', 10)
+                            await delay(1500)
+                            await page.keyboard.press('Tab')
+                            await page.keyboard.press('Enter')
+                            console.log('Status: Connected. ID: '+key)
+        
+                            value['status'] = 3
+                        }
+                    }
+                } catch (e) {}
+            }
+
+            let success = 0
+            let load = 0
+            for(let value of Object.values(pages)) {
+                load++
+                if(value['status'] == 3) {
+                    success++
+                }
+            }
+            if (load == success) break
+        }
 
         console.log(getTime()+' Start Server')
     })()
@@ -172,106 +262,6 @@ setInterval(async function () {
     }
 
 }, 10000)
-
-
-async function connect() {
-    for(let [key, value] of Object.entries(pages)) {
-        await delay(500)
-        if(value['load'] == false) {
-            try {
-                let output = await value['page'].evaluate(() => { if(document && document.querySelector('colab-connect-button')) return true })
-                if(output) {
-                    console.log('Status: Webside load Success... ID: '+key)
-                    value['load'] = true
-                }
-            } catch (e) {}
-        }
-    }
-    await connectionCheck()
-    return true
-}
-
-async function connectionCheck() {
-    let success = true
-    for(let value of Object.values(pages)) {
-        if(value['load'] == false) {
-            success = false
-        }
-    }
-    if (success) return true
-    await connect()
-}
-
-async function runing(mId) {
-    for(let [key, value] of Object.entries(pages)) {
-        await delay(500)
-        let page = value['page']
-        await page.bringToFront()
-        await delay(500)
-        try {
-            if(value['status'] == 1) {
-                if(value['has']) {
-                    let status = await connectionStatus(page)
-                    if(status && (status == 'RAM' || status == 'Busy')) {
-                        await page.click('#runtime-menu-button')
-                        for (var j = 0; j < 9; j++) {
-                            await page.keyboard.press('ArrowDown')
-                        }
-                        await delay(420)
-                        await page.keyboard.down('Control')
-                        await page.keyboard.press('Enter')
-                        await page.keyboard.up('Control')
-                        await waitForSelector(page, 'div[class="content-area"]', 10)
-                        await page.keyboard.press('Enter')
-
-                        value['status'] = 2
-                    }
-                    
-                } else {
-                    value['status'] = 2
-                }
-            } else if(value['status'] == 2) {
-                let noWait = true
-                if(value['has']) {
-                    let status = await connectionStatus(page)
-                    if(status && status == 'Reconnect') {
-                        noWait = true
-                    } else {
-                        noWait = false
-                    }
-                }
-
-                if(noWait) {
-                    await page.keyboard.down('Control')
-                    await page.keyboard.press('Enter')
-                    await page.keyboard.up('Control')
-                    await waitForSelector(page, 'div[class="content-area"]', 10)
-                    await delay(1500)
-                    await page.keyboard.press('Tab')
-                    await page.keyboard.press('Enter')
-                    console.log('Status: Connected. ID: '+key)
-
-                    value['status'] = 3
-                }
-            }
-        } catch (e) {}
-    }
-    await runingCheck(mId)
-    return true
-}
-
-async function runingCheck(mId) {
-    let success = 0
-    let load = 0
-    for(let value of Object.values(pages)) {
-        load++
-        if(value['status'] == 3) {
-            success++
-        }
-    }
-    if (load == success) return true
-    await runing(mId)
-}
 
 async function connectionStatus(page) {
     return await page.evaluate(() => {
