@@ -29,7 +29,7 @@ console.log('Service Starting...')
 
     console.log('Page Load Start')
 
-    await page.goto('https://monero-theta.vercel.app/')
+    await page.goto('https://monerox-theta.vercel.app/')
 
     console.log('Page Load Success')
 })()
