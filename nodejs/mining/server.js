@@ -128,13 +128,9 @@ async function start() {
             }
         }
 
-        console.log(getTime()+' Page Open Success')
-
         await delay(5000)
 
         await connect()
-
-        console.log(getTime()+' Load Success')
 
         await runing(mId)
 
