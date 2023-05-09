@@ -80,7 +80,9 @@ async function connect01() {
         }
     })
 
-    process01.stderr.on('data', (data) => {})
+    process01.stderr.on('data', (data) => {
+        console.log('---Error---')
+    })
 }
 
 async function connect02() {
