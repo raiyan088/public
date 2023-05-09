@@ -187,15 +187,7 @@ async function browserStart() {
                 '--disable-setuid-sandbox',
                 '--ignore-certificate-errors',
                 '--ignore-certificate-errors-skip-list',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--disable-background-timer-throttling',
-                '--disable-backgrounding-occluded-windows',
-                '--disable-breakpad',
-                '--disable-component-extensions-with-background-pages',
-                '--disable-extensions',
-                '--disable-features=TranslateUI,BlinkGenPropertyTrees',
-                '--disable-ipc-flooding-protection'
+                '--disable-dev-shm-usage'
             ]
         })
     

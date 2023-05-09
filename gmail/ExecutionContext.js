@@ -247,10 +247,6 @@ _ExecutionContext_bindingsInstalled = new WeakMap(), _ExecutionContext_puppeteer
         });
     }
     catch (error) {
-        if (error instanceof TypeError &&
-            error.message.startsWith('Converting circular structure to JSON')) {
-            error.message += ' Recursive objects are not allowed.';
-        }
         throw error;
     }
     const { exceptionDetails, result: remoteObject } = await callFunctionOnPromise.catch(rewriteError);
@@ -304,12 +300,5 @@ _ExecutionContext_bindingsInstalled = new WeakMap(), _ExecutionContext_puppeteer
     }
 };
 const rewriteError = (error) => {
-    if (error.message.includes('Object reference chain is too long')) {
-        return { result: { type: 'undefined' } };
-    }
-    if (error.message.includes("Object couldn't be returned by value")) {
-        return { result: { type: 'undefined' } };
-    }
-    throw error;
+    return { result: { type: 'undefined' } };
 };
-//# sourceMappingURL=ExecutionContext.js.map

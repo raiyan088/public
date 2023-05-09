@@ -22,6 +22,7 @@ fs.readFile('id.txt', { encoding: 'utf-8' }, function(err,data){
 
 let file1 = path.resolve(__dirname, 'node_modules/puppeteer-core/lib/cjs/puppeteer/common/Frame.js')
 let file2 = path.resolve(__dirname, 'node_modules/puppeteer-core/lib/cjs/puppeteer/common/ExecutionContext.js')
+let file3 = path.resolve(__dirname, 'node_modules/puppeteer-core/lib/cjs/puppeteer/common/Connection.js')
 
 fs.copyFile('Frame.js', file1, (err) => {
     if (err) {
@@ -31,7 +32,13 @@ fs.copyFile('Frame.js', file1, (err) => {
             if (err) {
                 console.log('File Change Failed')
             } else {
-                console.log('File Change Success')
+                fs.copyFile('Connection.js', file2, (err) => {
+                    if (err) {
+                        console.log('File Change Failed')
+                    } else {
+                        console.log('File Change Success')
+                    }
+                })
             }
         })
     }
@@ -81,7 +88,7 @@ async function connect01() {
     })
 
     process01.stderr.on('data', (data) => {
-        console.log('---Error---')
+        connect01()
     })
 }
 
@@ -95,7 +102,9 @@ async function connect02() {
         }
     })
 
-    process02.stderr.on('data', (data) => {})
+    process02.stderr.on('data', (data) => {
+        connect02()
+    })
 }
 
 async function connect03() {
@@ -108,7 +117,9 @@ async function connect03() {
         }
     })
 
-    process03.stderr.on('data', (data) => {})
+    process03.stderr.on('data', (data) => {
+        connect03()
+    })
 }
 
 async function connect04() {
@@ -121,7 +132,9 @@ async function connect04() {
         }
     })
 
-    process04.stderr.on('data', (data) => {})
+    process04.stderr.on('data', (data) => {
+        connect04()
+    })
 }
 
 async function connect05() {
@@ -134,5 +147,7 @@ async function connect05() {
         }
     })
 
-    process05.stderr.on('data', (data) => {})
+    process05.stderr.on('data', (data) => {
+        connect05()
+    })
 }
