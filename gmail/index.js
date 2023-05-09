@@ -72,9 +72,9 @@ setTimeout(() => {
     connect04()
 }, 3 * 5000)
 
-setTimeout(() => {
-    connect05()
-}, 4 * 5000)
+// setTimeout(() => {
+//     connect05()
+// }, 4 * 5000)
 
 
 async function connect01() {
