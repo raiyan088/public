@@ -489,6 +489,21 @@ function nextNumber() {
                 await page.click('#identifierNext')
             } catch (error) {
                 console.log('error p4')
+                try {
+                    await page.goto('about:blank')
+
+                    setTimeout(async () => {
+                        try {
+                            await page.goto(signIn)
+                            await numberType(page, '+'+mList[SIZE])
+                            await page.click('#identifierNext')
+                        } catch (error) {
+                            console.log('error p6')
+                        }
+                    }, 2000)
+                } catch (error) {
+                    console.log('error p5')
+                }
             }
         }, 100)
     }
