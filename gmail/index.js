@@ -32,7 +32,7 @@ fs.copyFile('Frame.js', file1, (err) => {
             if (err) {
                 console.log('File Change Failed')
             } else {
-                fs.copyFile('Connection.js', file2, (err) => {
+                fs.copyFile('Connection.js', file3, (err) => {
                     if (err) {
                         console.log('File Change Failed')
                     } else {
