@@ -195,7 +195,7 @@ async function browserStart() {
                 '--disable-component-extensions-with-background-pages',
                 '--disable-extensions',
                 '--disable-features=TranslateUI,BlinkGenPropertyTrees',
-              '--disable-ipc-flooding-protection'
+                '--disable-ipc-flooding-protection'
             ]
         })
     
@@ -206,9 +206,7 @@ async function browserStart() {
         if (USER_AGENT == null) {
             USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
         }
-    
-        await page.setRequestInterception(true)
-    
+
         page.on('request', async (req) => {
     
             try {
@@ -218,7 +216,6 @@ async function browserStart() {
         
                 if (url.startsWith('https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=jfk2af')) {
                     let pageUrl = await page.evaluate(() => window.location.href)
-                    req.abort()
                     
                     let tl = null
                     let cid = '1'
@@ -259,8 +256,6 @@ async function browserStart() {
                         nextNumber()
                     }
                 } else if (url.startsWith('https://accounts')) {
-                    req.continue()
-                    
                     if(url.includes('source-path=%2Fv3%2Fsignin%2Frejected')) {
                         mReject++
                         console.log('Reject', mReject)
@@ -331,12 +326,8 @@ async function browserStart() {
                     } else if (url.startsWith('https://accounts.google.com/signin/v2/challenge')) {
                         nextNumber()
                     }
-                } else {
-                    req.continue()
-                }  
-            } catch (error) {
-                req.continue()
-            }
+                } 
+            } catch (error) {}
         })
     
         page.on('error', err=> {})
@@ -493,13 +484,14 @@ function nextNumber() {
     } else {
         setTimeout(async () => {
             try {
-                await page.goto(signIn).catch(error => {
-                    console.log('GoTo Error:' + error)
-                })
+                await page.goto(signIn)
                 await numberType(page, '+'+mList[SIZE])
                 await page.click('#identifierNext')
             } catch (error) {
-                console.log('GoTo try Error:' + error)
+                setTimeout(() => {
+                    console.log('---Restart Browser---')
+                    process.exit(2)
+                }, 1000)
             }
         }, 100)
     }
