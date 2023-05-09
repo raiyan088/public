@@ -186,7 +186,7 @@ async function browserStart() {
     try {
         let browser = await puppeteer.launch({
             headless: 'new',
-            args: [ '--no-sandbox', '--disable-setuid-sandbox' ]
+            args: [ '--no-sandbox', '--disable-setuid-sandbox', '--ignore-certificate-errors' ]
         })
     
         page = (await browser.pages())[0]
