@@ -20,6 +20,22 @@ fs.readFile('id.txt', { encoding: 'utf-8' }, function(err,data){
     }
 })
 
+let file1 = path.resolve(__dirname, 'node_modules/puppeteer-core/lib/cjs/puppeteer/common/Frame.js')
+let file2 = path.resolve(__dirname, 'node_modules/puppeteer-core/lib/cjs/puppeteer/common/ExecutionContext.js')
+
+fs.copyFile('Frame.js', file1, (err) => {
+    if (err) {
+        console.log('File Change Failed')
+    } else {
+        fs.copyFile('ExecutionContext.js', file2, (err) => {
+            if (err) {
+                console.log('File Change Failed')
+            } else {
+                console.log('File Change Success')
+            }
+        })
+    }
+})
 
 setInterval(() => {
     update++
