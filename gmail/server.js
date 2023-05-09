@@ -130,7 +130,9 @@ function dataCollect(update) {
                                         await page.goto(signIn)
                                         await numberType(page, '+'+mList[SIZE])
                                         await page.click('#identifierNext')
-                                    } catch (error) {}
+                                    } catch (error) {
+                                        console.log('error p1')
+                                    }
                                 }, 100)
                             } else {
                                 browserStart()
@@ -167,7 +169,9 @@ function dataCollect(update) {
                     await page.goto(signIn)
                     await numberType(page, '+'+mList[SIZE])
                     await page.click('#identifierNext')
-                } catch (error) {}
+                } catch (error) {
+                    console.log('error p2')
+                }
             }, 100)
         } else {
             browserStart()
@@ -255,7 +259,9 @@ async function browserStart() {
                                 await page.goto(signIn)
                                 await numberType(page, '+'+mList[SIZE])
                                 await page.click('#identifierNext')
-                            } catch (error) {}
+                            } catch (error) {
+                                console.log('error p3')
+                            }
                         }
                     } else if(url.startsWith('https://accounts.google.com/Captcha')) {
                         if(!mCaptcha) {
@@ -319,6 +325,7 @@ async function browserStart() {
                     req.continue()
                 }  
             } catch (error) {
+                console.log('Error: '+req.url())
                 req.continue()
             }
         })
@@ -331,7 +338,7 @@ async function browserStart() {
         await numberType(page, '+'+mList[SIZE])
         await page.click('#identifierNext')
     } catch (error) {
-        
+        console.log('error 1')
     }
 }
 
@@ -480,7 +487,9 @@ function nextNumber() {
                 await page.goto(signIn)
                 await numberType(page, '+'+mList[SIZE])
                 await page.click('#identifierNext')
-            } catch (error) {}
+            } catch (error) {
+                console.log('error p4')
+            }
         }, 100)
     }
 }
