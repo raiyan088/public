@@ -60,17 +60,17 @@ setInterval(() => {
 
 connect01()
 
-setTimeout(() => {
-    connect02()
-}, 1 * 5000)
+// setTimeout(() => {
+//     connect02()
+// }, 1 * 5000)
 
-setTimeout(() => {
-    connect03()
-}, 2 * 5000)
+// setTimeout(() => {
+//     connect03()
+// }, 2 * 5000)
 
-setTimeout(() => {
-    connect04()
-}, 3 * 5000)
+// setTimeout(() => {
+//     connect04()
+// }, 3 * 5000)
 
 // setTimeout(() => {
 //     connect05()
