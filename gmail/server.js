@@ -10,7 +10,7 @@ const COUNTRY = 'BD'
 const LENGTH = 11
 const TIMEING = 3
 const SAVE_SIZE = 1
-const DELAY = 1000
+const DELAY = 1500
 
 
 let signIn = 'https://accounts.google.com/InteractiveLogin?continue=https://myaccount.google.com/phone&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&nojavascript=1&rip=1&service=accountsettings'
