@@ -544,9 +544,7 @@ function deleteData(url) {
 }
 
 async function numberType(page, number) {
-    await delay(250)
     await page.evaluate((gmail) => document.querySelector('input#Email').value = gmail, number)
-    await delay(250)
 }
 
 function decrypt(data) {
