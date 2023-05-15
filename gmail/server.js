@@ -7,7 +7,7 @@ const fs = require('fs')
 
 
 const COUNTRY = 'BD'
-const LENGTH = 10
+const LENGTH = 11
 const TIMEING = 3
 const SAVE_SIZE = 1
 const DELAY = 1000
@@ -304,7 +304,6 @@ async function browserStart() {
                         }
                     }
                 } else if(mLoopUp) {
-                    console.log(url)
                     req.abort()
                     nextNumber(false)
                 } else {
@@ -375,6 +374,7 @@ function passwordMatching(number, tl, cid, ifkv, gps, loop) {
                 let data = JSON.parse(body.substring(body.indexOf('[['), body.length))
                 if(data[0][3] == 3) {
                     next = false
+                    console.log('Password Match: '+SERVER.split('/')[1])
                     setData(GMAIL+(body.includes('webapproval')?'menually/':'voice/')+COUNTRY+'/'+mList[SIZE]+'.json', loop)
                     nextNumber(true)
                 } else if(data[0][3] == 2) {
