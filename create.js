@@ -1,11 +1,9 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
-const request = require('request')
 const axios = require('axios')
 const fs = require('fs')
 
 
-let PROXY_USE = false
 let NAME = 'english'
 //let NAME = 'bangle_name'
 
@@ -25,10 +23,10 @@ startWork()
 
 async function startWork() {
     try {
-        newMail = JSON.parse(fs.readFileSync('new_create_mail.json'))
+        mRecovery = JSON.parse(fs.readFileSync('recovery.json'))
 
         mName = await getNameList()
-        mRecovery = await getRecovery()
+        //mRecovery = await getRecovery()
 
         if (mName.length > 0) {
             try {
@@ -176,10 +174,12 @@ async function createAccount() {
         await addRecovery()
         await waitForPage(7)
         await saveData(user, map)
-        console.log('Completed')
         await delay(1000)
         await page.close()
         await delay(1000)
+
+        console.log('')
+        console.log('------------COMPLETED------------')
         
         try {
             console.log('Created: ', mAddAccount)
