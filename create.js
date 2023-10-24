@@ -168,13 +168,13 @@ async function createAccount() {
                             console.log('Account: Confirm')
                             await page.click(next)
                             await page.waitForNavigation({ waitUntil: ['load'] })
-                            success = await waitForPage(5)
+                            success = await waitForFinish()
                             if (success) {
                                 console.log('Create: Finish')
                                 await page.click(next)
                                 await delay(1000)
                                 await dialogConfirm()
-                                success = await waitForPage(6)
+                                success = await waitForPage(8)
                                 if (success) {
                                     console.log('Account Create Success')
                                     await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
@@ -183,7 +183,7 @@ async function createAccount() {
                                     await page.type('input[type="email"]', map['recovery'])
                                     await delay(500)
                                     await addRecovery()
-                                    success = await waitForPage(7)
+                                    success = await waitForPage(9)
                                     if (success) {
                                         await saveData(user, map)
                                         await delay(1000)
@@ -216,7 +216,7 @@ async function createAccount() {
                                 }
                             } else {
                                 console.log('Timeout: Create-Finish')
-                                await errorHandling()
+                                //await errorHandling()
                             }
                         } else {
                             console.log('Timeout: Account-Confirm')
@@ -266,6 +266,39 @@ async function errorHandling() {
     }
 }
 
+async function waitForFinish() {
+    let success = await waitForPage(5)
+    if (success) {
+        let data = await exists('div[class="zJKIV y5MMGc sD2Hod"]')
+        if (data) {
+            await page.click('div[class="zJKIV y5MMGc sD2Hod"]')
+            await delay(5000)
+            await page.click('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]')
+            success = await waitForPage(6)
+            if (success) {
+                await page.evaluate(() => {
+                    let root = document.querySelectorAll('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
+                    if (root && root.length > 0) {
+                        root[root.length-1].click()
+                    }
+                })
+
+                success = await waitForPage(7)
+                if (success) {
+                    await page.evaluate(() => {
+                        let root = document.querySelectorAll('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
+                        if (root && root.length > 0) {
+                            root[root.length-1].click()
+                        }
+                    })
+                    return await waitForPage(5)
+                }
+            }
+        }
+        return true
+    }
+    return false
+}
 
 async function waitForPage(type) {
     let timeout = 0
@@ -310,7 +343,25 @@ async function waitForPage(type) {
                 timeout = 0
                 break
             }
-        } else if(type == 6) {
+        } else if(type == 5 && url.startsWith('https://accounts.google.com/lifecycle/steps/signup/personalizationchoice')) {
+            let data = await exists('div[class="zJKIV y5MMGc sD2Hod"]')
+            if (data) {
+                timeout = 0
+                break
+            }
+        } else if(type == 6 && url.startsWith('https://accounts.google.com/lifecycle/steps/signup/expresssettings')) {
+            let data = await exists('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
+            if (data) {
+                timeout = 0
+                break
+            }
+        } else if(type == 7 && url.startsWith('https://accounts.google.com/lifecycle/steps/signup/confirmpersonalizationsettings')) {
+            let data = await exists('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
+            if (data) {
+                timeout = 0
+                break
+            }
+        } else if(type == 8) {
             timeout++
             await delay(1000)
             try {
@@ -332,7 +383,7 @@ async function waitForPage(type) {
                     break
                 }
             } catch (error) {}
-        } else if (type == 7) {
+        } else if (type == 9) {
             let data = await exists('input[type="text"][inputmode="numeric"]')
             if (data) {
                 timeout = 0
