@@ -59,13 +59,16 @@ async function startWork() {
                     process.exit(0)
                 }
             } catch (error) {
-                console.log(error)
+                console.log('Somthing Error')
+                process.exit(0)
             }
         } else {
             console.log('Name List Null')
+            process.exit(0)
         }
-    } catch (e) {
-        console.log(e)
+    } catch (erroe) {
+        console.log('Somthing Error')
+        process.exit(0)
     }
 }
 
@@ -93,7 +96,8 @@ async function browserStart() {
         await createAccount()
         
     } catch (error) {
-       console.log(error)
+        console.log('Somthing Error')
+        process.exit(0)
     }
 }
 
@@ -123,115 +127,191 @@ async function createAccount() {
     await page.type('#lastName', name[1])
     await delay(500)
     await page.click('#collectNameNext')
-    await waitForPage(0)
-    let TL = await getTL()
-    if (TL) {
-        await page.goto('https://accounts.google.com/signup/v2/birthdaygender?continue=https%3A%2F%2Fmyaccount.google.com%2Frecovery%2Femail&source=com.google.android.gms&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&mwdm=MWDM_QR_CODE&lang=en&langCountry=en_us&hl=en-US&cc='+COUNTRY.toLowerCase()+'&multilogin=1&use_native_navigation=0&cbsc=1&flowName=EmbeddedSetupAndroid&TL='+TL, { waitUntil: 'load', timeout: 0 })
-        console.log('Birthday: '+map['day']+'-'+map['month']+'-'+map['year'])
-        console.log('Gender: Male')
-        let next = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]'
-        let input = 'input[class="whsOnd zHQkBf"]'
-        await delay(1000)
-        await page.select('#month', map['month'])
-        await delay(500)
-        await page.type('#day', map['day'])
-        await delay(500)
-        await page.type('#year', map['year'])
-        await delay(500)
-        await page.select('#gender', '1')
-        await delay(500)
-        await page.click(next)
-        await waitForPage(1)
-        console.log('Gmail: '+user+'@gmail.com')
-        await page.type(input, user)
-        await delay(500)
-        await page.click(next)
-        await waitForPage(2)
-        console.log('Password: '+map['password'])
-        await page.type(input, map['password'])
-        await delay(500)
-        await page.click(next)
-        await waitForPage(3)
-        await delay(1000)
-        console.log('Number: Skip')
-        await skipNumber()
-        await waitForPage(4)
-        console.log('Account: Confirm')
-        await page.click(next)
-        await page.waitForNavigation({ waitUntil: ['load'] })
-        await waitForPage(5)
-        console.log('Create: Finish')
-        await page.click(next)
-        await delay(1000)
-        await dialogConfirm()
-        await waitForPage(6)
-        console.log('Account Create Success')
-        await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
-        console.log('Recovery: '+map['recovery'])
-        await delay(500)
-        await page.type('input[type="email"]', map['recovery'])
-        await delay(500)
-        await addRecovery()
-        await waitForPage(7)
-        await saveData(user, map)
-        await delay(1000)
+    let success = await waitForPage(0)
+    if (success) {
+        let TL = await getTL()
+        if (TL) {
+            await page.goto('https://accounts.google.com/signup/v2/birthdaygender?continue=https%3A%2F%2Fmyaccount.google.com%2Frecovery%2Femail&source=com.google.android.gms&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&mwdm=MWDM_QR_CODE&lang=en&langCountry=en_us&hl=en-US&cc='+COUNTRY.toLowerCase()+'&multilogin=1&use_native_navigation=0&cbsc=1&flowName=EmbeddedSetupAndroid&TL='+TL, { waitUntil: 'load', timeout: 0 })
+            console.log('Birthday: '+map['day']+'-'+map['month']+'-'+map['year'])
+            console.log('Gender: Male')
+            let next = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]'
+            let input = 'input[class="whsOnd zHQkBf"]'
+            await delay(1000)
+            await page.select('#month', map['month'])
+            await delay(500)
+            await page.type('#day', map['day'])
+            await delay(500)
+            await page.type('#year', map['year'])
+            await delay(500)
+            await page.select('#gender', '1')
+            await delay(500)
+            await page.click(next)
+            success = await waitForPage(1)
+            if (success) {
+                console.log('Gmail: '+user+'@gmail.com')
+                await page.type(input, user)
+                await delay(500)
+                await page.click(next)
+                success = await waitForPage(2)
+                if (success) {
+                    console.log('Password: '+map['password'])
+                    await page.type(input, map['password'])
+                    await delay(500)
+                    await page.click(next)
+                    success = await waitForPage(3)
+                    if (success) {
+                        await delay(1000)
+                        console.log('Number: Skip')
+                        await skipNumber()
+                        success = await waitForPage(4)
+                        if (success) {
+                            console.log('Account: Confirm')
+                            await page.click(next)
+                            await page.waitForNavigation({ waitUntil: ['load'] })
+                            success = await waitForPage(5)
+                            if (success) {
+                                console.log('Create: Finish')
+                                await page.click(next)
+                                await delay(1000)
+                                await dialogConfirm()
+                                success = await waitForPage(6)
+                                if (success) {
+                                    console.log('Account Create Success')
+                                    await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
+                                    console.log('Recovery: '+map['recovery'])
+                                    await delay(500)
+                                    await page.type('input[type="email"]', map['recovery'])
+                                    await delay(500)
+                                    await addRecovery()
+                                    success = await waitForPage(7)
+                                    if (success) {
+                                        await saveData(user, map)
+                                        await delay(1000)
+                                        await page.close()
+                                        await delay(1000)
+
+                                        console.log('')
+                                        console.log('------------COMPLETED------------')
+                                        
+                                        try {
+                                            console.log('Created: ', mAddAccount)
+                                    
+                                            if (mAddAccount < 10) {
+                                                browserStart()
+                                            } else {
+                                                console.log('Please Change Your IP Adress')
+                                                process.exit(0)
+                                            }
+                                        } catch (error) {
+                                            console.log('Somthing Error')
+                                            process.exit(0)
+                                        }
+                                    } else {
+                                        console.log('Timeout: Completed')
+                                        await errorHandling()
+                                    }
+                                } else {
+                                    console.log('Timeout: Account-Create-Success')
+                                    await errorHandling()
+                                }
+                            } else {
+                                console.log('Timeout: Create-Finish')
+                                await errorHandling()
+                            }
+                        } else {
+                            console.log('Timeout: Account-Confirm')
+                            await errorHandling()
+                        }
+                    } else {
+                        console.log('Timeout: Number-Skip')
+                        await errorHandling()
+                    }
+                } else {
+                    console.log('Timeout: Password')
+                    await errorHandling()
+                }
+            } else {
+                console.log('Timeout: Gmail')
+                await errorHandling()
+            }
+        } else {
+            console.log('TL Token Not Found')
+            await errorHandling()
+        }
+    } else {
+        console.log('Timeout: Birthday')
+        await errorHandling()
+    }
+}
+
+async function errorHandling() {
+    try {
         await page.close()
         await delay(1000)
 
-        console.log('')
-        console.log('------------COMPLETED------------')
-        
-        try {
-            console.log('Created: ', mAddAccount)
-    
-            if (mAddAccount < 10) {
-                browserStart()
-            } else {
-                console.log('Please Change Your IP Adress')
-                process.exit(0)
-            }
-        } catch (error) {}
-    } else {
-        console.log('TL Token Not Found')
+        mName.shift()
+        mAddAccount++
+
+        console.log('Created: ', mAddAccount)
+
+        if (mAddAccount < 10) {
+            browserStart()
+        } else {
+            console.log('Please Change Your IP Adress')
+            process.exit(0)
+        }
+    } catch (error) {
+        console.log('Somthing Error')
+        process.exit(0)
     }
 }
 
 
 async function waitForPage(type) {
+    let timeout = 0
+
     while (true) {
+        timeout++
         await delay(1000)
         let url = await page.url()
         if (type == 0 && url.startsWith('https://accounts.google.com/signup/v2/birthdaygender') || url.startsWith('https://accounts.google.com/birthdaygender')) {
             let data = await exists('#gender')
             if (data) {
+                timeout = 0
                 break
             }
         } else if (type == 1 && url.startsWith('https://accounts.google.com/signup/v2/createusername') || url.startsWith('https://accounts.google.com/createusername')) {
             let data = await exists('#domainSuffix')
             if (data) {
+                timeout = 0
                 break
             }
         } else if (type == 2 && url.startsWith('https://accounts.google.com/createpassword')) {
             let data = await exists('input[name="Passwd"]')
             if (data) {
+                timeout = 0
                 break
             }
         } else if (type == 3 && url.startsWith('https://accounts.google.com/addrecoveryphone')) {
             let data = await exists('#phoneNumberId')
             if (data) {
+                timeout = 0
                 break
             }
         } else if (type == 4 && url.startsWith('https://accounts.google.com/signup/v2/confirmation')) {
             let data = await exists('div[class="wLBAL"]')
             if (data) {
+                timeout = 0
                 break
             }
         } else if(type == 5 && url.startsWith('https://accounts.google.com/lifecycle/steps/signup/termsofservice')) {
             let data = await exists('#headingText')
             if (data) {
+                timeout = 0
                 break
             }
         } else if(type == 6) {
+            timeout++
             await delay(1000)
             try {
                 let OSID = 0
@@ -248,17 +328,26 @@ async function waitForPage(type) {
                 }
 
                 if (OSID == 3) {
+                    timeout = 0
                     break
                 }
             } catch (error) {}
         } else if (type == 7) {
             let data = await exists('input[type="text"][inputmode="numeric"]')
             if (data) {
+                timeout = 0
                 break
             }
         }
+
+        if (timeout >= 30) {
+            timeout = 99
+            break
+        }
     }
     await delay(1000)
+
+    return timeout == 0
 }
 
 async function addRecovery() {
