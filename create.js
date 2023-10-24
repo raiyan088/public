@@ -14,6 +14,7 @@ let mAddAccount = 0
 let mRecovery = []
 let IP = null
 let COUNTRY = null 
+let mError = 0
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dtYWlsLw==', 'base64').toString('ascii')
 
@@ -246,19 +247,26 @@ async function createAccount() {
 
 async function errorHandling() {
     try {
-        await page.close()
-        await delay(1000)
+        mError++
 
-        mName.shift()
-        mAddAccount++
-
-        console.log('Created: ', mAddAccount)
-
-        if (mAddAccount < 10) {
-            browserStart()
-        } else {
+        if (mError >= 3) {
             console.log('Please Change Your IP Adress')
             process.exit(0)
+        } else {
+            await page.close()
+            await delay(1000)
+    
+            mName.shift()
+            mAddAccount++
+    
+            console.log('Created: ', mAddAccount)
+    
+            if (mAddAccount < 10) {
+                browserStart()
+            } else {
+                console.log('Please Change Your IP Adress')
+                process.exit(0)
+            }
         }
     } catch (error) {
         console.log('Somthing Error')
