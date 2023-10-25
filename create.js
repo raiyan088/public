@@ -13,7 +13,6 @@ let page = null
 let mAddAccount = 0
 let mRecovery = []
 let IP = null
-let COUNTRY = null 
 let mError = 0
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dtYWlsLw==', 'base64').toString('ascii')
@@ -34,9 +33,8 @@ async function startWork() {
                 let api = await getAxios('http://ip-api.com/json')
                 let data = api.data
                 IP = data['query']
-                COUNTRY = data['countryCode']
                 console.log('IP: '+IP)
-                console.log('Countyr: '+data['country'])
+                console.log('Country: '+data['country'])
                 
                 let key = IP.replace(/[.]/g, '_')
                 let mIP = await getAxios(BASE_URL+'ip/'+key+'.json')
@@ -110,15 +108,9 @@ async function createAccount() {
     let recovery = mRecovery[Math.floor((Math.random() * mRecovery.length))]
     let name = mName[0].split(' ')
     let map = {}
-    map['name'] = mName[0]
     map['password'] = getRandomPassword()
     map['recovery'] = recovery+'@gmail.com'
-    map['year'] = getRandomYear()
-    map['month'] = getRandomMonth()
-    map['day'] = getRandomDay()
     map['create'] = parseInt(new Date().getTime()/1000)
-    map['ip'] = IP
-    map['country'] = COUNTRY
 
     await page.goto('https://accounts.google.com/signup/v2/createaccount?continue=https%3A%2F%2Fmyaccount.google.com%2Frecovery%2Femail&theme=glif&flowName=GlifWebSignIn&flowEntry=SignUp&hl=en', { waitUntil: 'load', timeout: 0 })
     await delay(1000)
@@ -132,17 +124,20 @@ async function createAccount() {
     if (success) {
         let TL = await getTL()
         if (TL) {
-            await page.goto('https://accounts.google.com/signup/v2/birthdaygender?continue=https%3A%2F%2Fmyaccount.google.com%2Frecovery%2Femail&source=com.google.android.gms&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&mwdm=MWDM_QR_CODE&lang=en&langCountry=en_us&hl=en-US&cc='+COUNTRY.toLowerCase()+'&multilogin=1&use_native_navigation=0&cbsc=1&flowName=EmbeddedSetupAndroid&TL='+TL, { waitUntil: 'load', timeout: 0 })
-            console.log('Birthday: '+map['day']+'-'+map['month']+'-'+map['year'])
+            let year = getRandomYear()
+            let month = getRandomMonth()
+            let day = getRandomDay()
+            await page.goto('https://accounts.google.com/signup/v2/birthdaygender?continue=https%3A%2F%2Fmyaccount.google.com%2Frecovery%2Femail&source=com.google.android.gms&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&mwdm=MWDM_QR_CODE&lang=en&langCountry=en_us&hl=en-US&cc=us&multilogin=1&use_native_navigation=0&cbsc=1&flowName=EmbeddedSetupAndroid&TL='+TL, { waitUntil: 'load', timeout: 0 })
+            console.log('Birthday: '+day+'-'+month+'-'+year)
             console.log('Gender: Male')
             let next = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]'
             let input = 'input[class="whsOnd zHQkBf"]'
             await delay(1000)
-            await page.select('#month', map['month'])
+            await page.select('#month', month)
             await delay(500)
-            await page.type('#day', map['day'])
+            await page.type('#day', day)
             await delay(500)
-            await page.type('#year', map['year'])
+            await page.type('#year', year)
             await delay(500)
             await page.select('#gender', '1')
             await delay(500)
