@@ -19,6 +19,13 @@ let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJh
 
 puppeteer.use(StealthPlugin())
 
+
+console.log('\n')
+console.log('\n')
+console.log('------------START GMAIL CREATE PROCESS------------')
+console.log('\n')
+console.log('\n')
+
 startWork()
 
 async function startWork() {
@@ -376,7 +383,7 @@ async function waitForPage(type) {
                         OSID++
                     } else if (cookies[i]['name'] == 'HSID') {
                         OSID++
-                    } else if (cookies[i]['name'] == 'LSID') {
+                    } else if (cookies[i]['name'] == 'APISID') {
                         OSID++
                     }
                 }
