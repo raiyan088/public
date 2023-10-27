@@ -635,11 +635,13 @@ function getRandomPassword() {
     pass += S[Math.floor((Math.random() * 26))]
     pass += S[Math.floor((Math.random() * 26))]
     pass += S[Math.floor((Math.random() * 26))]
+    pass += S[Math.floor((Math.random() * 26))]
     pass += N[Math.floor((Math.random() * 10))]
     pass += N[Math.floor((Math.random() * 10))]
     pass += N[Math.floor((Math.random() * 10))]
-    pass += U[Math.floor((Math.random() * 3))]
-    pass += U[Math.floor((Math.random() * 3))]
+    pass += N[Math.floor((Math.random() * 10))]
+    //pass += U[Math.floor((Math.random() * 3))]
+    //pass += U[Math.floor((Math.random() * 3))]
     
     return pass
 }
