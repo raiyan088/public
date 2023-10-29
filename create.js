@@ -490,7 +490,7 @@ async function saveData(user, map) {
         mAddAccount++
         let key = IP.replace(/[.]/g, '_')
         let value = {
-            time: parseInt(new Date().getTime()/1000)+86400,
+            time: parseInt(new Date().getTime()/1000)+43200,
             add: mAddAccount
         }
 
