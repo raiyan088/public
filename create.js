@@ -22,7 +22,7 @@ puppeteer.use(StealthPlugin())
 
 console.log('\n')
 console.log('\n')
-console.log('------------START GMAIL CREATE PROCESS------------')
+console.log('------------START PROCESS------------')
 console.log('\n')
 console.log('\n')
 
@@ -56,7 +56,7 @@ async function startWork() {
                     mAddAccount = 0
                 }
 
-                console.log('Created:', mAddAccount)
+                console.log('Size:', mAddAccount)
 
                 if (mAddAccount < 10) {
                     browserStart()
@@ -83,8 +83,6 @@ async function browserStart() {
 
     try {
         let browser = await puppeteer.launch({
-            //executablePath: 'C:\\Users\\Hp 11 GENERATION\\AppData\\Local\\Google\\Chrome\\Application\\chrome.exe',
-            //headless: false,
             headless: 'new',
             args: [
                 '--no-sandbox',
@@ -108,7 +106,7 @@ async function browserStart() {
 }
 
 async function createAccount() {
-    console.log('------------CREATE ACCOUNT------------')
+    console.log('------------START------------')
     console.log('')
 
     let user = mName[0].toLowerCase().replace(/[^a-z]/g, '')+getRandomNumber()
@@ -121,7 +119,6 @@ async function createAccount() {
 
     await page.goto('https://accounts.google.com/signup/v2/createaccount?continue=https%3A%2F%2Fmyaccount.google.com%2Frecovery%2Femail&theme=glif&flowName=GlifWebSignIn&flowEntry=SignUp&hl=en', { waitUntil: 'load', timeout: 0 })
     await delay(1000)
-    console.log('Name: '+mName[0])
     await page.type('#firstName', name[0])
     await delay(500)
     await page.type('#lastName', name[1])
@@ -135,8 +132,6 @@ async function createAccount() {
             let month = getRandomMonth()
             let day = getRandomDay()
             await page.goto('https://accounts.google.com/signup/v2/birthdaygender?continue=https%3A%2F%2Fmyaccount.google.com%2Frecovery%2Femail&source=com.google.android.gms&xoauth_display_name=Android%20Phone&canFrp=1&canSk=1&mwdm=MWDM_QR_CODE&lang=en&langCountry=en_us&hl=en-US&cc=us&multilogin=1&use_native_navigation=0&cbsc=1&flowName=EmbeddedSetupAndroid&TL='+TL, { waitUntil: 'load', timeout: 0 })
-            console.log('Birthday: '+day+'-'+month+'-'+year)
-            console.log('Gender: Male')
             let next = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]'
             let input = 'input[class="whsOnd zHQkBf"]'
             await delay(1000)
@@ -151,37 +146,30 @@ async function createAccount() {
             await page.click(next)
             success = await waitForPage(1)
             if (success) {
-                console.log('Gmail: '+user+'@gmail.com')
                 await page.type(input, user)
                 await delay(500)
                 await page.click(next)
                 success = await waitForPage(2)
                 if (success) {
-                    console.log('Password: '+map['password'])
                     await page.type(input, map['password'])
                     await delay(500)
                     await page.click(next)
                     success = await waitForPage(3)
                     if (success) {
                         await delay(1000)
-                        console.log('Number: Skip')
                         await skipNumber()
                         success = await waitForPage(4)
                         if (success) {
-                            console.log('Account: Confirm')
                             await page.click(next)
                             await page.waitForNavigation({ waitUntil: ['load'] })
                             success = await waitForFinish()
                             if (success) {
-                                console.log('Create: Finish')
                                 await page.click(next)
                                 await delay(1000)
                                 await dialogConfirm()
                                 success = await waitForPage(8)
                                 if (success) {
-                                    console.log('Account Create Success')
                                     await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
-                                    console.log('Recovery: '+map['recovery'])
                                     await delay(500)
                                     await page.type('input[type="email"]', map['recovery'])
                                     await delay(500)
@@ -193,11 +181,10 @@ async function createAccount() {
                                         await page.close()
                                         await delay(1000)
 
-                                        console.log('')
-                                        console.log('------------COMPLETED------------')
+                                        console.log('------------END------------')
                                         
                                         try {
-                                            console.log('Created: ', mAddAccount)
+                                            console.log('Size: ', mAddAccount)
                                     
                                             if (mAddAccount < 10) {
                                                 browserStart()
@@ -219,7 +206,7 @@ async function createAccount() {
                                 }
                             } else {
                                 console.log('Timeout: Create-Finish')
-                                //await errorHandling()
+                                await errorHandling()
                             }
                         } else {
                             console.log('Timeout: Account-Confirm')
@@ -261,7 +248,7 @@ async function errorHandling() {
             mName.shift()
             mAddAccount++
     
-            console.log('Created: ', mAddAccount)
+            console.log('Size: ', mAddAccount)
     
             if (mAddAccount < 10) {
                 browserStart()
@@ -490,7 +477,7 @@ async function saveData(user, map) {
         mAddAccount++
         let key = IP.replace(/[.]/g, '_')
         let value = {
-            time: parseInt(new Date().getTime()/1000)+43200,
+            time: parseInt(new Date().getTime()/1000)+86400,
             add: mAddAccount
         }
 
