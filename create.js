@@ -197,6 +197,8 @@ async function createAccount() {
                                             process.exit(0)
                                         }
                                     } else {
+                                        let content = await page.content()
+                                        fs.writeFileSync('timeout.html', content)
                                         console.log('Timeout: Completed')
                                         await errorHandling()
                                     }
@@ -238,7 +240,7 @@ async function errorHandling() {
     try {
         mError++
 
-        if (mError >= 3) {
+        if (mError > 3) {
             console.log('Please Change Your IP Adress')
             process.exit(0)
         } else {
@@ -556,7 +558,7 @@ async function getNameList() {
     }
 
     let response = await getAxios(BASE_URL+'name/'+NAME+'.json?orderBy=%22list%22&limitToLast=20&print=pretty')
-    
+
     try {
         let list = []
         for (let key of Object.keys(response.data)) {
