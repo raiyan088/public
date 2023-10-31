@@ -666,9 +666,9 @@ function getStringTime() {
         month = ''+(d.getMonth() + 1),
         day = ''+d.getDate(),
         year = d.getFullYear(),
-        hour = ''+d.setHours(),
-        minute = ''+d.setMinutes(),
-        second = ''+d.setSeconds()
+        hour = ''+d.getHours(),
+        minute = ''+d.getMinutes(),
+        second = ''+d.getSeconds()
 
     if (month.length < 2) 
         month = '0' + month
