@@ -33,7 +33,6 @@ async function startWork() {
         mRecovery = JSON.parse(fs.readFileSync('recovery.json'))
 
         mName = await getNameList()
-        //mRecovery = await getRecovery()
 
         if (mName.length > 0) {
             try {
@@ -72,7 +71,7 @@ async function startWork() {
             console.log('Name List Null')
             process.exit(0)
         }
-    } catch (erroe) {
+    } catch (error) {
         console.log('Somthing Error')
         process.exit(0)
     }
@@ -83,6 +82,7 @@ async function browserStart() {
 
     try {
         let browser = await puppeteer.launch({
+            //headless: false,
             headless: 'new',
             args: [
                 '--no-sandbox',
@@ -162,44 +162,48 @@ async function createAccount() {
                         if (success) {
                             await page.click(next)
                             await page.waitForNavigation({ waitUntil: ['load'] })
-                            success = await waitForFinish()
+                            success = await waitForPage(5)
                             if (success) {
                                 await page.click(next)
                                 await delay(1000)
                                 await dialogConfirm()
-                                success = await waitForPage(8)
+                                success = await waitForPage(6)
                                 if (success) {
                                     await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
-                                    await delay(500)
-                                    await page.type('input[type="email"]', map['recovery'])
-                                    await delay(500)
-                                    await addRecovery()
-                                    success = await waitForPage(9)
+                                    await delay(1000)
+                                    success = await waitForRecoveryType(map['recovery'], false)
                                     if (success) {
-                                        await saveData(user, map)
-                                        await delay(1000)
-                                        await page.close()
-                                        await delay(1000)
+                                        await delay(500)
+                                        await addRecovery()
+                                        await delay(500)
+                                        success = await waitForPage(7)
+                                        if (success) {
+                                            await saveData(user, map)
+                                            await delay(1000)
+                                            await page.close()
+                                            await delay(1000)
 
-                                        console.log('------------END------------')
+                                            console.log('------------END------------')
+                                            
+                                            try {
+                                                console.log('Size: ', mAddAccount)
                                         
-                                        try {
-                                            console.log('Size: ', mAddAccount)
-                                    
-                                            if (mAddAccount < 10) {
-                                                browserStart()
-                                            } else {
-                                                console.log('Please Change Your IP Adress')
+                                                if (mAddAccount < 10) {
+                                                    browserStart()
+                                                } else {
+                                                    console.log('Please Change Your IP Adress')
+                                                    process.exit(0)
+                                                }
+                                            } catch (error) {
+                                                console.log('Somthing Error')
                                                 process.exit(0)
                                             }
-                                        } catch (error) {
-                                            console.log('Somthing Error')
-                                            process.exit(0)
+                                        } else {
+                                            console.log('Timeout: Completed')
+                                            await errorHandling()
                                         }
                                     } else {
-                                        let content = await page.content()
-                                        fs.writeFileSync('timeout.html', content)
-                                        console.log('Timeout: Completed')
+                                        console.log('Timeout: Recovery-Add')
                                         await errorHandling()
                                     }
                                 } else {
@@ -265,38 +269,59 @@ async function errorHandling() {
     }
 }
 
-async function waitForFinish() {
-    let success = await waitForPage(5)
-    if (success) {
-        let data = await exists('div[class="zJKIV y5MMGc sD2Hod"]')
-        if (data) {
-            await page.click('div[class="zJKIV y5MMGc sD2Hod"]')
-            await delay(5000)
-            await page.click('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]')
-            success = await waitForPage(6)
-            if (success) {
-                await page.evaluate(() => {
-                    let root = document.querySelectorAll('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
-                    if (root && root.length > 0) {
-                        root[root.length-1].click()
-                    }
-                })
 
-                success = await waitForPage(7)
-                if (success) {
-                    await page.evaluate(() => {
-                        let root = document.querySelectorAll('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
-                        if (root && root.length > 0) {
-                            root[root.length-1].click()
-                        }
-                    })
-                    return await waitForPage(5)
-                }
+async function waitForRecoveryType(recovery, again) {
+    let timeout = 0
+    while (true) {
+        timeout++
+        
+        let exists = await page.evaluate(() => {
+            let root = document.querySelector('input[type="email"]')
+            if (root) {
+                return true
             }
+            return false
+        })
+
+        if (exists) {
+            await page.type('input[type="email"]', recovery)
+            await delay(500)
+            let success = await page.evaluate((recovery) => {
+                try {
+                    let data = document.querySelector('input[type="email"]').value
+                    if (data == recovery) {
+                        return true
+                    }
+                } catch (error) {}
+
+                return false
+            }, recovery)
+
+            if (success) {
+                timeout = 0
+                break
+            } else {
+                await delay(1000)
+            }
+        } else {
+            await delay(1000)
         }
-        return true
+
+        if (timeout > 10) {
+            timeout = 99
+            break
+        }
     }
-    return false
+
+    if (timeout == 0) {
+        return true
+    } else if (again) {
+        return false
+    } else {
+        await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
+        await delay(1000)
+        return await waitForRecoveryType(recovery, true)
+    }
 }
 
 async function waitForPage(type) {
@@ -348,19 +373,7 @@ async function waitForPage(type) {
                 timeout = 0
                 break
             }
-        } else if(type == 6 && url.startsWith('https://accounts.google.com/lifecycle/steps/signup/expresssettings')) {
-            let data = await exists('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
-            if (data) {
-                timeout = 0
-                break
-            }
-        } else if(type == 7 && url.startsWith('https://accounts.google.com/lifecycle/steps/signup/confirmpersonalizationsettings')) {
-            let data = await exists('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 xYnMae TrZEUc lw1w4b"]')
-            if (data) {
-                timeout = 0
-                break
-            }
-        } else if(type == 8) {
+        } else if(type == 6) {
             timeout++
             await delay(1000)
             try {
@@ -382,7 +395,7 @@ async function waitForPage(type) {
                     break
                 }
             } catch (error) {}
-        } else if (type == 9) {
+        } else if (type == 7) {
             let data = await exists('input[type="text"][inputmode="numeric"]')
             if (data) {
                 timeout = 0
