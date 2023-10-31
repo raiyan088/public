@@ -24,6 +24,7 @@ console.log('\n')
 console.log('\n')
 console.log('------------START PROCESS------------')
 console.log('\n')
+console.log('---------'+getStringTime()+'---------')
 console.log('\n')
 
 startWork()
@@ -658,6 +659,29 @@ function getRandomMonth() {
 
 function getRandomDay() {
     return  (Math.floor((Math.random() * 28))+1).toString()
+}
+
+function getStringTime() {
+    var d = new Date(),
+        month = ''+(d.getMonth() + 1),
+        day = ''+d.getDate(),
+        year = d.getFullYear(),
+        hour = ''+d.setHours(),
+        minute = ''+d.setMinutes(),
+        second = ''+d.setSeconds()
+
+    if (month.length < 2) 
+        month = '0' + month
+    if (day.length < 2) 
+        day = '0' + day
+    if (hour.length < 2) 
+        hour = '0' + hour
+    if (minute.length < 2) 
+        minute = '0' + minute
+    if (second.length < 2) 
+        second = '0' + second
+
+    return [day, month, year].join('-')+' '+[hour, minute, second].join(':')
 }
 
 function delay(time) {
