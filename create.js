@@ -107,7 +107,6 @@ async function browserStart() {
 
 async function createAccount() {
     console.log('------------START------------')
-    console.log('')
 
     let user = mName[0].toLowerCase().replace(/[^a-z]/g, '')+getRandomNumber()
     let recovery = mRecovery[Math.floor((Math.random() * mRecovery.length))]
