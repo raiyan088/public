@@ -14,18 +14,42 @@ let mAddAccount = 0
 let mRecovery = []
 let IP = null
 let mError = 0
+let mStatus = 0
+
+
+let mStart = new Date().getTime()+90000
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dtYWlsLw==', 'base64').toString('ascii')
 
 puppeteer.use(StealthPlugin())
 
+setInterval(async() => {
+    if (mStart < new Date().getTime()) {                                    
+        try {
+            await page.close()
+            await delay(1000)
 
-console.log('\n')
-console.log('\n')
-console.log('------------START PROCESS------------')
-console.log('\n')
-console.log('---------'+getStringTime()+'---------')
-console.log('\n')
+            mStart = new Date().getTime()+30000
+            
+            if (mAddAccount < 10) {
+                browserStart()
+            } else {
+                console.log('-IP CHANGE-')
+                process.exit(0)
+            }
+        } catch (error) {
+            console.log('---ERROR---')
+            process.exit(0)
+        }
+    }
+}, 20000)
+
+console.log('---     ---')
+console.log('   -----   ')
+console.log('---START---')
+console.log('---'+getStringTime()+'---')
+console.log('   -----   ')
+console.log('---     ---')
 
 startWork()
 
@@ -40,8 +64,7 @@ async function startWork() {
                 let api = await getAxios('http://ip-api.com/json')
                 let data = api.data
                 IP = data['query']
-                console.log('IP: '+IP)
-                console.log('Country: '+data['country'])
+                console.log('Country: '+data['countryCode'])
                 
                 let key = IP.replace(/[.]/g, '_')
                 let mIP = await getAxios(BASE_URL+'ip/'+key+'.json')
@@ -56,24 +79,22 @@ async function startWork() {
                     mAddAccount = 0
                 }
 
-                console.log('Size:', mAddAccount)
-
                 if (mAddAccount < 10) {
                     browserStart()
                 } else {
-                    console.log('Please Change Your IP Adress')
+                    console.log('-IP CHANGE-')
                     process.exit(0)
                 }
             } catch (error) {
-                console.log('Somthing Error')
+                console.log('---ERROR---')
                 process.exit(0)
             }
         } else {
-            console.log('Name List Null')
+            console.log('--N: NULL--')
             process.exit(0)
         }
     } catch (error) {
-        console.log('Somthing Error')
+        console.log('---ERROR---')
         process.exit(0)
     }
 }
@@ -82,6 +103,8 @@ async function startWork() {
 async function browserStart() {
 
     try {
+        mStart = new Date().getTime()+90000
+
         let browser = await puppeteer.launch({
             //headless: false,
             headless: 'new',
@@ -101,13 +124,13 @@ async function browserStart() {
         await createAccount()
         
     } catch (error) {
-        console.log('Somthing Error')
+        console.log('---ERROR---')
         process.exit(0)
     }
 }
 
 async function createAccount() {
-    console.log('------------START------------')
+    console.log('-START: '+getAccountSize()+'-')
 
     let user = mName[0].toLowerCase().replace(/[^a-z]/g, '')+getRandomNumber()
     let recovery = mRecovery[Math.floor((Math.random() * mRecovery.length))]
@@ -126,7 +149,7 @@ async function createAccount() {
     await page.click('#collectNameNext')
     let success = await waitForPage(0)
     if (success) {
-        console.log('Status:', 1)
+        mStatus = 1
         let TL = await getTL()
         if (TL) {
             let year = getRandomYear()
@@ -147,104 +170,105 @@ async function createAccount() {
             await page.click(next)
             success = await waitForPage(1)
             if (success) {
-                console.log('Status:', 2)
+                mStatus = 2
                 await page.type(input, user)
                 await delay(500)
                 await page.click(next)
                 success = await waitForPage(2)
                 if (success) {
-                    console.log('Status:', 3)
+                    mStatus = 3
                     await page.type(input, map['password'])
                     await delay(500)
                     await page.click(next)
                     success = await waitForPage(3)
                     if (success) {
-                        console.log('Status:', 4)
+                        mStatus = 4
                         await delay(1000)
                         await skipNumber()
                         success = await waitForPage(4)
                         if (success) {
-                            console.log('Status:', 5)
+                            mStatus = 5
                             await page.click(next)
                             await page.waitForNavigation({ waitUntil: ['load'] })
                             success = await waitForPage(5)
                             if (success) {
-                                console.log('Status:', 6)
+                                mStatus = 6
                                 await page.click(next)
                                 await delay(1000)
                                 await dialogConfirm()
                                 success = await waitForPage(6)
                                 if (success) {
-                                    console.log('Status:', 7)
+                                    mStatus = 7
                                     await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
                                     await delay(1000)
                                     success = await waitForRecoveryType(map['recovery'], false)
                                     if (success) {
-                                        console.log('Status:', 9)
+                                        mStatus = 9
                                         await delay(500)
                                         await addRecovery()
                                         await delay(500)
                                         success = await waitForPage(7)
                                         if (success) {
-                                            console.log('Status:', 10)
+                                            mStatus = 10
                                             await saveData(user, map)
                                             await delay(1000)
                                             await page.close()
                                             await delay(1000)
 
-                                            console.log('------------END------------')
+                                            mStart = new Date().getTime()+30000
+
+                                            console.log('--END: '+getAccountSize()+'--')
+                                            console.log('---'+getStringTime()+'---')
                                             
                                             try {
-                                                console.log('Size: ', mAddAccount)
-                                        
                                                 if (mAddAccount < 10) {
                                                     browserStart()
                                                 } else {
-                                                    console.log('Please Change Your IP Adress')
+                                                    console.log('-IP CHANGE-')
                                                     process.exit(0)
                                                 }
                                             } catch (error) {
-                                                console.log('Somthing Error')
+                                                console.log('---ERROR---')
                                                 process.exit(0)
                                             }
                                         } else {
-                                            console.log('Timeout: Completed')
+                                            console.log('-TIMEOUT:9-')
                                             await errorHandling()
                                         }
                                     } else {
-                                        console.log('Timeout: Recovery-Add')
+                                        console.log('-TIMEOUT:8-')
                                         await errorHandling()
                                     }
                                 } else {
-                                    console.log('Timeout: Account-Create-Success')
+                                    console.log('-TIMEOUT:7-')
                                     await errorHandling()
                                 }
                             } else {
-                                console.log('Timeout: Create-Finish')
+                                console.log('-TIMEOUT:6-')
                                 await errorHandling()
                             }
                         } else {
-                            console.log('Timeout: Account-Confirm')
+                            console.log('-TIMEOUT:5-')
                             await errorHandling()
                         }
                     } else {
-                        console.log('Timeout: Number-Skip')
+                        console.log('-TIMEOUT:4-')
                         await errorHandling()
                     }
                 } else {
-                    console.log('Timeout: Password')
+                    console.log('-TIMEOUT:3-')
                     await errorHandling()
                 }
             } else {
-                console.log('Timeout: Gmail')
+                console.log('-TIMEOUT:2-')
                 await errorHandling()
             }
         } else {
-            console.log('TL Token Not Found')
+            console.log('-TIMEOUT:1-')
             await errorHandling()
         }
     } else {
-        console.log('Timeout: Birthday')
+        console.log('-TIMEOUT:0-')
         await errorHandling()
     }
 }
@@ -254,7 +278,7 @@ async function errorHandling() {
         mError++
 
         if (mError > 3) {
-            console.log('Please Change Your IP Adress')
+            console.log('-IP CHANGE-')
             process.exit(0)
         } else {
             await page.close()
@@ -263,17 +287,15 @@ async function errorHandling() {
             mName.shift()
             mAddAccount++
     
-            console.log('Size: ', mAddAccount)
-    
             if (mAddAccount < 10) {
                 browserStart()
             } else {
-                console.log('Please Change Your IP Adress')
+                console.log('-IP CHANGE-')
                 process.exit(0)
             }
         }
     } catch (error) {
-        console.log('Somthing Error')
+        console.log('---ERROR---')
         process.exit(0)
     }
 }
@@ -324,7 +346,7 @@ async function waitForRecoveryType(recovery, again) {
 
     if (timeout == 0) {
         if(!again) {
-            console.log('Status:', 8)
+            mStatus = 8
         }
         return true
     } else if (again) {
@@ -522,7 +544,7 @@ async function saveData(user, map) {
 
         fs.writeFileSync('temp_name.json', JSON.stringify(mName))
     } catch (error) {
-        console.log(error)
+        console.log('---ERROR---')
     }
 }
 
@@ -537,7 +559,6 @@ async function getAxios(url) {
             break
         } catch (error) {
             loop++
-            console.log('Responce Error: '+loop)
 
             if (loop >= 5) {
                 break
@@ -560,7 +581,6 @@ async function patchAxios(url, body, data) {
             break
         } catch (error) {
             loop++
-            console.log('Responce Error: '+loop)
 
             if (loop >= 5) {
                 break
@@ -675,25 +695,23 @@ function getRandomDay() {
 
 function getStringTime() {
     var d = new Date(),
-        month = ''+(d.getMonth() + 1),
-        day = ''+d.getDate(),
-        year = d.getFullYear(),
         hour = ''+d.getHours(),
-        minute = ''+d.getMinutes(),
-        second = ''+d.getSeconds()
+        minute = ''+d.getMinutes()
 
-    if (month.length < 2) 
-        month = '0' + month
-    if (day.length < 2) 
-        day = '0' + day
     if (hour.length < 2) 
         hour = '0' + hour
     if (minute.length < 2) 
         minute = '0' + minute
-    if (second.length < 2) 
-        second = '0' + second
 
-    return [day, month, year].join('-')+' '+[hour, minute, second].join(':')
+    return [hour, minute].join(':')
+}
+
+function getAccountSize() {
+    let size = ''+(mAddAccount+1)
+    if (size.length == 1) {
+        return '0'+size
+    }
+    return size
 }
 
 function delay(time) {
