@@ -44,7 +44,7 @@ setInterval(async() => {
     }
 }, 20000)
 
-console.log('|R|---START---')
+console.log('|R|---START---|R|')
 console.log('|X|---'+getStringTime()+'---')
 
 startWork()
