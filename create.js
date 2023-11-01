@@ -34,22 +34,18 @@ setInterval(async() => {
             if (mAddAccount < 10) {
                 browserStart()
             } else {
-                console.log('-IP CHANGE-')
+                console.log('|*|-IP CHANGE-')
                 process.exit(0)
             }
         } catch (error) {
-            console.log('---ERROR---')
+            console.log('|*|---ERROR---')
             process.exit(0)
         }
     }
 }, 20000)
 
-console.log('---     ---')
-console.log('   -----   ')
-console.log('---START---')
-console.log('---'+getStringTime()+'---')
-console.log('   -----   ')
-console.log('---     ---')
+console.log('|R|---START---')
+console.log('|X|---'+getStringTime()+'---')
 
 startWork()
 
@@ -64,7 +60,7 @@ async function startWork() {
                 let api = await getAxios('http://ip-api.com/json')
                 let data = api.data
                 IP = data['query']
-                console.log('Country: '+data['countryCode'])
+                console.log('|T|----'+data['countryCode']+'-----')
                 
                 let key = IP.replace(/[.]/g, '_')
                 let mIP = await getAxios(BASE_URL+'ip/'+key+'.json')
@@ -82,19 +78,19 @@ async function startWork() {
                 if (mAddAccount < 10) {
                     browserStart()
                 } else {
-                    console.log('-IP CHANGE-')
+                    console.log('|*|-IP CHANGE-')
                     process.exit(0)
                 }
             } catch (error) {
-                console.log('---ERROR---')
+                console.log('|*|---ERROR---')
                 process.exit(0)
             }
         } else {
-            console.log('--N: NULL--')
+            console.log('|*|--N: NULL--')
             process.exit(0)
         }
     } catch (error) {
-        console.log('---ERROR---')
+        console.log('|*|---ERROR---')
         process.exit(0)
     }
 }
@@ -124,13 +120,13 @@ async function browserStart() {
         await createAccount()
         
     } catch (error) {
-        console.log('---ERROR---')
+        console.log('|*|---ERROR---')
         process.exit(0)
     }
 }
 
 async function createAccount() {
-    console.log('-START: '+getAccountSize()+'-')
+    console.log('|*|-START: '+getAccountSize()+'-')
 
     let user = mName[0].toLowerCase().replace(/[^a-z]/g, '')+getRandomNumber()
     let recovery = mRecovery[Math.floor((Math.random() * mRecovery.length))]
@@ -217,58 +213,58 @@ async function createAccount() {
 
                                             mStart = new Date().getTime()+30000
 
-                                            console.log('--END: '+getAccountSize()+'--')
-                                            console.log('---'+getStringTime()+'---')
+                                            console.log('|*|--END: '+getAccountSize()+'--')
+                                            console.log('|*|---'+getStringTime()+'---')
                                             
                                             try {
                                                 if (mAddAccount < 10) {
                                                     browserStart()
                                                 } else {
-                                                    console.log('-IP CHANGE-')
+                                                    console.log('|*|-IP CHANGE-')
                                                     process.exit(0)
                                                 }
                                             } catch (error) {
-                                                console.log('---ERROR---')
+                                                console.log('|*|---ERROR---')
                                                 process.exit(0)
                                             }
                                         } else {
-                                            console.log('-TIMEOUT:9-')
+                                            console.log('|*|-TIMEOUT:9-')
                                             await errorHandling()
                                         }
                                     } else {
-                                        console.log('-TIMEOUT:8-')
+                                        console.log('|*|-TIMEOUT:8-')
                                         await errorHandling()
                                     }
                                 } else {
-                                    console.log('-TIMEOUT:7-')
+                                    console.log('|*|-TIMEOUT:7-')
                                     await errorHandling()
                                 }
                             } else {
-                                console.log('-TIMEOUT:6-')
+                                console.log('|*|-TIMEOUT:6-')
                                 await errorHandling()
                             }
                         } else {
-                            console.log('-TIMEOUT:5-')
+                            console.log('|*|-TIMEOUT:5-')
                             await errorHandling()
                         }
                     } else {
-                        console.log('-TIMEOUT:4-')
+                        console.log('|*|-TIMEOUT:4-')
                         await errorHandling()
                     }
                 } else {
-                    console.log('-TIMEOUT:3-')
+                    console.log('|*|-TIMEOUT:3-')
                     await errorHandling()
                 }
             } else {
-                console.log('-TIMEOUT:2-')
+                console.log('|*|-TIMEOUT:2-')
                 await errorHandling()
             }
         } else {
-            console.log('-TIMEOUT:1-')
+            console.log('|*|-TIMEOUT:1-')
             await errorHandling()
         }
     } else {
-        console.log('-TIMEOUT:0-')
+        console.log('|*|-TIMEOUT:0-')
         await errorHandling()
     }
 }
@@ -278,7 +274,7 @@ async function errorHandling() {
         mError++
 
         if (mError > 3) {
-            console.log('-IP CHANGE-')
+            console.log('|*|-IP CHANGE-')
             process.exit(0)
         } else {
             await page.close()
@@ -290,12 +286,12 @@ async function errorHandling() {
             if (mAddAccount < 10) {
                 browserStart()
             } else {
-                console.log('-IP CHANGE-')
+                console.log('|*|-IP CHANGE-')
                 process.exit(0)
             }
         }
     } catch (error) {
-        console.log('---ERROR---')
+        console.log('|*|---ERROR---')
         process.exit(0)
     }
 }
@@ -544,7 +540,7 @@ async function saveData(user, map) {
 
         fs.writeFileSync('temp_name.json', JSON.stringify(mName))
     } catch (error) {
-        console.log('---ERROR---')
+        console.log('|*|---ERROR---')
     }
 }
 
