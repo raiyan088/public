@@ -126,6 +126,7 @@ async function createAccount() {
     await page.click('#collectNameNext')
     let success = await waitForPage(0)
     if (success) {
+        console.log('Status:', 1)
         let TL = await getTL()
         if (TL) {
             let year = getRandomYear()
@@ -146,38 +147,46 @@ async function createAccount() {
             await page.click(next)
             success = await waitForPage(1)
             if (success) {
+                console.log('Status:', 2)
                 await page.type(input, user)
                 await delay(500)
                 await page.click(next)
                 success = await waitForPage(2)
                 if (success) {
+                    console.log('Status:', 3)
                     await page.type(input, map['password'])
                     await delay(500)
                     await page.click(next)
                     success = await waitForPage(3)
                     if (success) {
+                        console.log('Status:', 4)
                         await delay(1000)
                         await skipNumber()
                         success = await waitForPage(4)
                         if (success) {
+                            console.log('Status:', 5)
                             await page.click(next)
                             await page.waitForNavigation({ waitUntil: ['load'] })
                             success = await waitForPage(5)
                             if (success) {
+                                console.log('Status:', 6)
                                 await page.click(next)
                                 await delay(1000)
                                 await dialogConfirm()
                                 success = await waitForPage(6)
                                 if (success) {
+                                    console.log('Status:', 7)
                                     await page.goto('https://myaccount.google.com/recovery/email', { waitUntil: 'load', timeout: 0 })
                                     await delay(1000)
                                     success = await waitForRecoveryType(map['recovery'], false)
                                     if (success) {
+                                        console.log('Status:', 9)
                                         await delay(500)
                                         await addRecovery()
                                         await delay(500)
                                         success = await waitForPage(7)
                                         if (success) {
+                                            console.log('Status:', 10)
                                             await saveData(user, map)
                                             await delay(1000)
                                             await page.close()
@@ -314,6 +323,9 @@ async function waitForRecoveryType(recovery, again) {
     }
 
     if (timeout == 0) {
+        if(!again) {
+            console.log('Status:', 8)
+        }
         return true
     } else if (again) {
         return false
