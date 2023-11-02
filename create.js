@@ -229,6 +229,11 @@ async function createAccount() {
                                             }
                                         } else {
                                             console.log('|*|-TIMEOUT:9-')
+                                            await page.screenshot({
+                                                path: 'screenshot.jpg'
+                                            })
+                                            let content = await page.content()
+                                            fs.writeFileSync('timeout.html', content)
                                             await errorHandling()
                                         }
                                     } else {
