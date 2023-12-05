@@ -1,21 +1,40 @@
-const { exec } = require('child_process')
+var ks = require('node-key-sender')
 
-let process = null
-let n = 0
 
-connect()
-
-async function connect() {
-    process = exec('tasklist')
-
-    process.stdout.on('data', (data) => {
-        let log = data.toString().trimStart().trimEnd()
-        if (log == 'provisioner.exe') {
-            console.log(log)
-            n = 1
-        } else if (n == 1) {
-	    n = 2
-            console.log(log)
+process.argv.slice(2).forEach(function (data, index) {
+    try {
+        if (index == 0) {
+            if (data == '0' || data == 0) {
+                ks.sendCombination(['windows', 'r'])
+                setTimeout(() => {
+                    ks.startBatch().batchTypeText('cmd').sendBatch()
+                }, 2000)
+            } else {
+                startProcess()
+            }
         }
+    } catch (error) {}
+})
+
+async function startProcess() {
+    ks.sendCombination(['windows', 'r'])
+    await delay(500)
+    ks.startBatch().batchTypeText('cmd').sendBatch()
+    await delay(500)
+    ks.sendKey('enter')
+    await delay(2000)
+    ks.startBatch().batchTypeText('cd Desktop/raiyan').sendBatch()
+    await delay(1000)
+    ks.sendKey('enter')
+    await delay(500)
+    ks.startBatch().batchTypeText('node create').sendBatch()
+    await delay(500)
+    ks.sendKey('enter')
+    await delay(6000)
+}
+
+function delay(time) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve, time)
     })
 }
