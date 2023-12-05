@@ -32,7 +32,7 @@ async function startProcess() {
     await delay(500)
     ks.sendKey('enter')
     console.log('Run Completed')
-    await delay(6000)
+    await delay(3000)
     try {
         await killProcess()
     } catch (error) {}
