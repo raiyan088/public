@@ -1,4 +1,5 @@
-var ks = require('node-key-sender')
+const { exec } = require('child_process')
+const ks = require('node-key-sender')
 
 
 process.argv.slice(2).forEach(function (data, index) {
@@ -31,7 +32,16 @@ async function startProcess() {
     await delay(500)
     ks.sendKey('enter')
     await delay(6000)
+    try {
+        await killProcess()
+    } catch (error) {}
 }
+
+async function killProcess() {
+    process = exec('taskkill/IM provisioner.exe')
+    process.stdout.on('data', (data) => {})
+}
+
 
 function delay(time) {
     return new Promise(function(resolve) {
