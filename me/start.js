@@ -2,7 +2,7 @@ var ks = require('node-key-sender')
 
 
 ks.sendCombination(['windows', 'r'])
-ks.batchTypeText('cmd')
+ks.startBatch().batchTypeText('cmd').sendBatch()
 setTimeout(() => {
     ks.sendKey('enter')
 }, 500)
