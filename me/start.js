@@ -23,8 +23,12 @@ async function startProcess() {
     await delay(500)
     ks.sendKey('enter')
     await delay(2000)
-    ks.startBatch().batchTypeText('node -v').sendBatch()
-    await delay(500)
+    ks.startBatch().batchTypeText('cd Desktop/raiyam').sendBatch()
+    await delay(100)
+    ks.sendKey('enter')
+    await delay(100)
+    ks.startBatch().batchTypeText('node create').sendBatch()
+    await delay(100)
     ks.sendKey('enter')
 }
 
