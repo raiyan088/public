@@ -30,6 +30,7 @@ async function startProcess() {
     ks.startBatch().batchTypeText('node create').sendBatch()
     await delay(500)
     ks.sendKey('enter')
+    await delay(60000)
 }
 
 function delay(time) {
