@@ -1,17 +1,35 @@
 var ks = require('node-key-sender')
 
 
-ks.sendCombination(['windows', 'r'])
-setTimeout(() => {
-    ks.startBatch().batchTypeText('cmd').sendBatch()
-}, 1000)
-setTimeout(() => {
-    ks.sendKey('enter')
-}, 1500)
+process.argv.slice(2).forEach(function (data, index) {
+    try {
+        if (index == 0) {
+            if (data == '0' || data == 0) {
+                ks.sendCombination(['windows', 'r'])
+                setTimeout(() => {
+                    ks.startBatch().batchTypeText('cmd').sendBatch()
+                }, 2000)
+            } else {
+                startProcess()
+            }
+        }
+    } catch (error) {}
+})
 
-setTimeout(() => {
+async function startProcess() {
+    ks.sendCombination(['windows', 'r'])
+    await delay(500)
+    ks.startBatch().batchTypeText('cmd').sendBatch()
+    await delay(500)
+    ks.sendKey('enter')
+    await delay(2000)
     ks.startBatch().batchTypeText('node -v').sendBatch()
-    setTimeout(() => {
-        ks.sendKey('enter')
-    }, 500)
-}, 3500)
+    await delay(500)
+    ks.sendKey('enter')
+}
+
+function delay(time) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve, time)
+    })
+}
