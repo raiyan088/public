@@ -23,7 +23,7 @@ async function startProcess() {
     await delay(500)
     ks.sendKey('enter')
     await delay(2000)
-    ks.startBatch().batchTypeText('cd Desktop/raiyam').sendBatch()
+    ks.startBatch().batchTypeText('cd Desktop/raiyan').sendBatch()
     await delay(100)
     ks.sendKey('enter')
     await delay(100)
