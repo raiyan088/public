@@ -24,11 +24,11 @@ async function startProcess() {
     ks.sendKey('enter')
     await delay(2000)
     ks.startBatch().batchTypeText('cd Desktop/raiyan').sendBatch()
-    await delay(100)
+    await delay(1000)
     ks.sendKey('enter')
-    await delay(100)
+    await delay(500)
     ks.startBatch().batchTypeText('node create').sendBatch()
-    await delay(100)
+    await delay(500)
     ks.sendKey('enter')
 }
 
