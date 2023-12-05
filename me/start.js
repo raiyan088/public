@@ -34,7 +34,7 @@ async function startProcess() {
     console.log('Run Completed')
     await delay(6000)
     try {
-        await killProcess()
+        //await killProcess()
     } catch (error) {}
     console.log('Kill Process')
     await delay(60000)
