@@ -31,10 +31,14 @@ async function startProcess() {
     ks.startBatch().batchTypeText('node create').sendBatch()
     await delay(500)
     ks.sendKey('enter')
+    console.log('Run Completed')
     await delay(6000)
     try {
         await killProcess()
     } catch (error) {}
+    console.log('Kill Process')
+    await delay(60000)
+    console.log('Success')
 }
 
 async function killProcess() {
