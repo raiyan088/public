@@ -1,18 +1,15 @@
 {
-  "name": "found",
+  "name": "CMD",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node start.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.20.1",
-    "express": "^4.18.2",
-    "http": "^0.0.1-security",
-    "puppeteer": "^0.10.0"
+    "node-key-sender": "^1.0.11"
   }
 }
