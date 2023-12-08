@@ -474,7 +474,7 @@ async function waitForFinish() {
                     })
     
                     if (data) {
-                        if (data.includes('★★★--START--★★★')) {
+                        if (data.includes('★★★--START--★★★#'+mData+'#')) {
                             mLogStart = true
                         }
                         
