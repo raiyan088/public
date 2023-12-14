@@ -134,38 +134,31 @@ async function startBrowser(data) {
                 mPrevLog = ''
                 mLogStart = false
                 mDisconnect = false
-                await waitForFinish()
+                let mCompleted = await waitForFinish()
                 console.log('##-COMPLETED-'+getID())
-                await removeCaptha()
-                await delay(1000)
-                await waitForDisconnected()
-                await delay(2000)
-                console.log('##--DISMISS--'+getID())
-                if (start < new Date().getTime()) {
-                    await page.goto('https://colab.research.google.com/drive/1fo2UYtAkRKTWqvDM6PkOlfZo5B6odYwB', { waitUntil: 'load', timeout: 0 })
-                    await waitForSelector('colab-connect-button')
-                    await delay(2000)
-                    await saveCookies()
-                    mArrowUp = true
-                    await page.keyboard.press('ArrowUp')
-                    await page.keyboard.down('Control')
-                    await page.keyboard.press('Enter')
-                    await page.keyboard.up('Control')
-                    await waitForSelector('mwc-dialog[class="wide"]')
+                if (!mCompleted) {
+                    await removeCaptha()
                     await delay(1000)
-                    await page.keyboard.press('Tab')
-                    await delay(200)
-                    await page.keyboard.press('Tab')
-                    await delay(200)
-                    await page.keyboard.press('Enter')
-                    start = new Date().getTime()+300000
-                } else {
-                    mArrowUp = true
-                    await page.keyboard.press('ArrowUp')
-                    await page.keyboard.down('Control')
-                    await page.keyboard.press('Enter')
-                    await page.keyboard.up('Control')
+                    await waitForDisconnected()
+                    await delay(2000)
+                    console.log('##--DISMISS--'+getID()) 
                 }
+                await page.goto('https://colab.research.google.com/drive/1fo2UYtAkRKTWqvDM6PkOlfZo5B6odYwB', { waitUntil: 'load', timeout: 0 })
+                await waitForSelector('colab-connect-button')
+                await delay(2000)
+                await saveCookies()
+                mArrowUp = true
+                await page.keyboard.press('ArrowUp')
+                await page.keyboard.down('Control')
+                await page.keyboard.press('Enter')
+                await page.keyboard.up('Control')
+                await waitForSelector('mwc-dialog[class="wide"]')
+                await delay(1000)
+                await page.keyboard.press('Tab')
+                await delay(200)
+                await page.keyboard.press('Tab')
+                await delay(200)
+                await page.keyboard.press('Enter')
                 let success = await checkConnected()
                 if (success) {
                     console.log('##-CONNECTED-'+getID())
@@ -383,6 +376,8 @@ async function waitForPasswordType(password) {
 async function waitForFinish() {
     let time = 0
 
+    let mCompleted = false
+
     while (true) {
         await delay(3000)
         time += 3
@@ -432,6 +427,11 @@ async function waitForFinish() {
 
                 if (value && value == 'Reconnect') {
                     mDisconnect = true
+                    mCompleted = true
+                    let has = await exists('mwc-button[dialogaction="cancel"]')
+                    if (has) {
+                        await page.click('mwc-button[dialogaction="cancel"]')
+                    }
                 } else {
                     mDisconnect = await page.evaluate(() => {
                         let root = document.querySelector('[aria-label="Run cell"]')
@@ -443,6 +443,12 @@ async function waitForFinish() {
                         }
                         return false
                     })
+                }
+            } else {
+                mCompleted = true
+                let has = await exists('mwc-button[dialogaction="cancel"]')
+                if (has) {
+                    await page.click('mwc-button[dialogaction="cancel"]')
                 }
             }
 
@@ -494,6 +500,8 @@ async function waitForFinish() {
             }
         } catch (error) {}
     }
+
+    return mCompleted
 }
 
 async function waitForDisconnected() {
@@ -613,8 +621,15 @@ async function checkConnected() {
 }
 
 
-async function waitForSelector(element) {
+async function waitForSelector(element, _timeout) {
+    let timeout = 60
+
+    if (_timeout != null) {
+        timeout = _timeout
+    }
+
     while (true) {
+        timeout--
         await delay(1000)
         try {
             let data = await exists(element)
@@ -622,6 +637,10 @@ async function waitForSelector(element) {
                 break
             }
         } catch (error) {}
+
+        if (timeout <= 0) {
+            break
+        }
     }
 }
 
