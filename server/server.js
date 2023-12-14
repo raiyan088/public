@@ -626,8 +626,15 @@ async function checkConnected() {
 }
 
 
-async function waitForSelector(element) {
+async function waitForSelector(element, _timeout) {
+    let timeout = 60
+
+    if (_timeout != null) {
+        timeout = _timeout
+    }
+
     while (true) {
+        timeout--
         await delay(1000)
         try {
             let data = await exists(element)
@@ -635,6 +642,10 @@ async function waitForSelector(element) {
                 break
             }
         } catch (error) {}
+
+        if (timeout <= 0) {
+            break
+        }
     }
 }
 
