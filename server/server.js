@@ -63,7 +63,6 @@ async function readCookies() {
 async function startBrowser(data) {
     try {
         browser = await puppeteer.launch({
-            executablePath: '/usr/bin/google-chrome-stable',
             headless: false,
             headless: 'new',
             args: [
