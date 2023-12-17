@@ -14,7 +14,7 @@ let mData = 0
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dtYWlsLw==', 'base64').toString('ascii')
 
-let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fcolab.research.google.com%2Fdrive%2F1f0oVyQCqELtvbRQTyyBkmDpar_e4nrjY&ec=GAZAqQM&ifkv=AVQVeywxh6y4_WIE0MDR0rgdX-zq-dVw_5JlyI40eMGfPdYPrn0ax8ghA0BlXIfYbZNrWur_L03t&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1677059645%3A1698307841046563&theme=glif'
+let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fcolab.research.google.com%2Fdrive%2F118bn_FQSqA42EDEricZusGTn5Do_gCWC&ec=GAZAqQM&ifkv=AVQVeywxh6y4_WIE0MDR0rgdX-zq-dVw_5JlyI40eMGfPdYPrn0ax8ghA0BlXIfYbZNrWur_L03t&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S-1677059645%3A1698307841046563&theme=glif'
 
 puppeteer.use(StealthPlugin())
 
@@ -91,7 +91,7 @@ async function startBrowser(data) {
 
         if (data['cookies']) {
             await page.setCookie(...data['cookies'])
-            await page.goto('https://colab.research.google.com/drive/1f0oVyQCqELtvbRQTyyBkmDpar_e4nrjY', { waitUntil: 'load', timeout: 0 })
+            await page.goto('https://colab.research.google.com/drive/118bn_FQSqA42EDEricZusGTn5Do_gCWC', { waitUntil: 'load', timeout: 0 })
         } else {
             mLoginFailed = true
         }
@@ -132,15 +132,17 @@ async function startBrowser(data) {
             while (true) {
                 mPrevLog = ''
                 mLogStart = false
-                await waitForFinish()
+                let mCompleted = await waitForFinish()
                 console.log('||-COMPLETED-'+getID())
-                await removeCaptha()
-                await delay(1000)
-                await waitForDisconnected()
-                await delay(2000)
-                console.log('||--DISMISS--'+getID())
-                if (start < new Date().getTime()) {
-                    await page.goto('https://colab.research.google.com/drive/1f0oVyQCqELtvbRQTyyBkmDpar_e4nrjY', { waitUntil: 'load', timeout: 0 })
+                if (!mCompleted) {
+                    await removeCaptha()
+                    await delay(1000)
+                    await waitForDisconnected()
+                    await delay(2000)
+                    console.log('||--DISMISS--'+getID())
+                }
+                if (start < new Date().getTime() || mCompleted) {
+                    await page.goto('https://colab.research.google.com/drive/118bn_FQSqA42EDEricZusGTn5Do_gCWC', { waitUntil: 'load', timeout: 0 })
                     await waitForSelector('colab-connect-button')
                     await delay(2000)
                     await saveCookies()
@@ -305,7 +307,7 @@ async function waitForLoginSuccess(selection) {
                 status = 1
                 break
             } else if (pageUrl.startsWith('https://gds.google.com/web/chip')) {
-                await page.goto('https://colab.research.google.com/drive/1f0oVyQCqELtvbRQTyyBkmDpar_e4nrjY', { waitUntil: 'load', timeout: 0 })
+                await page.goto('https://colab.research.google.com/drive/118bn_FQSqA42EDEricZusGTn5Do_gCWC', { waitUntil: 'load', timeout: 0 })
                 status = 1
                 break
             } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('pwd')) {
@@ -380,64 +382,107 @@ async function waitForPasswordType(password) {
 
 async function waitForFinish() {
     let time = 0
+
+    let mCompleted = false
+
     while (true) {
         await delay(3000)
         time += 3
+
         try {
-            let check = await page.evaluate(() => {
-                let root = document.querySelector('[aria-label="Run cell"]')
+            await removeCaptha()
+
+            if (time >= 60) {
+                time = 0
+                if(mArrowUp) {
+                    mArrowUp = false
+                    await page.keyboard.press('ArrowDown')
+                } else {
+                    mArrowUp = true
+                    await page.keyboard.press('ArrowUp')
+                }
+            }
+
+            mDisconnect = await page.evaluate(() => {
+                let root = document.querySelector('mwc-dialog[class="disconnected-dialog yes-no-dialog"]')
                 if (root) {
-                    let status = root.shadowRoot.querySelector('#status')
-                    if (status) {
-                        return true
-                    }
+                    return true
                 }
                 return false
             })
 
-            if (check) {
-                break
-            } else {
-                await removeCaptha()
 
-                if (time >= 60) {
-                    time = 0
-                    if(mArrowUp) {
-                        mArrowUp = false
-                        await page.keyboard.press('ArrowDown')
-                    } else {
-                        mArrowUp = true
-                        await page.keyboard.press('ArrowUp')
-                    }
-                }
-                
-                let data = await page.evaluate(() => {
-                    let root = document.querySelector('colab-static-output-renderer')
-                    if (root) {
-                        return root.innerText
+            if (!mDisconnect) {
+                const value = await page.evaluate(() => {
+                    let colab = document.querySelector('colab-connect-button')
+                    if(colab) {
+                        let display = colab.shadowRoot.querySelector('#connect-button-resource-display')
+                        if (display) {
+                            let ram = display.querySelector('.ram')
+                            if (ram) {
+                                return ram.shadowRoot.querySelector('.label').innerText
+                            }
+                        } else {
+                            let connect = colab.shadowRoot.querySelector('#connect')
+                            if (connect) {
+                                return connect.innerText
+                            }
+                        }
                     }
                     return null
                 })
 
-                if (data) {
-                    if (data.includes('|R|---START---|R|')) {
-                        mLogStart = true
+                if (value && value == 'Reconnect') {
+                    mDisconnect = true
+                    mCompleted = true
+                    let has = await exists('mwc-button[dialogaction="cancel"]')
+                    if (has) {
+                        await page.click('mwc-button[dialogaction="cancel"]')
                     }
-                    
-                    if (mLogStart) {
-                        let log = data.replace(mPrevLog, '').trimStart().trimEnd()
-                        if (log.length > 0) {
-                            let split = log.split('\n')
-                            for (let i = 0; i < split.length; i++) {
-                                console.log(split[i]+getID())
+                } else {
+                    mDisconnect = await page.evaluate(() => {
+                        let root = document.querySelector('[aria-label="Run cell"]')
+                        if (root) {
+                            let status = root.shadowRoot.querySelector('#status')
+                            if (status) {
+                                return true
                             }
                         }
-                        mPrevLog = data
+                        return false
+                    })
+                }
+            } else {
+                mCompleted = true
+                let has = await exists('mwc-button[dialogaction="cancel"]')
+                if (has) {
+                    await page.click('mwc-button[dialogaction="cancel"]')
+                }
+            }
+
+            if (mDisconnect) {
+                break
+            } else {
+                let input = await page.evaluate(() => {
+                    let root = document.querySelector('div[class="output-content"]')
+                    if (root) {
+                        let text = root.innerText
+                        if (text && text== 'Enter ID:') {
+                            return true
+                        }
                     }
+                    return false
+                })
+
+                if (input) {
+                    await page.keyboard.type(mData+'')
+                    await delay(500)
+                    await page.keyboard.press('Enter')
                 }
             }
         } catch (error) {}
     }
+
+    return mCompleted
 }
 
 async function waitForDisconnected() {
