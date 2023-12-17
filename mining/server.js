@@ -1,5 +1,4 @@
-const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-const puppeteer = require('puppeteer-extra')
+const puppeteer = require('puppeteer')
 
 
 let browser = null
@@ -7,8 +6,6 @@ let page = null
 let ID = null
 
 let mUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
-
-puppeteer.use(StealthPlugin())
 
 process.argv.slice(2).forEach(function (data, index) {
     try {
@@ -35,7 +32,6 @@ async function browserStart() {
         console.log('-----START-----')
 
         browser = await puppeteer.launch({
-            executablePath: '/usr/bin/google-chrome-stable',
             headless: false,
             headless: 'new',
             args: [
