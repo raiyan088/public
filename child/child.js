@@ -129,8 +129,6 @@ async function startBrowser(data) {
         if (success) {
             console.log('##-CONNECTED-'+getID())
 
-            let start = new Date().getTime()+300000
-                
             while (true) {
                 mPrevLog = ''
                 mLogStart = false
