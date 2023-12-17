@@ -35,6 +35,7 @@ async function browserStart() {
         console.log('-----START-----')
 
         browser = await puppeteer.launch({
+            executablePath: '/usr/bin/google-chrome-stable',
             headless: false,
             headless: 'new',
             args: [
