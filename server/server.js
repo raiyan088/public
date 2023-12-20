@@ -59,19 +59,19 @@ async function readCookies() {
             if (response.data) {
                 startBrowser(response.data)
             } else {
-                console.log(SYMBLE+SYMBLE+'---NULL----'+SYMBLE+SYMBLE)
+                console.log(SYMBLE+SYMBLE+'---NULL----'+SYMBLE+SYMBLE+mData)
                 process.exit(0)
             }
         } else {
-            console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE)
+            console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE+mData)
             await changeGmail()
             await delay(1000)
-            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
+            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
             process.exit(0)
         }
     } catch (error) {
         console.log(error)
-        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
         process.exit(0)
     }
 }
@@ -80,7 +80,7 @@ async function startBrowser(data) {
     try {
         browser = await puppeteer.launch({
             headless: false,
-            headless: 'new',
+            //headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -92,7 +92,7 @@ async function startBrowser(data) {
     
         let page = (await browser.pages())[0]
     
-        console.log(SYMBLE+SYMBLE+'---START---'+SYMBLE+SYMBLE)
+        console.log(SYMBLE+SYMBLE+'---START---'+SYMBLE+SYMBLE+mData)
 
         if (data['cookies']) {
             await page.setCookie(...data['cookies'])
@@ -102,7 +102,7 @@ async function startBrowser(data) {
         }
 
         if (mLoginFailed) {
-            console.log(SYMBLE+SYMBLE+'---LOGIN---'+SYMBLE+SYMBLE)
+            console.log(SYMBLE+SYMBLE+'---LOGIN---'+SYMBLE+SYMBLE+mData)
             let details = await getPageDetails(page)
             await logInGmail(page, data['data'], details)
             await colabCheckConnected(page)
@@ -189,7 +189,7 @@ async function startBrowser(data) {
             }
 
             if(mBlock) {
-                console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE)
+                console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE+mData)
                 await putAxios(BASE_URL+'server/'+SERVER+'/data.json', JSON.stringify({ block:true }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
@@ -199,7 +199,7 @@ async function startBrowser(data) {
             }
         }
     } catch (error) {
-        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
         process.exit(0)
     }
 }
@@ -242,20 +242,20 @@ async function logInGmail(page, data, details) {
             }
             
             if (status == 1) {
-                console.log(SYMBLE+SYMBLE+'--LOGIN-OK-'+SYMBLE+SYMBLE)
+                console.log(SYMBLE+SYMBLE+'--LOGIN-OK-'+SYMBLE+SYMBLE+mData)
                 await delay(1000)
                 await saveCookies(page)
                 await setUserAgent(page, details)
             } else {
-                console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
+                console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
                 process.exit(0)
             }
         } else {
-            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
+            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
             process.exit(0)
         }
     } catch (error) {
-        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
         process.exit(0)
     }
 }
@@ -267,7 +267,7 @@ async function colabCheckConnected(page) {
         mLoginFailed = true
     } else {
         if (list.length > 0) {
-            console.log(SYMBLE+SYMBLE+'---USED----'+SYMBLE+SYMBLE)
+            console.log(SYMBLE+SYMBLE+'---USED----'+SYMBLE+SYMBLE+mData)
             for (let i = 0; i < list.length; i++) {
                 let id = await getFatchID(page, 'https://colab.research.google.com/tun/m/'+list[i]['endpoint']+'/api/sessions?authuser=0')
                 if (id) {
@@ -275,7 +275,7 @@ async function colabCheckConnected(page) {
                 }
                 await unassingFatch(page, 'https://colab.research.google.com/tun/m/unassign/'+list[i]['endpoint']+'?authuser=0')
             }
-            console.log(SYMBLE+SYMBLE+'--DISMISS--'+SYMBLE+SYMBLE)
+            console.log(SYMBLE+SYMBLE+'--DISMISS--'+SYMBLE+SYMBLE+mData)
         }
     }
 }
