@@ -12,7 +12,7 @@ let mLogStart = false
 let mArrowUp = true
 let browser = null
 let SERVER = ''
-let mLog = false
+let mLoad = true
 let mData = 0
 let PAGES = []
 let STATUS = []
@@ -128,9 +128,9 @@ async function startBrowser(data) {
 
         await delay(5000)
 
-        console.log(SYMBLE+SYMBLE+'---LOAD----')
-
         let mBlock = false
+        let load = 0
+
         while (true) {
             for (let i = 0; i < SIZE; i++) {
                 await PAGES[i].bringToFront()
@@ -141,7 +141,14 @@ async function startBrowser(data) {
                     if (data) {
                         console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
                         await setUserId(PAGES[i])
+                        load++
                         STATUS[i] = 1
+                        if (load >= SIZE) {
+                            if (mLoad) {
+                                mLoad = false
+                                console.log(SYMBLE+SYMBLE+'---LOAD----'+SYMBLE+SYMBLE+mData)
+                            }
+                        }
                     }
                 } else if(STATUS[i] == 1) {
                     await removeCaptha(PAGES[i])
@@ -178,7 +185,7 @@ async function startBrowser(data) {
                 } else if(STATUS[i] == 2) {
                     let log = await getStatusLog(PAGES[i])
                     if (log == 'START') {
-                        console.log(SYMBLE+SYMBLE+'---START---'+getID(ID))
+                        console.log(SYMBLE+SYMBLE+'---ACTIVE--'+getID(ID))
                     } else if (log == 'COMPLETED') {
                         console.log(SYMBLE+SYMBLE+'-COMPLETED-'+getID(ID))
                         PAGES[i].goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
