@@ -34,7 +34,7 @@ process.argv.slice(2).forEach(function (data, index) {
 async function browserStart() {
 
     try {
-        console.log('-----START-----')
+        console.log('★★★---START---★★★')
 
         browser = await puppeteer.launch({
             headless: false,
