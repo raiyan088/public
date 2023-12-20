@@ -2,7 +2,7 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 
-const SYMBLE = '$'
+const SYMBLE = '#'
 const SIZE = 6
 
 let mPrevLog = ''
@@ -59,19 +59,19 @@ async function readCookies() {
             if (response.data) {
                 startBrowser(response.data)
             } else {
-                console.log(SYMBLE+SYMBLE+'---NULL----')
+                console.log(SYMBLE+SYMBLE+'---NULL----'+SYMBLE+SYMBLE)
                 process.exit(0)
             }
         } else {
-            console.log(SYMBLE+SYMBLE+'---BLOCK---')
+            console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE)
             await changeGmail()
             await delay(1000)
-            console.log(SYMBLE+SYMBLE+'---EXIT----')
+            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
             process.exit(0)
         }
     } catch (error) {
         console.log(error)
-        console.log(SYMBLE+SYMBLE+'---EXIT----')
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
         process.exit(0)
     }
 }
@@ -92,7 +92,7 @@ async function startBrowser(data) {
     
         let page = (await browser.pages())[0]
     
-        console.log(SYMBLE+SYMBLE+'---START---')
+        console.log(SYMBLE+SYMBLE+'---START---'+SYMBLE+SYMBLE)
 
         if (data['cookies']) {
             await page.setCookie(...data['cookies'])
@@ -102,7 +102,7 @@ async function startBrowser(data) {
         }
 
         if (mLoginFailed) {
-            console.log(SYMBLE+SYMBLE+'---LOGIN---')
+            console.log(SYMBLE+SYMBLE+'---LOGIN---'+SYMBLE+SYMBLE)
             let details = await getPageDetails(page)
             await logInGmail(page, data['data'], details)
             await colabCheckConnected(page)
@@ -126,15 +126,20 @@ async function startBrowser(data) {
             newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
         }
 
+        await delay(5000)
+
+        console.log(SYMBLE+SYMBLE+'---LOAD----')
+
         let mBlock = false
         while (true) {
             for (let i = 0; i < SIZE; i++) {
                 await PAGES[i].bringToFront()
                 await delay(500)
+                let ID = ((mData-1)*SIZE)+i+1
                 if (STATUS[i] == 0) {
                     let data = await exists(PAGES[i], 'colab-connect-button')
                     if (data) {
-                        console.log(SYMBLE+SYMBLE+'---LOAD----'+getID(mData+i))
+                        console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
                         await setUserId(PAGES[i])
                         STATUS[i] = 1
                     }
@@ -164,7 +169,7 @@ async function startBrowser(data) {
                         })
             
                         if (input) {
-                            await PAGES[i].keyboard.type(parseInt(mData+i).toString())
+                            await PAGES[i].keyboard.type(parseInt(ID).toString())
                             await delay(200)
                             await PAGES[i].keyboard.press('Enter')
                             STATUS[i] = 2
@@ -173,9 +178,9 @@ async function startBrowser(data) {
                 } else if(STATUS[i] == 2) {
                     let log = await getStatusLog(PAGES[i])
                     if (log == 'START') {
-                        console.log(SYMBLE+SYMBLE+'---START---'+getID(mData+i))
+                        console.log(SYMBLE+SYMBLE+'---START---'+getID(ID))
                     } else if (log == 'COMPLETED') {
-                        console.log(SYMBLE+SYMBLE+'-COMPLETED-'+getID(mData+i))
+                        console.log(SYMBLE+SYMBLE+'-COMPLETED-'+getID(ID))
                         PAGES[i].goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
                         STATUS[i] = 0
                     }
@@ -184,7 +189,7 @@ async function startBrowser(data) {
             }
 
             if(mBlock) {
-                console.log(SYMBLE+SYMBLE+'---BLOCK---')
+                console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE)
                 await putAxios(BASE_URL+'server/'+SERVER+'/data.json', JSON.stringify({ block:true }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
@@ -194,7 +199,7 @@ async function startBrowser(data) {
             }
         }
     } catch (error) {
-        console.log(SYMBLE+SYMBLE+'---EXIT----')
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
         process.exit(0)
     }
 }
@@ -237,20 +242,20 @@ async function logInGmail(page, data, details) {
             }
             
             if (status == 1) {
-                console.log(SYMBLE+SYMBLE+'--LOGIN-OK-')
+                console.log(SYMBLE+SYMBLE+'--LOGIN-OK-'+SYMBLE+SYMBLE)
                 await delay(1000)
                 await saveCookies(page)
                 await setUserAgent(page, details)
             } else {
-                console.log(SYMBLE+SYMBLE+'---EXIT----')
+                console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
                 process.exit(0)
             }
         } else {
-            console.log(SYMBLE+SYMBLE+'---EXIT----')
+            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
             process.exit(0)
         }
     } catch (error) {
-        console.log(SYMBLE+SYMBLE+'---EXIT----')
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE)
         process.exit(0)
     }
 }
@@ -262,6 +267,7 @@ async function colabCheckConnected(page) {
         mLoginFailed = true
     } else {
         if (list.length > 0) {
+            console.log(SYMBLE+SYMBLE+'---USED----'+SYMBLE+SYMBLE)
             for (let i = 0; i < list.length; i++) {
                 let id = await getFatchID(page, 'https://colab.research.google.com/tun/m/'+list[i]['endpoint']+'/api/sessions?authuser=0')
                 if (id) {
@@ -269,6 +275,7 @@ async function colabCheckConnected(page) {
                 }
                 await unassingFatch(page, 'https://colab.research.google.com/tun/m/unassign/'+list[i]['endpoint']+'?authuser=0')
             }
+            console.log(SYMBLE+SYMBLE+'--DISMISS--'+SYMBLE+SYMBLE)
         }
     }
 }
