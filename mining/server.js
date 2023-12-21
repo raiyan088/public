@@ -122,13 +122,17 @@ async function browserStart() {
                     
                     console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: '+xmr+' USD: '+usd)
 
-                    if (SERVER == 'gmail_1' || SERVER == 'gmail_10') {
-                        await putAxios(BASE_URL+'status/mining/data.json', JSON.stringify({ xmr:xmr, usd:usd }), {
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded'
+                    try {
+                        if (SERVER == 'gmail_1' || SERVER == 'gmail_10') {
+                            if (parseFloat(xmr) > 0 && parseFloat(usd) > 0) {
+                                await putAxios(BASE_URL+'status/mining/data.json', JSON.stringify({ xmr:xmr, usd:usd }), {
+                                    headers: {
+                                        'Content-Type': 'application/x-www-form-urlencoded'
+                                    }
+                                })
                             }
-                        })
-                    }
+                        }
+                    } catch (error) {}
                 } catch (error) {
                     console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: 0 USD: 0')
                 }
