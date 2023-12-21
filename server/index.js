@@ -7,14 +7,10 @@ let SIZE = 0
 
 let load02 = true
 let load03 = true
-let load04 = true
-let load05 = true
 
 let process01 = null
 let process02 = null
 let process03 = null
-let process04 = null
-let process05 = null
 
 
 process.argv.slice(2).forEach(function (data, index) {
@@ -83,46 +79,6 @@ async function connect03() {
         }
         if(data.toString().includes(SYMBLE+SYMBLE+'---EXIT----')) {
             connect03()
-        }
-        // if (load04) {
-        //     if (data.toString().includes(SYMBLE+SYMBLE+'---LOAD----')) {
-        //         load04 = false
-        //         connect04()
-        //     }
-        // }
-    })
-}
-
-async function connect04() {
-    process04 = exec('node server.js '+(SIZE+4))
-
-    process04.stdout.on('data', (data) => {
-        let log = data.toString().trimStart().trimEnd()
-        if (log.length > 0) {
-            console.log(log)
-        }
-        if(data.toString().includes(SYMBLE+SYMBLE+'---EXIT----')) {
-            connect04()
-        }
-        if (load05) {
-            if (data.toString().includes(SYMBLE+SYMBLE+'---LOAD----')) {
-                load05 = false
-                connect05()
-            }
-        }
-    })
-}
-
-async function connect05() {
-    process05 = exec('node server.js '+(SIZE+5))
-
-    process05.stdout.on('data', (data) => {
-        let log = data.toString().trimStart().trimEnd()
-        if (log.length > 0) {
-            console.log(log)
-        }
-        if(data.toString().includes(SYMBLE+SYMBLE+'---EXIT----')) {
-            connect05()
         }
     })
 }
