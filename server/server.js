@@ -189,6 +189,7 @@ async function startBrowser(data) {
                         await PAGES[i].goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
                         await waitForSelector(PAGES[i], 'colab-connect-button')
                         await setUserId(PAGES[i])
+                        console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
                         STATUS[i] = 0
                     }
                 }
@@ -511,7 +512,7 @@ async function getStatusLog(page) {
 
             if (value && value == 'Reconnect') {
                 mDisconnect = true
-                let has = await exists('mwc-button[dialogaction="cancel"]')
+                let has = await exists(page, 'mwc-button[dialogaction="cancel"]')
                 if (has) {
                     await page.click('mwc-button[dialogaction="cancel"]')
                 }
@@ -528,7 +529,7 @@ async function getStatusLog(page) {
                 })
             }
         } else {
-            let has = await exists('mwc-button[dialogaction="cancel"]')
+            let has = await exists(page, 'mwc-button[dialogaction="cancel"]')
             if (has) {
                 await page.click('mwc-button[dialogaction="cancel"]')
             }
