@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 
 const SYMBLE = '#'
-const SIZE = 6
+const SIZE = 3
 
 let mPrevLog = ''
 let mLoginFailed = false
@@ -80,7 +80,7 @@ async function startBrowser(data) {
     try {
         browser = await puppeteer.launch({
             headless: false,
-            headless: 'new',
+            //headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
