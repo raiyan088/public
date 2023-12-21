@@ -20,7 +20,7 @@ process.argv.slice(2).forEach(function (data, index) {
         
             SIZE = (size-1)*LENGTH
 
-            console.log('$$$---START---$$$')
+            console.log('★★★---START---★★★')
 
             connect01()
         }
