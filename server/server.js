@@ -80,7 +80,7 @@ async function startBrowser(data) {
     try {
         browser = await puppeteer.launch({
             headless: false,
-            headless: 'new',
+            //headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -133,7 +133,7 @@ async function startBrowser(data) {
             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         }
 
-        console.log(SYMBLE+SYMBLE+'---LOAD---'+getID(mData))
+        console.log(SYMBLE+SYMBLE+'---LOAD----'+getID(mData))
 
         let mBlock = false
 
@@ -168,16 +168,10 @@ async function startBrowser(data) {
                         })
             
                         if (input) {
-                            console.log('Set ID:', i+1)
                             await PAGES[i].keyboard.type(parseInt(ID).toString())
                             await delay(200)
                             await PAGES[i].keyboard.press('Enter')
                             STATUS[i] = 1
-                        } else {
-                            console.log('Input Not Show:', i+1)
-                            await PAGES[i].screenshot({
-                                path: 'screenshot'+i+'.jpg'
-                            })
                         }
                     }
                 } else if(STATUS[i] == 1) {
