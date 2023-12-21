@@ -1,13 +1,16 @@
 const puppeteer = require('puppeteer')
-
+const axios = require('axios')
 
 let browser = null
 let page = null
 let ID = null
+let SERVER = ''
 
 let mUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
 
 let mData = Buffer.from('W3sibmFtZSI6Il9nYV9GWlBLN0s2TlhMIiwidmFsdWUiOiJHUzEuMS4xNzAyOTE1MTI4LjEuMS4xNzAyOTE1OTMxLjM5LjAuMCIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM3NDc1OTMxLjc2MTQ1OSwic2l6ZSI6NTIsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX2dhIiwidmFsdWUiOiJHQTEuMS45MzYwOTYwNzguMTcwMjkxNTEyOCIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM3NDc1OTMxLjczMjkxNywic2l6ZSI6MjksImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX19ncGkiLCJ2YWx1ZSI6IlVJRD0wMDAwMGNiNGI1MjY1YWZmOlQ9MTcwMjkxNTEyODpSVD0xNzAyOTE1OTExOlM9QUxOSV9NWUNVVkFuVjRfeFd5TEdGYmw3clBOQ3QwN2N2USIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM2NjExMTI4LCJzaXplIjo4OSwiaHR0cE9ubHkiOmZhbHNlLCJzZWN1cmUiOmZhbHNlLCJzZXNzaW9uIjpmYWxzZSwic2FtZVBhcnR5IjpmYWxzZSwic291cmNlU2NoZW1lIjoiU2VjdXJlIiwic291cmNlUG9ydCI6NDQzfSx7Im5hbWUiOiJGQ05FQyIsInZhbHVlIjoiJTVCJTVCJTIyQUtzUm9sX0RGM0t6R2RjRXE0QkNIWVpDLVZfckt5dFhpX2hsazVmOXFrZzRBZFJkcmx6cVFxQXRjN1VMT09BSFNCSFlHSHY5Ni1EVE1Xa2E5Z1JhQmx3aVl5Zk9oNEpXNEQ3T2xqalF1VllvcEE1R0FPVDZSR2ZLdmpfM0p5OGt4RWQ0dmNzZF9Zd1B1cWUtMkRxd0o2dDM5Y2Exek55MldBJTNEJTNEJTIyJTVEJTVEIiwiZG9tYWluIjoiLmVvLmZpbmFuY2UiLCJwYXRoIjoiLyIsImV4cGlyZXMiOjE3MzQ0NTE5MzMsInNpemUiOjE5MSwiaHR0cE9ubHkiOmZhbHNlLCJzZWN1cmUiOmZhbHNlLCJzZXNzaW9uIjpmYWxzZSwic2FtZVBhcnR5IjpmYWxzZSwic291cmNlU2NoZW1lIjoiU2VjdXJlIiwic291cmNlUG9ydCI6NDQzfSx7Im5hbWUiOiJfZ2lkIiwidmFsdWUiOiJHQTEuMi4xMjAwNzY4MTAyLjE3MDI5MTUxMjgiLCJkb21haW4iOiIuZW8uZmluYW5jZSIsInBhdGgiOiIvIiwiZXhwaXJlcyI6MTcwMzAwMjMzMCwic2l6ZSI6MzEsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX2djbF9hdSIsInZhbHVlIjoiMS4xLjgzMDA4OTg0LjE3MDI5MTUxMjkiLCJkb21haW4iOiIuZW8uZmluYW5jZSIsInBhdGgiOiIvIiwiZXhwaXJlcyI6MTcxMDY5MTEyOSwic2l6ZSI6MzAsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoidG9rZW4iLCJ2YWx1ZSI6ImFiNWU0YjM5ODQ1M2Q2NWQ4ZWQ0ZGJiNDAwZTdhZDVlYWU4MDIyYzk3OTFiYzFmMGQ4MTNiNmFjYTM2ZmQ4NTI2YjZjY2IyZjVmZjEzY2M2ZmUxMTFmYzRkZTUyMDk5Zjg5MjU3YzE3YTg0MGMzNDhiMWQ3NmUxYTljY2FiZjdiIiwiZG9tYWluIjoiLmVvLmZpbmFuY2UiLCJwYXRoIjoiLyIsImV4cGlyZXMiOjE3Mzc0NzUxNzkuMDIxMTQ5LCJzaXplIjoxMzMsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX19nYWRzIiwidmFsdWUiOiJJRD0zMDM5YWY1MzViYzMzYTE3OlQ9MTcwMjkxNTEyODpSVD0xNzAyOTE1OTExOlM9QUxOSV9NWkVHT0owQjhfYjNHblFNVGlKaTJXNmg2VlA1QSIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM2NjExMTI4LCJzaXplIjo4OSwiaHR0cE9ubHkiOmZhbHNlLCJzZWN1cmUiOmZhbHNlLCJzZXNzaW9uIjpmYWxzZSwic2FtZVBhcnR5IjpmYWxzZSwic291cmNlU2NoZW1lIjoiU2VjdXJlIiwic291cmNlUG9ydCI6NDQzfSx7Im5hbWUiOiJfZ2FfRjhEUlNTRTJTMCIsInZhbHVlIjoiR1MxLjIuMTcwMjkxNTEyOS4xLjEuMTcwMjkxNTkzMC4wLjAuMCIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM3NDc1OTMwLjI3OTYzOCwic2l6ZSI6NTEsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoidXNlcklkIiwidmFsdWUiOiI0MTU4MjUyNTgiLCJkb21haW4iOiIuZW8uZmluYW5jZSIsInBhdGgiOiIvIiwiZXhwaXJlcyI6MTczNzQ3NTE3OS4wMjE1NDEsInNpemUiOjE1LCJodHRwT25seSI6ZmFsc2UsInNlY3VyZSI6ZmFsc2UsInNlc3Npb24iOmZhbHNlLCJzYW1lUGFydHkiOmZhbHNlLCJzb3VyY2VTY2hlbWUiOiJTZWN1cmUiLCJzb3VyY2VQb3J0Ijo0NDN9XQ==', 'base64').toString('ascii')
+
+let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2NvbGFiLw==', 'base64').toString('ascii')
 
 let cookies = JSON.parse(mData)
 
@@ -15,6 +18,7 @@ let cookies = JSON.parse(mData)
 process.argv.slice(2).forEach(function (data, index) {
     try {
         if (index == 0) {
+            SERVER = 'gmail_'+data
             if (data.toString().length == 1) {
                 ID = '?worker=00'+data
             } else if (data.toString().length == 2) {
@@ -100,12 +104,17 @@ async function browserStart() {
         await delay(5000)
 
         let size = 0
+        let nonHash = 0
 
         while (true) {
             try {
                 size++
                 let hashrate = await page.evaluate(() => document.querySelector('#hashrate').innerText)
                 
+                if (hashrate == 0 || hashrate == '0') {
+                    nonHash++
+                }
+
                 try {
                     let xmr = await page.evaluate(() => document.querySelector('#totalBalance').innerText)
                     let usd = await page.evaluate(() => document.querySelector('#balance_usd').innerText)
@@ -114,6 +123,17 @@ async function browserStart() {
                 } catch (error) {
                     console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: 0 USD: 0')
                 }
+
+                if (nonHash >= 3) {
+                    console.log('----NO-HASH----')
+                    process.exit(0)
+                }
+
+                await putAxios(BASE_URL+'status/mining/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+180) }), {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
             } catch (error) {}
 
             await delay(60000)
@@ -228,6 +248,27 @@ async function exists(element) {
         }
         return false
     }, element)
+}
+
+async function putAxios(url, body, data) {
+    let loop = 0
+    let responce = null
+    while (true) {
+        try {
+            data.timeout = 10000
+            responce = await axios.put(url, body, data)
+            break
+        } catch (error) {
+            loop++
+
+            if (loop >= 5) {
+                break
+            } else {
+                await delay(3000)
+            }
+        }
+    }
+    return responce
 }
 
 function delay(time) {
