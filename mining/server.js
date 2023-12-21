@@ -5,6 +5,7 @@ let browser = null
 let page = null
 let ID = null
 let SERVER = ''
+let mUpdate = 0
 
 let mUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
 
@@ -137,11 +138,16 @@ async function browserStart() {
                     process.exit(0)
                 }
 
-                await putAxios(BASE_URL+'status/mining/'+SERVER+'.json', JSON.stringify({ online:(parseInt(new Date().getTime()/1000)+180) }), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
+                let now = new Date().getTime()
+
+                if (now > mUpdate) {
+                    mUpdate = now+300000
+                    await putAxios(BASE_URL+'status/mining/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+600) }), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                }
             } catch (error) {}
 
             await delay(60000)
