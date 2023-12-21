@@ -59,19 +59,19 @@ async function readCookies() {
             if (response.data) {
                 startBrowser(response.data)
             } else {
-                console.log(SYMBLE+SYMBLE+'---NULL----'+SYMBLE+SYMBLE+mData)
+                console.log(SYMBLE+SYMBLE+'---NULL----'+getID(mData))
                 process.exit(0)
             }
         } else {
-            console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE+mData)
+            console.log(SYMBLE+SYMBLE+'---BLOCK---'+getID(mData))
             await changeGmail()
             await delay(1000)
-            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
+            console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
             process.exit(0)
         }
     } catch (error) {
         console.log(error)
-        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
         process.exit(0)
     }
 }
@@ -92,7 +92,7 @@ async function startBrowser(data) {
     
         let page = (await browser.pages())[0]
     
-        console.log(SYMBLE+SYMBLE+'---START---'+SYMBLE+SYMBLE+mData)
+        console.log(SYMBLE+SYMBLE+'---START---'+getID(mData))
 
         if (data['cookies']) {
             await page.setCookie(...data['cookies'])
@@ -102,14 +102,17 @@ async function startBrowser(data) {
         }
 
         if (mLoginFailed) {
-            console.log(SYMBLE+SYMBLE+'---LOGIN---'+SYMBLE+SYMBLE+mData)
+            console.log(SYMBLE+SYMBLE+'---LOGIN---'+getID(mData))
             let details = await getPageDetails(page)
             await logInGmail(page, data['data'], details)
             await colabCheckConnected(page)
         }
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
-        page.goto('https://colab.research.google.com/drive/'+COLAB[0], { waitUntil: 'load', timeout: 0 })
+        await page.goto('https://colab.research.google.com/drive/'+COLAB[0], { waitUntil: 'load', timeout: 0 })
+        await waitForSelector(page, 'colab-connect-button')
+        await setUserId(page)
+        console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         
         PAGES.push(page)
         STATUS.push(0)
@@ -117,40 +120,27 @@ async function startBrowser(data) {
         let cookies = await page.cookies()
         
         for (let i = 1; i < SIZE; i++) {
-            await delay(500)
             let newPage = await browser.newPage()
             await newPage.setCookie(...cookies)
             PAGES.push(newPage)
             STATUS.push(0)
-            page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
-            newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
+            newPage.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
+            await newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
+            await waitForSelector(newPage, 'colab-connect-button')
+            await setUserId(newPage)
+            console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         }
 
-        await delay(5000)
+        console.log(SYMBLE+SYMBLE+'---LOAD---'+getID(mData))
 
         let mBlock = false
-        let load = 0
 
         while (true) {
             for (let i = 0; i < SIZE; i++) {
                 await PAGES[i].bringToFront()
                 await delay(500)
                 let ID = ((mData-1)*SIZE)+i+1
-                if (STATUS[i] == 0) {
-                    let data = await exists(PAGES[i], 'colab-connect-button')
-                    if (data) {
-                        console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
-                        await setUserId(PAGES[i])
-                        load++
-                        STATUS[i] = 1
-                        if (load >= SIZE) {
-                            if (mLoad) {
-                                mLoad = false
-                                console.log(SYMBLE+SYMBLE+'---LOAD----'+SYMBLE+SYMBLE+mData)
-                            }
-                        }
-                    }
-                } else if(STATUS[i] == 1) {
+                if(STATUS[i] == 0) {
                     await removeCaptha(PAGES[i])
 
                     let block = await PAGES[i].evaluate(() => {
@@ -179,16 +169,18 @@ async function startBrowser(data) {
                             await PAGES[i].keyboard.type(parseInt(ID).toString())
                             await delay(200)
                             await PAGES[i].keyboard.press('Enter')
-                            STATUS[i] = 2
+                            STATUS[i] = 1
                         }
                     }
-                } else if(STATUS[i] == 2) {
+                } else if(STATUS[i] == 1) {
                     let log = await getStatusLog(PAGES[i])
                     if (log == 'START') {
                         console.log(SYMBLE+SYMBLE+'---ACTIVE--'+getID(ID))
                     } else if (log == 'COMPLETED') {
                         console.log(SYMBLE+SYMBLE+'-COMPLETED-'+getID(ID))
-                        PAGES[i].goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
+                        await PAGES[i].goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
+                        await waitForSelector(PAGES[i], 'colab-connect-button')
+                        await setUserId(PAGES[i])
                         STATUS[i] = 0
                     }
                 }
@@ -196,7 +188,7 @@ async function startBrowser(data) {
             }
 
             if(mBlock) {
-                console.log(SYMBLE+SYMBLE+'---BLOCK---'+SYMBLE+SYMBLE+mData)
+                console.log(SYMBLE+SYMBLE+'---BLOCK---'+getID(mData))
                 await putAxios(BASE_URL+'server/'+SERVER+'/data.json', JSON.stringify({ block:true }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
@@ -206,7 +198,7 @@ async function startBrowser(data) {
             }
         }
     } catch (error) {
-        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
         process.exit(0)
     }
 }
@@ -249,20 +241,20 @@ async function logInGmail(page, data, details) {
             }
             
             if (status == 1) {
-                console.log(SYMBLE+SYMBLE+'--LOGIN-OK-'+SYMBLE+SYMBLE+mData)
+                console.log(SYMBLE+SYMBLE+'--LOGIN-OK-'+getID(mData))
                 await delay(1000)
                 await saveCookies(page)
                 await setUserAgent(page, details)
             } else {
-                console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
+                console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
                 process.exit(0)
             }
         } else {
-            console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
+            console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
             process.exit(0)
         }
     } catch (error) {
-        console.log(SYMBLE+SYMBLE+'---EXIT----'+SYMBLE+SYMBLE+mData)
+        console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
         process.exit(0)
     }
 }
@@ -274,7 +266,7 @@ async function colabCheckConnected(page) {
         mLoginFailed = true
     } else {
         if (list.length > 0) {
-            console.log(SYMBLE+SYMBLE+'---USED----'+SYMBLE+SYMBLE+mData)
+            console.log(SYMBLE+SYMBLE+'---USED----'+getID(mData))
             for (let i = 0; i < list.length; i++) {
                 let id = await getFatchID(page, 'https://colab.research.google.com/tun/m/'+list[i]['endpoint']+'/api/sessions?authuser=0')
                 if (id) {
@@ -282,23 +274,24 @@ async function colabCheckConnected(page) {
                 }
                 await unassingFatch(page, 'https://colab.research.google.com/tun/m/unassign/'+list[i]['endpoint']+'?authuser=0')
             }
-            console.log(SYMBLE+SYMBLE+'--DISMISS--'+SYMBLE+SYMBLE+mData)
+            console.log(SYMBLE+SYMBLE+'--DISMISS--'+getID(mData))
         }
     }
 }
 
 async function setUserId(page) {
-    await delay(1000)
     await page.keyboard.down('Control')
     await page.keyboard.press('Enter')
     await page.keyboard.up('Control')
     await waitForSelector(page, 'mwc-dialog[class="wide"]', 10)
-    await delay(1000)
-    await page.keyboard.press('Tab')
-    await delay(200)
-    await page.keyboard.press('Tab')
-    await delay(200)
-    await page.keyboard.press('Enter')
+    while (true) {
+        try {
+            await page.click('mwc-button[dialogaction="ok"]')
+        } catch (error) {
+            break
+        }
+        await delay(200)
+    }
 }
 
 async function getPageDetails(page) {
@@ -605,7 +598,16 @@ async function removeCaptha(page) {
 }
 
 async function saveCookies(page) {
-    let cookies = await page.cookies()
+    let cookie = await page.cookies()
+
+    let cookies = []
+
+    for (let i = 0; i < cookie.length; i++) {
+        let name = cookie[i]['name']
+        if (name == 'SAPISID' || name == 'APISID' || name == 'SSID' || name == 'SID' || name == 'HSID') {
+            cookies.push(cookie[i])
+        }
+    }
 
     await putAxios(BASE_URL+'server/'+SERVER+'/cookies.json', JSON.stringify(cookies), {
         headers: {
@@ -872,7 +874,6 @@ async function waitForSelector(page, element, _timeout) {
 
     while (true) {
         timeout--
-        await delay(500)
         try {
             let data = await exists(page, element)
             if (data) {
@@ -883,6 +884,7 @@ async function waitForSelector(page, element, _timeout) {
         if (timeout <= 0) {
             break
         }
+        await delay(500)
     }
 }
 
