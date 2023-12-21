@@ -109,8 +109,11 @@ async function startBrowser(data) {
         }
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
+        console.log(new Date().toString(), 0)
         await page.goto('https://colab.research.google.com/drive/'+COLAB[0], { waitUntil: 'load', timeout: 0 })
+        console.log(new Date().toString(), 0)
         await waitForSelector(page, 'colab-connect-button')
+        console.log(new Date().toString(), 0)
         await setUserId(page)
         let ID = ((mData-1)*SIZE)+1
         console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
@@ -126,8 +129,11 @@ async function startBrowser(data) {
             PAGES.push(newPage)
             STATUS.push(0)
             newPage.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
+            console.log(new Date().toString(), i)
             await newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
+            console.log(new Date().toString(), i)
             await waitForSelector(newPage, 'colab-connect-button')
+            console.log(new Date().toString(), i)
             await setUserId(newPage)
             let ID = ((mData-1)*SIZE)+i+1
             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
