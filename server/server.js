@@ -192,6 +192,7 @@ async function startBrowser(data) {
             await updateServer()
         }
     } catch (error) {
+        console.log(error)
         console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
         process.exit(0)
     }
@@ -564,8 +565,8 @@ async function updateServer() {
     let now = new Date().getTime()
 
     if (now > mUpdate) {
-        mUpdate = now+60000
-        await putAxios(BASE_URL+'status/'+NAME+'/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+180) }), {
+        mUpdate = now+300000
+        await putAxios(BASE_URL+'status/'+NAME+'/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+600) }), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
