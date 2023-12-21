@@ -112,6 +112,7 @@ async function startBrowser(data) {
         await page.goto('https://colab.research.google.com/drive/'+COLAB[0], { waitUntil: 'load', timeout: 0 })
         await waitForSelector(page, 'colab-connect-button')
         await setUserId(page)
+        let ID = ((mData-1)*SIZE)+1
         console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         
         PAGES.push(page)
@@ -128,6 +129,7 @@ async function startBrowser(data) {
             await newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
             await waitForSelector(newPage, 'colab-connect-button')
             await setUserId(newPage)
+            let ID = ((mData-1)*SIZE)+i+1
             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         }
 
