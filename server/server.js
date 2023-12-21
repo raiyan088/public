@@ -3,30 +3,23 @@ const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 
 const SYMBLE = '#'
-const SIZE = 3
+const NAME = 'server'
 
-let mPrevLog = ''
 let mLoginFailed = false
-let mDisconnect = false
-let mLogStart = false
-let mArrowUp = true
 let browser = null
 let SERVER = ''
-let mLoad = true
 let mData = 0
 let PAGES = []
 let STATUS = []
+let mUpdate = 0
 
 let COLAB = [
     '118bn_FQSqA42EDEricZusGTn5Do_gCWC',
     '1rAoQfVTS2AJ9LywvC_mGAXBoKum_MGdx',
-    '1NLEVldJSzt7OnlGo3mgZrrHhxvBqjyQe',
-    '1kWn3wvRf9MFdR5pnhZl5TuxGnAJ3kPjt',
-    '1mmBYBL0eqzFU3RRQY7Q5twKRZmpmBUrS',
-    '1x9dFHpPihtrGUKnOe3haHuNwJaDUEMUg'
+    '1NLEVldJSzt7OnlGo3mgZrrHhxvBqjyQe'
 ]
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dtYWlsLw==', 'base64').toString('ascii')
+let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2NvbGFiLw==', 'base64').toString('ascii')
 
 let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fcolab.research.google.com%2Ftun%2Fm%2Fassignments%3Fauthuser%3D0&ec=GAZAqQM&ifkv=ASKXGp2VjIgsjrAwBFLiCjhx-F5QfSM4e9q_N7QDa_b3wN-IPMZNHK_ZiTRaBByb_7kyjZ7DePjB&passive=true&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S687877650%3A1703041094123974&theme=glif'
 
@@ -44,7 +37,7 @@ process.argv.slice(2).forEach(function (data, index) {
 })
 
 async function readCookies() {
-    let response = await getAxios(BASE_URL+'server/'+SERVER+'.json')
+    let response = await getAxios(BASE_URL+NAME+'/'+SERVER+'.json')
 
     try {
         let start = true
@@ -93,6 +86,7 @@ async function startBrowser(data) {
         let page = (await browser.pages())[0]
     
         console.log(SYMBLE+SYMBLE+'---START---'+getID(mData))
+        await updateServer()
 
         if (data['cookies']) {
             await page.setCookie(...data['cookies'])
@@ -112,7 +106,8 @@ async function startBrowser(data) {
         await page.goto('https://colab.research.google.com/drive/'+COLAB[0], { waitUntil: 'load', timeout: 0 })
         await waitForSelector(page, 'colab-connect-button')
         await setUserId(page)
-        let ID = ((mData-1)*SIZE)+1
+        await updateServer()
+        let ID = ((mData-1)*3)+1
         console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         
         PAGES.push(page)
@@ -120,7 +115,7 @@ async function startBrowser(data) {
 
         let cookies = await page.cookies()
         
-        for (let i = 1; i < SIZE; i++) {
+        for (let i = 1; i < 3; i++) {
             let newPage = await browser.newPage()
             await newPage.setCookie(...cookies)
             PAGES.push(newPage)
@@ -129,7 +124,7 @@ async function startBrowser(data) {
             await newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
             await waitForSelector(newPage, 'colab-connect-button')
             await setUserId(newPage)
-            let ID = ((mData-1)*SIZE)+i+1
+            let ID = ((mData-1)*3)+i+1
             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         }
 
@@ -138,10 +133,10 @@ async function startBrowser(data) {
         let mBlock = false
 
         while (true) {
-            for (let i = 0; i < SIZE; i++) {
+            for (let i = 0; i < 3; i++) {
                 await PAGES[i].bringToFront()
                 await delay(500)
-                let ID = ((mData-1)*SIZE)+i+1
+                let ID = ((mData-1)*3)+i+1
                 if(STATUS[i] == 0) {
                     await removeCaptha(PAGES[i])
 
@@ -192,13 +187,15 @@ async function startBrowser(data) {
 
             if(mBlock) {
                 console.log(SYMBLE+SYMBLE+'---BLOCK---'+getID(mData))
-                await putAxios(BASE_URL+'server/'+SERVER+'/data.json', JSON.stringify({ block:true }), {
+                await putAxios(BASE_URL+NAME+'/'+SERVER+'/data.json', JSON.stringify({ block:true }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 })
                 process.exit(0)
             }
+
+            await updateServer()
         }
     } catch (error) {
         console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
@@ -562,30 +559,17 @@ async function getStatusLog(page) {
     return 'NULL'
 }
 
-async function waitForDisconnected() {
-    await page.click('#runtime-menu-button')
-    for (var j = 0; j < 9; j++) {
-        await delay(100)
-        let finish = await page.evaluate(() => {
-            try {
-                return document.querySelector('#runtime-menu-button').getAttribute('aria-owns') == ':25'
-            } catch (error) {}
-            return false
+async function updateServer() {
+    let now = new Date().getTime()
+
+    if (now > mUpdate) {
+        mUpdate = now+60000
+        await putAxios(BASE_URL+'status/'+NAME+'/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+180) }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
         })
-        if (finish) {
-            break
-        } else {
-            await page.keyboard.press('ArrowDown')
-        }
     }
-    await delay(420)
-    await page.keyboard.down('Control')
-    await page.keyboard.press('Enter')
-    await page.keyboard.up('Control')
-    await waitForSelector('mwc-dialog[class="yes-no-dialog"]', 10)
-    await delay(500)
-    await page.keyboard.press('Enter')
-    await delay(5000)
 }
 
 async function removeCaptha(page) {
@@ -612,7 +596,7 @@ async function saveCookies(page) {
         }
     }
 
-    await putAxios(BASE_URL+'server/'+SERVER+'/cookies.json', JSON.stringify(cookies), {
+    await putAxios(BASE_URL+NAME+'/'+SERVER+'/cookies.json', JSON.stringify(cookies), {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
@@ -917,7 +901,7 @@ async function changeGmail() {
             await axios.delete(BASE_URL+'backup/'+data['user']+'.json')
         } catch (error) {}
 
-        await putAxios(BASE_URL+'server/'+SERVER+'/data.json', JSON.stringify(data), {
+        await putAxios(BASE_URL+NAME+'/'+SERVER+'/data.json', JSON.stringify(data), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
