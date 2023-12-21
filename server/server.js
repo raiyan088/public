@@ -168,10 +168,16 @@ async function startBrowser(data) {
                         })
             
                         if (input) {
+                            console.log(i, 'Set ID')
                             await PAGES[i].keyboard.type(parseInt(ID).toString())
                             await delay(200)
                             await PAGES[i].keyboard.press('Enter')
                             STATUS[i] = 1
+                        } else {
+                            console.log(i, 'Input Not Show')
+                            await PAGES[i].screenshot({
+                                path: 'screenshot'+i+'.jpg'
+                            })
                         }
                     }
                 } else if(STATUS[i] == 1) {
