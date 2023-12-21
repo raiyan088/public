@@ -1,7 +1,7 @@
 const { exec } = require('child_process')
 
 const SYMBLE = '#'
-const LENGTH = 2
+const LENGTH = 3
 
 let SIZE = 0
 
@@ -64,12 +64,12 @@ async function connect02() {
         if(data.toString().includes(SYMBLE+SYMBLE+'---EXIT----')) {
             connect02()
         }
-        // if (load03) {
-        //     if (data.toString().includes(SYMBLE+SYMBLE+'---LOAD----')) {
-        //         load03 = false
-        //         connect03()
-        //     }
-        // }
+        if (load03) {
+            if (data.toString().includes(SYMBLE+SYMBLE+'---LOAD----')) {
+                load03 = false
+                connect03()
+            }
+        }
     })
 }
 
@@ -84,12 +84,12 @@ async function connect03() {
         if(data.toString().includes(SYMBLE+SYMBLE+'---EXIT----')) {
             connect03()
         }
-        if (load04) {
-            if (data.toString().includes(SYMBLE+SYMBLE+'---LOAD----')) {
-                load04 = false
-                connect04()
-            }
-        }
+        // if (load04) {
+        //     if (data.toString().includes(SYMBLE+SYMBLE+'---LOAD----')) {
+        //         load04 = false
+        //         connect04()
+        //     }
+        // }
     })
 }
 
