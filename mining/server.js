@@ -120,6 +120,14 @@ async function browserStart() {
                     let usd = await page.evaluate(() => document.querySelector('#balance_usd').innerText)
                     
                     console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: '+xmr+' USD: '+usd)
+
+                    if (SERVER == 'gmail_1' || SERVER == 'gmail_10') {
+                        await putAxios(BASE_URL+'status/mining/data.json', JSON.stringify({ xmr:xmr, usd:usd }), {
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }
+                        })
+                    }
                 } catch (error) {
                     console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: 0 USD: 0')
                 }
@@ -129,7 +137,7 @@ async function browserStart() {
                     process.exit(0)
                 }
 
-                await putAxios(BASE_URL+'status/mining/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+180) }), {
+                await putAxios(BASE_URL+'status/mining/'+SERVER+'.json', JSON.stringify({ online:(parseInt(new Date().getTime()/1000)+180) }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
