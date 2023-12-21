@@ -88,14 +88,6 @@ async function browserStart() {
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
 
-        //await getFiveSecond('http://festyy.com/ehD5hw', 'span[class="skip-btn show"]', '#skip_button')
-
-        console.log('----SUCCESS----', 1)
-
-        //await getFiveSecond('https://adfoc.us/84368198903866', '#showTimer[style="display: none;"]', '#showSkip > a')
- 
-        console.log('----SUCCESS----', 2)
-
         await page.setCookie(...cookies)
         
         await page.bringToFront()
@@ -105,13 +97,26 @@ async function browserStart() {
 
         console.log('-----FINISH----')
 
+        await delay(5000)
+
+        let size = 0
+
         while (true) {
             try {
+                size++
                 let hashrate = await page.evaluate(() => document.querySelector('#hashrate').innerText)
-                console.log('Hashrate: '+hashrate)
+                
+                try {
+                    let xmr = await page.evaluate(() => document.querySelector('#totalBalance').innerText)
+                    let usd = await page.evaluate(() => document.querySelector('#balance_usd').innerText)
+                    
+                    console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: '+xmr+' USD: '+usd)
+                } catch (error) {
+                    console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: 0 USD: 0')
+                }
             } catch (error) {}
 
-            await delay(5000)
+            await delay(60000)
         }
     } catch (error) {
         console.log(error)
