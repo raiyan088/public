@@ -88,6 +88,9 @@ async function startBrowser(data) {
         console.log(SYMBLE+SYMBLE+'---START---'+getID(mData))
         await updateServer()
 
+        let details = await getPageDetails(page)
+        await setUserAgent(page, details)
+
         if (data['cookies']) {
             await page.setCookie(...data['cookies'])
             await colabCheckConnected(page, false)
@@ -97,7 +100,6 @@ async function startBrowser(data) {
 
         if (mLoginFailed) {
             console.log(SYMBLE+SYMBLE+'---LOGIN---'+getID(mData))
-            let details = await getPageDetails(page)
             await logInGmail(page, data['data'], details)
             await colabCheckConnected(page, true)
         }
@@ -198,10 +200,8 @@ async function startBrowser(data) {
     }
 }
 
-async function logInGmail(page, data, details) {
+async function logInGmail(page, data) {
     try {
-        await page.emulate({"name":"Mi 9T Pro","userAgent":"Mozilla/5.0 (Linux; Android 10; Mi 9T Pro Build/QKQ1.190825.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.6099.43 Mobile Safari/537.36","viewport":{"width":320,"height":480,"deviceScaleFactor":2,"isMobile":true,"hasTouch":true,"isLandscape":false}})
-        
         await page.goto(loginUrl, { waitUntil: 'load', timeout: 0 })
         await delay(500)
         await page.waitForSelector('#identifierId')
@@ -239,7 +239,6 @@ async function logInGmail(page, data, details) {
                 console.log(SYMBLE+SYMBLE+'--LOGIN-OK-'+getID(mData))
                 await delay(1000)
                 await saveCookies(page)
-                await setUserAgent(page, details)
             } else {
                 console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
                 process.exit(0)
@@ -311,6 +310,8 @@ async function getPageDetails(page) {
 }
 
 async function setUserAgent(page, details) {
+    let userAgent = 'Mozilla/5.0 (Linux; Android 10; Mi 9T Pro Build/QKQ1.190825.002; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/120.0.6099.43 Mobile Safari/537.36'
+    
     await page.evaluateOnNewDocument((userAgent) => {
         let open = window.open
 
@@ -322,9 +323,11 @@ async function setUserAgent(page, details) {
 
         window.open.toString = () => 'function open() { [native code] }'
 
-    }, details['user'])
+    }, userAgent)
 
-    await page.setUserAgent(details['user'])
+    await page.setUserAgent(userAgent)
+
+    await page.emulate({"name":"Mi 9T Pro","userAgent":userAgent,"viewport":{"width":details['width'],"height":details['height'],"deviceScaleFactor":1,"isMobile":true,"hasTouch":true,"isLandscape":false}})
 
     await page.setViewport({
         width: details['width'],
