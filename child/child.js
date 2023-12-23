@@ -58,10 +58,8 @@ async function readCookies() {
             }
         } else {
             console.log(SYMBLE+SYMBLE+'---BLOCK---'+getID(mData))
-            await changeGmail()
-            await delay(1000)
-            console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
-            process.exit(0)
+            let send = await changeGmail()
+            startBrowser({ data:send })
         }
     } catch (error) {
         console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
@@ -73,7 +71,7 @@ async function startBrowser(data) {
     try {
         browser = await puppeteer.launch({
             headless: false,
-            headless: 'new',
+            //headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -183,11 +181,14 @@ async function startBrowser(data) {
 
             if(mBlock) {
                 console.log(SYMBLE+SYMBLE+'---BLOCK---'+getID(mData))
+                await saveBlockGmail(data['data'], 'block')
+                
                 await putAxios(BASE_URL+NAME+'/'+SERVER+'/data.json', JSON.stringify({ block:true }), {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 })
+
                 process.exit(0)
             }
 
@@ -239,6 +240,11 @@ async function logInGmail(page, data) {
                 console.log(SYMBLE+SYMBLE+'--LOGIN-OK-'+getID(mData))
                 await delay(1000)
                 await saveCookies(page)
+            } else if (status == 2) {
+                console.log(SYMBLE+SYMBLE+'---WRONG---'+getID(mData))
+                await saveBlockGmail(data, 'wrong')
+                let send = await changeGmail()
+                await logInGmail(page, send)
             } else {
                 console.log(SYMBLE+SYMBLE+'---EXIT----'+getID(mData))
                 process.exit(0)
@@ -891,9 +897,19 @@ async function exists(page, evement) {
     }, evement)
 }
 
+async function saveBlockGmail(data, type) {
+    try {
+        await putAxios(BASE_URL+type+'/'+data['user']+'.json', JSON.stringify({ pass:data['pass'], recovery:data['recovery'] }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+    } catch (error) {}
+}
+
 async function changeGmail() {
 
-    let response = await getAxios(BASE_URL+'backup.json?orderBy="pass"&limitToLast=1&print=pretty')
+    let response = await getAxios(BASE_URL+'backup.json?orderBy="$key"&limitToLast=1&print=pretty')
 
     try {
         let data = {}
@@ -911,7 +927,11 @@ async function changeGmail() {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         })
+
+        return data
     } catch (error) {}
+
+    return null
 }
 
 async function getAxios(url) {
