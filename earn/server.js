@@ -20,6 +20,8 @@ let mUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
+console.log('★★★---START---★★★')
+
 startWork()
 
 async function startWork() {
@@ -85,9 +87,9 @@ async function checkClick() {
 async function browserStart() {
 
     try {
-        console.log('-----START-----')
+        console.log('----BROWSER----')
 
-        //await saveData()
+        await saveData()
 
         browser = await puppeteer.launch({
             headless: false,
@@ -109,43 +111,43 @@ async function browserStart() {
     
         page = (await browser.pages())[0]
 
-        let details = await setPageSize()
+        await setUserAgent()
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
 
-        // if (CLICK['raiyan']['click']) {
-        //     await getMyWebsite('https://www.raiyan088.xyz', details)
-        //     console.log('----SUCCESS----', 1)
-        // }
+        if (CLICK['raiyan']['click']) {
+            await getMyWebsite('https://www.raiyan088.xyz')
+            console.log('----SUCCESS----', 1)
+        }
 
-        // if (CLICK['zagl']['click']) {
-        //     await getZagl('https://za.gl/BtNFF')
-        //     console.log('----SUCCESS----', 2)
-        // }
+        if (CLICK['zagl']['click']) {
+            await getZagl('https://za.gl/BtNFF')
+            console.log('----SUCCESS----', 2)
+        }
 
-        // if (CLICK['shorte']['click']) {
-        //     await getFiveSecond('http://festyy.com/ehD5hw', 'span[class="skip-btn show"]', '#skip_button')
-        //     console.log('----SUCCESS----', 3)
-        // }
+        if (CLICK['shorte']['click']) {
+            await getFiveSecond('http://festyy.com/ehD5hw', 'span[class="skip-btn show"]', '#skip_button')
+            console.log('----SUCCESS----', 3)
+        }
 
-        // if (CLICK['adfoc']['click']) {
-        //     await getFiveSecond('https://adfoc.us/84368198903866', '#showTimer[style="display: none;"]', '#showSkip > a')
-        //     console.log('----SUCCESS----', 4)
-        // }
+        if (CLICK['adfoc']['click']) {
+            await getFiveSecond('https://adfoc.us/84368198903866', '#showTimer[style="display: none;"]', '#showSkip > a')
+            console.log('----SUCCESS----', 4)
+        }
 
         if (CLICK['ouo']['click']) {
             await getOuo('https://ouo.io/ntjuRQd')
             console.log('----SUCCESS----', 5)
         }
 
-        // if (CLICK['direct']['click']) {
-        //     await getDirectLink('https://glaultoa.com/4/6829595')
-        //     console.log('----SUCCESS----', 6)
-        // }
+        if (CLICK['direct']['click']) {
+            await getDirectLink('https://glaultoa.com/4/6829595')
+            console.log('----SUCCESS----', 6)
+        }
 
         console.log('-----FINISH----')
         
-        //process.exit(0)
+        process.exit(0)
     } catch (error) {
         console.log(error)
         console.log('-----ERROR-----')
@@ -172,12 +174,17 @@ async function getMyWebsite(url) {
         await page.bringToFront()
         let scroll = await page.evaluate(() => document.querySelector('iframe#nenoAd').offsetTop - (window.innerHeight/2))
         await delay(1000)
-        await autoScroll(scroll, false)
+        await page.evaluate((size) => {
+            window.scrollTo({
+                top: size,
+                behavior: 'smooth',
+            })
+        }, scroll)
         await clickNeonAd()
     } catch (error) {}
     
     await delay(3000)
-    //await closeAllPage()
+    await closeAllPage()
 }
 
 async function closefullAd() {
@@ -186,51 +193,6 @@ async function closefullAd() {
     if (show) {
         await page.click('div[class="_7klm5xb "]')
     }
-}
-
-async function clickAdsterraAd(height) {
-    await delay(500)
-
-    var start = new Date().getTime()
-    while(new Date().getTime() - start < 15000) {
-    
-        try {
-            await closefullAd()
-            await delay(300)
-            await page.bringToFront()
-            await delay(200)
-
-            let check = await page.evaluate(() => {
-                try {
-                    let html = document.querySelector('html').childNodes
-                    let output = false
-                    for (let i = 0; i < html.length; i++) {
-                        try {
-                            if (html[i].innerHTML.startsWith('<div')) {
-                                if (html[i].getAttribute('style').includes('pointer-events: none')) {
-                                    output = true
-                                }
-                            }
-                        } catch (error) {}
-                    }
-                    return output
-                } catch (error) {}
-
-                return false
-            })
-
-            await page.mouse.click(getRandomNumber(30, 280), height)
-            await delay(500)
-
-            if (!check) {
-                break
-            }
-        } catch (error) {
-            break
-        }
-    }
-
-    await getOpenPage()
 }
 
 async function clickNeonAd() {
@@ -513,9 +475,8 @@ async function getOuo(url) {
 
     console.log('-----LOADED----')
 
-    let timeout = 0
-    while(true) {
-        timeout++
+    var start = new Date().getTime()
+    while(new Date().getTime() - start < 30000) {
         try {
             await _page.bringToFront()
 
@@ -528,7 +489,6 @@ async function getOuo(url) {
             })
 
             if (button) {
-                console.log('Button')
                 await delay(3000)
                 await _page.click('button#btn-main[class="btn btn-main"]')
                 await delay(2000)
@@ -536,13 +496,11 @@ async function getOuo(url) {
             }
         } catch (error) {}
 
-        console.log(timeout)
-
         await delay(1000)
     }
 
-    var start = new Date().getTime()
-    while(new Date().getTime() - start < 15000) {
+    start = new Date().getTime()
+    while(new Date().getTime() - start < 30000) {
     
         try {
             await _page.bringToFront()
@@ -583,22 +541,24 @@ async function getDirectLink(url) {
     await page.bringToFront()
     await page.goto(url, { waitUntil: 'load', timeout: 0 })
     console.log('-----LOADED----')
-    await delay(10000)
+    await delay(8000)
+    let _page = await getOpenPage()
+    let scroll = await _page.evaluate(() => document.body.scrollHeight - window.innerHeight)
+    let devided = parseInt(scroll/6)
+    for (let i = 0; i < 6; i++) {
+        await _page.evaluate((size) => {
+            window.scrollTo({
+                top: size,
+                behavior: 'smooth',
+            })
+        }, devided*(i+1))
+        await delay(500)
+    }
+    await delay(2000)
 }
 
-async function setPageSize() {
-    let details = await page.evaluate(() => {
-         let width = 1200
-         let height = 600
-         try {
-             width = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0)
-             height = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-         } catch (error) {}
- 
-         return { width:width, height:height }
-     })
-
-     await page.evaluateOnNewDocument((userAgent) => {
+async function setUserAgent() {
+    await page.evaluateOnNewDocument((userAgent) => {
         Object.defineProperty(navigator, 'platform', { get: () => 'Win32' })
         Object.defineProperty(navigator, 'productSub', { get: () => '20100101' })
         Object.defineProperty(navigator, 'vendor', { get: () => '' })
@@ -617,14 +577,6 @@ async function setPageSize() {
     }, mUserAgent)
 
     await page.setUserAgent(mUserAgent)
-
-    await page.setViewport({
-        width: details['width'],
-        height: details['height'],
-        deviceScaleFactor: 1,
-    })
-
-    return details
 }
 
 async function getAsiified(path, data) {
@@ -650,9 +602,8 @@ async function solveCloudFlare(_page) {
 
     let cloudflare = false
 
-    let timeout = 0
-    while(true) {
-        timeout++
+    var start = new Date().getTime()
+    while(new Date().getTime() - start < 30000) {
         await delay(1000)
         
         try {
@@ -669,8 +620,6 @@ async function solveCloudFlare(_page) {
                 return 0
             })
 
-            console.log(challenge)
-    
             if (challenge != 0) {
                 if (challenge != 1) {
                     cloudflare = true
@@ -822,23 +771,6 @@ async function patchAxios(url, body, data) {
         }
     }
     return responce
-}
-
-async function autoScroll(size, adPage) {
-    let _page = page
-
-    if (adPage) {
-        _page = await getOpenPage()
-    } else {
-        await page.bringToFront()
-    }
-    
-    await _page.evaluate((size) => {
-        window.scrollTo({
-            top: size,
-            behavior: 'smooth',
-        })
-    }, size)
 }
 
 function getNextTime(xy) {
