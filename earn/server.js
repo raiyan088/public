@@ -767,6 +767,7 @@ async function closeAllPage() {
 
     for (let i = 1; i < pages.length; i++) {
         try {
+            pages[i].on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
             await pages[i].goto('about:blank')
             await delay(500)
             await pages[i].close()
