@@ -87,7 +87,7 @@ async function browserStart() {
     try {
         console.log('-----START-----')
 
-        await saveData()
+        //await saveData()
 
         browser = await puppeteer.launch({
             headless: false,
@@ -113,39 +113,39 @@ async function browserStart() {
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
 
-        if (CLICK['raiyan']['click']) {
-            await getMyWebsite('https://www.raiyan088.xyz', details)
-            console.log('----SUCCESS----', 1)
-        }
+        // if (CLICK['raiyan']['click']) {
+        //     await getMyWebsite('https://www.raiyan088.xyz', details)
+        //     console.log('----SUCCESS----', 1)
+        // }
 
-        if (CLICK['zagl']['click']) {
-            await getZagl('https://za.gl/BtNFF')
-            console.log('----SUCCESS----', 2)
-        }
+        // if (CLICK['zagl']['click']) {
+        //     await getZagl('https://za.gl/BtNFF')
+        //     console.log('----SUCCESS----', 2)
+        // }
 
-        if (CLICK['shorte']['click']) {
-            await getFiveSecond('http://festyy.com/ehD5hw', 'span[class="skip-btn show"]', '#skip_button')
-            console.log('----SUCCESS----', 3)
-        }
+        // if (CLICK['shorte']['click']) {
+        //     await getFiveSecond('http://festyy.com/ehD5hw', 'span[class="skip-btn show"]', '#skip_button')
+        //     console.log('----SUCCESS----', 3)
+        // }
 
-        if (CLICK['adfoc']['click']) {
-            await getFiveSecond('https://adfoc.us/84368198903866', '#showTimer[style="display: none;"]', '#showSkip > a')
-            console.log('----SUCCESS----', 4)
-        }
+        // if (CLICK['adfoc']['click']) {
+        //     await getFiveSecond('https://adfoc.us/84368198903866', '#showTimer[style="display: none;"]', '#showSkip > a')
+        //     console.log('----SUCCESS----', 4)
+        // }
 
         if (CLICK['ouo']['click']) {
             await getOuo('https://ouo.io/ntjuRQd')
             console.log('----SUCCESS----', 5)
         }
 
-        if (CLICK['direct']['click']) {
-            await getDirectLink('https://www.toprevenuegate.com/i6b2dneaf?key=037571b48b68817a68ebb4d6933e29c6')
-            console.log('----SUCCESS----', 6)
-        }
+        // if (CLICK['direct']['click']) {
+        //     await getDirectLink('https://glaultoa.com/4/6829595')
+        //     console.log('----SUCCESS----', 6)
+        // }
 
         console.log('-----FINISH----')
         
-        process.exit(0)
+        //process.exit(0)
     } catch (error) {
         console.log(error)
         console.log('-----ERROR-----')
@@ -157,79 +157,27 @@ async function getMyWebsite(url) {
     await page.bringToFront()
     await page.goto(url, { waitUntil: 'load', timeout: 0 })
     console.log('-----LOADED----')
-    await delay(5000)
+    await delay(3000)
     
-    for (let i = 0; i < 2; i++) {
-        try {
-            let x = await page.evaluate(() => window.innerWidth/2 )
-            let y = await page.evaluate(() => window.innerHeight/2 )
+    try {
+        let x = await page.evaluate(() => window.innerWidth/2 )
+        let y = await page.evaluate(() => window.innerHeight/2 )
 
-            await page.mouse.click(getRandomNumber(x-100, x+100), getRandomNumber(y-100, y+100))
+        await page.mouse.click(getRandomNumber(x-100, x+100), getRandomNumber(y-100, y+100))
 
-            await delay(4000)
-            await page.bringToFront()
-        } catch (error) {}
-        
-        await delay(1000)
-    }
-
-    await page.bringToFront()
-
-    for (let i = 0; i < 2; i++) {
+        await delay(4000)
+        await closefullAd()
         await delay(100)
         await closefullAd()
-    }
-    
-    for (let i = 0; i < 2; i++) {
-        try {
-            let x = await page.evaluate(() => window.innerWidth/3 )
-            let y = await page.evaluate(() => window.innerHeight )
-
-            await page.mouse.click(getRandomNumber(x+x, x+x+x), getRandomNumber(50, y-50))
-
-            await delay(2000)
-            await page.bringToFront()
-        } catch (error) {}
-        
-        await delay(500)
-    }
-
-    for (let i = 0; i < 2; i++) {
-        try {
-            let x = await page.evaluate(() => window.innerWidth )
-            let y = await page.evaluate(() => window.innerHeight/3 )
-
-            await page.mouse.click(getRandomNumber(50, x-50), getRandomNumber(y+y, y+y+y))
-
-            await delay(2000)
-            await page.bringToFront()
-        } catch (error) {}
-        
-        await delay(500)
-    }
-
-    for (let i = 0; i < 3; i++) {
-        let scroll = 0
-        if (i == 0) {
-            scroll = await page.evaluate(() => document.querySelector('div#adsterraNad').offsetTop - (window.innerHeight/2)+100)
-        } else if (i == 1) {
-            scroll = await page.evaluate(() => document.querySelector('div#adsterraBad').offsetTop - (window.innerHeight/2)+100)
-        }  else if (i == 2) {
-            scroll = await page.evaluate(() => document.querySelector('div#adsterraFad').offsetTop - (window.innerHeight/2)+100)
-        }
-        let click = await page.evaluate(() => window.innerHeight/2)
+        await page.bringToFront()
+        let scroll = await page.evaluate(() => document.querySelector('iframe#nenoAd').offsetTop - (window.innerHeight/2))
+        await delay(1000)
         await autoScroll(scroll, false)
-        await delay(500)
-        await clickAdsterraAd(getRandomNumber(click, click+200))
-    }
-
-    await page.bringToFront()
-    let scroll = await page.evaluate(() => document.querySelector('iframe#nenoAd').offsetTop - (window.innerHeight/2))
-    await autoScroll(scroll, false)
-    await clickNeonAd()
+        await clickNeonAd()
+    } catch (error) {}
     
     await delay(3000)
-    await closeAllPage()
+    //await closeAllPage()
 }
 
 async function closefullAd() {
@@ -330,7 +278,7 @@ async function clickNeonAd() {
 
     await getOpenPage()
 
-    await delay(2000)
+    await delay(5000)
 }
 
 async function getZagl(url) {
@@ -565,9 +513,9 @@ async function getOuo(url) {
 
     console.log('-----LOADED----')
 
-    var start = new Date().getTime()
-    while(new Date().getTime() - start < 15000) {
-    
+    let timeout = 0
+    while(true) {
+        timeout++
         try {
             await _page.bringToFront()
 
@@ -580,12 +528,15 @@ async function getOuo(url) {
             })
 
             if (button) {
+                console.log('Button')
                 await delay(3000)
                 await _page.click('button#btn-main[class="btn btn-main"]')
                 await delay(2000)
                 break
             }
         } catch (error) {}
+
+        console.log(timeout)
 
         await delay(1000)
     }
@@ -699,35 +650,40 @@ async function solveCloudFlare(_page) {
 
     let cloudflare = false
 
-    var start = new Date().getTime()
-    while(new Date().getTime() - start < 15000) {
-    
+    let timeout = 0
+    while(true) {
+        timeout++
         await delay(1000)
-        let challenge = await _page.evaluate(() => {
-            let root = document.querySelector('iframe[src*="challenges.cloudflare"]')
-            if (root) {
-                return root.offsetTop
-            } else {
-                root = document.querySelector('h2#challenge-running')
+        
+        try {
+            let challenge = await _page.evaluate(() => {
+                let root = document.querySelector('iframe[src*="challenges.cloudflare"]')
                 if (root) {
-                    return 1
+                    return root.offsetTop
+                } else {
+                    root = document.querySelector('h2#challenge-running')
+                    if (root) {
+                        return 1
+                    }
                 }
-            }
-            return 0
-        })
+                return 0
+            })
 
-        if (challenge != 0) {
-            if (challenge != 1) {
-                cloudflare = false
-                await _page.mouse.click(55, challenge+30)
-            }
-            await delay(3000)
-        } else {
-            if (cloudflare) {
+            console.log(challenge)
+    
+            if (challenge != 0) {
+                if (challenge != 1) {
+                    cloudflare = true
+                    await _page.mouse.click(55, challenge+30)
+                }
                 await delay(3000)
+            } else {
+                if (cloudflare) {
+                    await delay(3000)
+                }
+                break
             }
-            break
-        }
+        } catch (error) {}
     }
 }
 
