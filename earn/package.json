@@ -1,0 +1,17 @@
+{
+  "name": "Earn",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "asciify-image": "^0.1.10",
+    "axios": "^1.5.1",
+    "path": "^0.12.7",
+    "puppeteer": "^19.10.0"
+  }
+}
