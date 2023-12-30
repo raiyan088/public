@@ -67,7 +67,9 @@ async function checkClick() {
                 for (let [key, value] of Object.entries(AD)) {
                     if (value['click'] < parseInt(new Date().getTime()/1000)) {
                         mStart = true
-                        CLICK[key]['click'] = true
+                        if (CLICK[key]) {
+                            CLICK[key]['click'] = true
+                        }
                     }
                 }
             }
