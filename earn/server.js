@@ -5,11 +5,7 @@ const fs = require('fs')
 
 const CLICK = {
     'zagl': { x:700, y:1500, click:false },
-    'ouo': { x:2000, y:5000, click:false },
-    'adfoc': { x:2000, y:5000, click:false },
     'raiyan': { x:2000, y:5000, click:false },
-    'shorte': { x:4000, y:10000, click:false },
-    'direct': { x:4000, y:10000, click:false },
 }
 
 let browser = null
@@ -134,22 +130,16 @@ async function browserStart() {
             console.log('----SUCCESS----', 2)
         }
 
-        if (CLICK['shorte']['click']) {
+        if (CLICK['raiyan']['click']) {
             await getFiveSecond('http://festyy.com/ehD5hw', 'span[class="skip-btn show"]', '#skip_button')
             console.log('----SUCCESS----', 3)
-        }
 
-        if (CLICK['adfoc']['click']) {
             await getFiveSecond('https://adfoc.us/84368198903866', '#showTimer[style="display: none;"]', '#showSkip > a')
             console.log('----SUCCESS----', 4)
-        }
 
-        if (CLICK['ouo']['click']) {
             await getOuo('https://ouo.io/ntjuRQd')
             console.log('----SUCCESS----', 5)
-        }
 
-        if (CLICK['direct']['click']) {
             await getDirectLink('https://glaultoa.com/4/6829595')
             console.log('----SUCCESS----', 6)
         }
