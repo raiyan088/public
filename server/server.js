@@ -4,8 +4,9 @@ const axios = require('axios')
 
 const SYMBLE = '#'
 const NAME = 'server'
+const SIZE = 3
 
-let RELOAD = false
+let RELOAD = true
 
 let mLoginFailed = false
 let browser = null
@@ -15,9 +16,9 @@ let PAGES = []
 let mUpdate = 0
 
 let COLAB = [
-    '118bn_FQSqA42EDEricZusGTn5Do_gCWC',
-    '1rAoQfVTS2AJ9LywvC_mGAXBoKum_MGdx',
-    '1NLEVldJSzt7OnlGo3mgZrrHhxvBqjyQe'
+    '1xxIqwqF4Mj0_2_ceMqygqJjbk6yV6K2F',
+    '1H5QEthvPRoU47BhLGv6TTCkALA5tQr6U',
+    '1wiveGS5thwvwpj_j4b3ZOoOC_XkE73rx'
 ]
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2NvbGFiLw==', 'base64').toString('ascii')
@@ -111,14 +112,14 @@ async function startBrowser(data) {
         await waitForSelector(page, 'colab-connect-button')
         await setUserId(page)
         await updateServer(null)
-        let ID = ((mData-1)*3)+1
+        let ID = ((mData-1)*SIZE)+1
         console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         
         PAGES.push(page)
 
         let cookies = await page.cookies()
         
-        for (let i = 1; i < 3; i++) {
+        for (let i = 1; i < SIZE; i++) {
             let newPage = await browser.newPage()
             await newPage.setCookie(...cookies)
             PAGES.push(newPage)
@@ -126,7 +127,7 @@ async function startBrowser(data) {
             await newPage.goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
             await waitForSelector(newPage, 'colab-connect-button')
             await setUserId(newPage)
-            let ID = ((mData-1)*3)+i+1
+            let ID = ((mData-1)*SIZE)+i+1
             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         }
 
@@ -135,10 +136,10 @@ async function startBrowser(data) {
         let mBlock = false
 
         while (true) {
-            for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < SIZE; i++) {
                 await PAGES[i].bringToFront()
                 await delay(1000)
-                let ID = ((mData-1)*3)+i+1
+                let ID = ((mData-1)*SIZE)+i+1
                 await removeCaptha(PAGES[i])
 
                 let block = await PAGES[i].evaluate(() => {
@@ -175,11 +176,15 @@ async function startBrowser(data) {
                         let log = await getStatusLog(PAGES[i])
                         if (log == 'START') {
                             console.log(SYMBLE+SYMBLE+'---ACTIVE--'+getID(ID))
-                        } else if (log == 'COMPLETED') {
+                        } else if (log == 'COMPLETED' || log == 'FINISH') {
                             console.log(SYMBLE+SYMBLE+'-COMPLETED-'+getID(ID))
+                            if (log == 'COMPLETED') {
+                                await colabDisConnected(PAGES[i], 'Earn0'+(i+1))
+                            }
                             await PAGES[i].goto('https://colab.research.google.com/drive/'+COLAB[i], { waitUntil: 'load', timeout: 0 })
                             await waitForSelector(PAGES[i], 'colab-connect-button')
                             await setUserId(PAGES[i])
+                            await saveCookies(page)
                             console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
                         }
                     }
@@ -285,6 +290,23 @@ async function colabCheckConnected(page, login) {
                 }
                 console.log(SYMBLE+SYMBLE+'--DISMISS--'+getID(mData))
             }
+        }
+    }
+}
+
+async function colabDisConnected(page, name) {
+    await page.goto('https://colab.research.google.com/tun/m/assignments?authuser=0', { waitUntil: 'load', timeout: 0 })
+    let list = await connectedList(page)
+    if (list) {
+        if (list.length > 0) {
+            for (let i = 0; i < list.length; i++) {
+                let id = await getFatchID(page, 'https://colab.research.google.com/tun/m/'+list[i]['endpoint']+'/api/sessions?authuser=0', name)
+                if (id) {
+                    await deleteFatchID(page, 'https://colab.research.google.com/tun/m/'+list[i]['endpoint']+'/api/sessions/'+id+'?authuser=0')
+                    await unassingFatch(page, 'https://colab.research.google.com/tun/m/unassign/'+list[i]['endpoint']+'?authuser=0')
+                }
+            }
+            console.log(SYMBLE+SYMBLE+'--DISMISS--'+getID(mData))
         }
     }
 }
@@ -538,6 +560,10 @@ async function getStatusLog(page) {
                     }
                     return false
                 })
+
+                if (mDisconnect) {
+                    return 'COMPLETED'
+                }
             }
         } else {
             let has = await exists(page, 'mwc-button[dialogaction="cancel"]')
@@ -547,7 +573,7 @@ async function getStatusLog(page) {
         }
 
         if (mDisconnect) {
-            return 'COMPLETED'
+            return 'FINISH'
         } else {
             let data = await page.evaluate(() => {
                 let root = document.querySelector('colab-static-output-renderer')
@@ -654,7 +680,7 @@ async function connectedList(page) {
 }
 
 
-async function getFatchID(page, url) {
+async function getFatchID(page, url, name) {
     
     let id = null
 
@@ -689,7 +715,15 @@ async function getFatchID(page, url) {
 
         if (data) {
             if (data.length > 0) {
-                id = data[0]['id']
+                if (name) {
+                    if (data[0]['name'].startsWith(name)) {
+                        id = data[0]['id']
+                    } else {
+                        id = null
+                    }
+                } else {
+                    id = data[0]['id']
+                }
             } else {
                 id = null
             }
