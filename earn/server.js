@@ -15,6 +15,7 @@ const CLICK = {
 let browser = null
 let page = null
 let IP = null
+let mTimeout = 0
 
 let mUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
 
@@ -36,13 +37,13 @@ async function startWork() {
 
         if (mIP.data && mIP.data != 'null') {
             if (mIP.data['time'] < parseInt(new Date().getTime()/1000)) {
-                checkClick()
+                await checkClick()
             } else {
                 console.log('---IP-CHANGE---')
                 process.exit(0)
             }
         } else {
-            checkClick()
+            await checkClick()
         }
     } catch (error) {
         console.log('-----ERROR-----')
@@ -78,9 +79,16 @@ async function checkClick() {
     } catch (error) {}
 
     if (mStart) {
-        browserStart()
+        await browserStart()
     } else {
-        console.log('----NO-TIME----')
+        mTimeout++
+        if (mTimeout >= 15) {
+            console.log('----NO-TIME----')
+            process.exit(0)
+        } else {
+            await delay(10000)
+            await checkClick()
+        }
     }
 }
 
