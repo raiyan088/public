@@ -5,7 +5,7 @@ const fs = require('fs')
 
 const CLICK = {
     'zagl': { x:700, y:1500, click:false },
-    'raiyan': { x:2000, y:5000, click:false },
+    'raiyan': { x:3000, y:5000, click:false },
 }
 
 let browser = null
