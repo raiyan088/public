@@ -87,6 +87,7 @@ async function checkClick() {
             process.exit(0)
         } else {
             await delay(10000)
+            console.log('----WAITING----')
             await checkClick()
         }
     }
