@@ -78,11 +78,11 @@ async function checkClick() {
         await browserStart()
     } else {
         mTimeout++
-        if (mTimeout >= 30) {
+        if (mTimeout >= 15) {
             console.log('----NO-TIME----')
             process.exit(0)
         } else {
-            await delay(5000)
+            await delay(10000)
             console.log('----WAITING----')
             await checkClick()
         }
