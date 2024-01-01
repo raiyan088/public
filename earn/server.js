@@ -127,10 +127,10 @@ async function browserStart() {
             console.log('----SUCCESS----', 1)
         }
 
-        if (CLICK['zagl']['click']) {
-            await getZagl('https://za.gl/BtNFF')
-            console.log('----SUCCESS----', 2)
-        }
+        // if (CLICK['zagl']['click']) {
+        //     await getZagl('https://za.gl/BtNFF')
+        //     console.log('----SUCCESS----', 2)
+        // }
 
         if (CLICK['raiyan']['click']) {
             await getFiveSecond('http://festyy.com/ehD5hw', 'span[class="skip-btn show"]', '#skip_button')
@@ -139,12 +139,14 @@ async function browserStart() {
             await getFiveSecond('https://adfoc.us/84368198903866', '#showTimer[style="display: none;"]', '#showSkip > a')
             console.log('----SUCCESS----', 4)
 
-            await getOuo('https://ouo.io/ntjuRQd')
-            console.log('----SUCCESS----', 5)
+            // await getOuo('https://ouo.io/ntjuRQd')
+            // console.log('----SUCCESS----', 5)
 
-            await getDirectLink('https://glaultoa.com/4/6829595')
-            console.log('----SUCCESS----', 6)
+            // await getDirectLink('https://glaultoa.com/4/6829595')
+            // console.log('----SUCCESS----', 6)
         }
+
+        await delay(30000)
 
         console.log('-----FINISH----')
         
