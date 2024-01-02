@@ -1,52 +1,30 @@
 const { exec } = require('child_process')
-const ks = require('node-key-sender')
+const https = require('https')
 const fs = require('fs')
 
-
-process.argv.slice(2).forEach(function (data, index) {
-    try {
-        if (index == 0) {
-            if (data == '0' || data == 0) {
-                ks.sendCombination(['windows', 'r'])
-                setTimeout(() => {
-                    ks.startBatch().batchTypeText('cmd').sendBatch()
-                }, 2000)
-            } else {
-                startProcess()
-            }
-        }
-    } catch (error) {}
-})
+startProcess()
 
 async function startProcess() {
-    let path = __dirname
-    console.log(path);
-    exec('installer.exe /S /D='+__dirname+'\\OpenVPN')
-    // ks.sendCombination(['windows', 'r'])
-    // await delay(500)
-    // ks.startBatch().batchTypeText('cmd').sendBatch()
-    // await delay(500)
-    // ks.sendKey('enter')
-    // await delay(2000)
-    // ks.startBatch().batchTypeText('cd Desktop/raiyan').sendBatch()
-    // await delay(1000)
-    // ks.sendKey('enter')
-    // await delay(500)
-    // ks.startBatch().batchTypeText('installer.exe /S /S /D=/OpenVPN').sendBatch()
-    // await delay(500)
-    // ks.sendKey('enter')
-    // console.log('Run Completed')
-    // await delay(5000)
-    let size = 0
+    let IP = await getRequest('https://ifconfig.me/ip')
 
     while (true) {
-        size++
+        if (IP == null) {
+            await delay(3000)
+            IP = await getRequest('https://ifconfig.me/ip')
+        } else {
+            break
+        }
+    }
+
+    console.log('IP: '+IP)
+
+    exec('installer.exe /S /D='+__dirname+'\\OpenVPN')
+
+    while (true) {
         try {
             let check = fs.existsSync('OpenVPN/bin/openvpn.exe')
             if (check) {
                 break
-            } else {
-                console.log('Loading:', size)
             }
         } catch (error) {}
 
@@ -57,18 +35,77 @@ async function startProcess() {
 
     console.log('Install Success')
 
-    // fs.copyFile('openvpn.exe', 'C:\\Program Files\\OpenVPN\\bin\\openvpn.exe', (err) => {
-    //     if (err) {
-    //         console.log(err)
-    //     } else {
-    //         console.log('Copy Success')
-    //     }
-    //   })
+    try {
+        fs.copyFileSync('vpn.ovpn', 'OpenVPN/config/vpn.ovpn')
+        fs.copyFileSync('openvpn.exe', 'OpenVPN/bin/openvpn.exe')
+        fs.copyFileSync('libpkcs11-helper-1.dll', 'OpenVPN/bin/libpkcs11-helper-1.dll')
+        console.log('File Copy Success')
+    } catch (error) {
+        console.log('File Copy Error')
+    }
+
+    exec(__dirname+'\\OpenVPN\\bin\\openvpn-gui.exe --connect vpn.ovpn')
+    console.log('VPN Connecting...')
+
+    let mConnect = false
+    let timeout = 0
+
+    while (true) {
+        timeout++
+        
+        let ip = await getRequest('https://ifconfig.me/ip')
+        console.log(ip)
+            
+        if (ip != null && ip != IP) {
+            mConnect = true
+            break
+        }
+
+        if (timeout > 10) {
+            break
+        }
+
+        await delay(3000)
+    }
+
+    if (mConnect) {
+        console.log('VPN Connected')
+    } else {
+        console.log('VPN Connection Failed')
+        exec('taskkill/IM openvpn-gui.exe')
+        exec('taskkill/IM openvpn.exe /F')
+        await delay(500)
+        exec('taskkill/IM openvpn-gui.exe')
+        exec('taskkill/IM openvpn.exe /F')
+        console.log('Stop')
+    }
+
+    await delay(60000)
+
+    process.exit(0)
 }
 
-async function killProcess() {
-    process = exec('taskkill/IM provisioner.exe')
-    process.stdout.on('data', (data) => {})
+
+async function getRequest(url) {
+    return new Promise((resolve) => {
+        https.get(url, (res) => {
+            res.setEncoding('utf8')
+            let body = ''
+            res.on('data', chunk => body += chunk)
+            res.on('end', () => resolve(body))
+        }).on('error', () => resolve(null))
+    })
+}
+
+async function postRequest(url, postData, options) {
+    return new Promise((resolve) => {
+        https.request(url, options, (res) => {
+            res.setEncoding('utf8')
+            let body = ''
+            res.on('data', chunk => body += chunk)
+            res.on('end', () => resolve(body))
+        }).on('error', () => resolve(null)).write(postData)
+    })
 }
 
 
