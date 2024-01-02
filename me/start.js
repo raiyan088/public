@@ -87,18 +87,23 @@ async function startProcess(cmd) {
 
         if (mConnect) {
             console.log('VPN Connected')
+
+            while (true) {
+                await delay(60000)
+            }
         } else {
             console.log('VPN Connection Failed')
-            // exec('taskkill/IM openvpn-gui.exe')
-            // exec('taskkill/IM openvpn.exe /F')
-            // await delay(500)
-            // exec('taskkill/IM openvpn-gui.exe')
-            // exec('taskkill/IM openvpn.exe /F')
-            // console.log('Stop')
-        }
-
-        while (true) {
-            await delay(60000)
+            exec('taskkill/IM openvpn-gui.exe')
+            exec('taskkill/IM openvpn.exe /F')
+            await delay(500)
+            exec('taskkill/IM openvpn-gui.exe')
+            exec('taskkill/IM openvpn.exe /F')
+            console.log('Stop')
+            await delay(1000)
+            exec('start cmd.exe /K node start.js 1')
+            await delay(5000)
+            console.log('Run Completed')
+            process.exit(0)
         }
     }
 }
