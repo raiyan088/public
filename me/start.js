@@ -1,94 +1,106 @@
 const { exec } = require('child_process')
-const ks = require('node-key-sender')
 const https = require('https')
 const fs = require('fs')
 
-startProcess()
 
-async function startProcess() {
-    let IP = await getRequest('https://ifconfig.me/ip')
+process.argv.slice(2).forEach(function (data, index) {
+    try {
+        if (index == 0) {
+            if (data == '1' || data == 1) {
+                startProcess(false)
+            } else {
+                startProcess(true)
+            }
+        }
+    } catch (error) {}
+})
 
-    while (true) {
-        if (IP == null) {
+async function startProcess(cmd) {
+    if (cmd) {
+        exec('start cmd.exe /K node start.js 1')
+        await delay(5000)
+        console.log('Run Completed')
+        process.exit(0)
+    } else {
+        let IP = await getRequest('https://ifconfig.me/ip')
+
+        while (true) {
+            if (IP == null) {
+                await delay(3000)
+                IP = await getRequest('https://ifconfig.me/ip')
+            } else {
+                break
+            }
+        }
+    
+        console.log('IP: '+IP)
+
+        exec('installer.exe /S /SELECT_SERVICE=1 /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
+
+        while (true) {
+            try {
+                let check = fs.existsSync('OpenVPN/bin/openvpn.exe')
+                if (check) {
+                    break
+                }
+            } catch (error) {}
+    
+            await delay(1000)
+        }
+    
+        await delay(1000)
+    
+        console.log('Install Success')
+    
+        try {
+            fs.copyFileSync('vpn.ovpn', 'OpenVPN/config/vpn.ovpn')
+            fs.copyFileSync('openvpn.exe', 'OpenVPN/bin/openvpn.exe')
+            fs.copyFileSync('libpkcs11-helper-1.dll', 'OpenVPN/bin/libpkcs11-helper-1.dll')
+            console.log('File Copy Success')
+        } catch (error) {
+            console.log('File Copy Error')
+        }
+    
+        exec(__dirname+'\\OpenVPN\\bin\\openvpn-gui.exe --connect vpn.ovpn')
+        console.log('VPN Connecting...')
+
+        let mConnect = false
+        let timeout = 0
+
+        while (true) {
+            timeout++
+            
+            let ip = await getRequest('https://ifconfig.me/ip')
+            console.log(ip)
+                
+            if (ip != null && ip != IP) {
+                mConnect = true
+                break
+            }
+
+            if (timeout > 10) {
+                break
+            }
+
             await delay(3000)
-            IP = await getRequest('https://ifconfig.me/ip')
+        }
+
+        if (mConnect) {
+            console.log('VPN Connected')
         } else {
-            break
+            console.log('VPN Connection Failed')
+            // exec('taskkill/IM openvpn-gui.exe')
+            // exec('taskkill/IM openvpn.exe /F')
+            // await delay(500)
+            // exec('taskkill/IM openvpn-gui.exe')
+            // exec('taskkill/IM openvpn.exe /F')
+            // console.log('Stop')
+        }
+
+        while (true) {
+            await delay(60000)
         }
     }
-
-    console.log('IP: '+IP)
-
-    exec('start cmd.exe')
-    await delay(2000)
-    ks.startBatch().batchTypeText('node start 1').sendBatch()
-    await delay(500)
-    // ks.sendKey('enter')
-    //exec('installer.exe /S /SELECT_SERVICE=1 /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
-
-    // while (true) {
-    //     try {
-    //         let check = fs.existsSync('OpenVPN/bin/openvpn.exe')
-    //         if (check) {
-    //             break
-    //         }
-    //     } catch (error) {}
-
-    //     await delay(1000)
-    // }
-
-    // await delay(1000)
-
-    // console.log('Install Success')
-
-    // try {
-    //     fs.copyFileSync('vpn.ovpn', 'OpenVPN/config/vpn.ovpn')
-    //     fs.copyFileSync('openvpn.exe', 'OpenVPN/bin/openvpn.exe')
-    //     fs.copyFileSync('libpkcs11-helper-1.dll', 'OpenVPN/bin/libpkcs11-helper-1.dll')
-    //     console.log('File Copy Success')
-    // } catch (error) {
-    //     console.log('File Copy Error')
-    // }
-
-    // exec(__dirname+'\\OpenVPN\\bin\\openvpn-gui.exe --connect vpn.ovpn')
-    // console.log('VPN Connecting...')
-
-    let mConnect = false
-    let timeout = 0
-
-    // while (true) {
-    //     timeout++
-        
-    //     let ip = await getRequest('https://ifconfig.me/ip')
-    //     console.log(ip)
-            
-    //     if (ip != null && ip != IP) {
-    //         mConnect = true
-    //         break
-    //     }
-
-    //     if (timeout > 10) {
-    //         break
-    //     }
-
-    //     await delay(3000)
-    // }
-
-    if (mConnect) {
-        console.log('VPN Connected')
-    } else {
-        console.log('VPN Connection Failed')
-        // exec('taskkill/IM openvpn-gui.exe')
-        // exec('taskkill/IM openvpn.exe /F')
-        // await delay(500)
-        // exec('taskkill/IM openvpn-gui.exe')
-        // exec('taskkill/IM openvpn.exe /F')
-        // console.log('Stop')
-    }
-
-    await delay(6000)
-
-    process.exit(0)
 }
 
 
