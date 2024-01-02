@@ -18,7 +18,7 @@ async function startProcess() {
 
     console.log('IP: '+IP)
 
-    exec('installer.exe /S /D='+__dirname+'\\OpenVPN')
+    exec('installer.exe /S /SELECT_SERVICE=1  /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
 
     while (true) {
         try {
