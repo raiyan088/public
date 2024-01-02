@@ -77,7 +77,6 @@ async function startProcess() {
             await delay(60000)
         }
     } else {
-        RUN++
         console.log('VPN Connection Failed')
         exec('taskkill/IM openvpn-gui.exe')
         exec('taskkill/IM openvpn.exe /F')
