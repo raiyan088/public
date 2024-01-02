@@ -4,6 +4,7 @@ const fs = require('fs')
 
 startProcess()
 
+
 async function startProcess() {
     let IP = await getRequest('https://ifconfig.me/ip')
 
@@ -88,6 +89,7 @@ async function startProcess() {
         process.exit(0)
     }
 }
+
 
 
 async function getRequest(url) {
