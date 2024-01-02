@@ -28,16 +28,16 @@ async function startProcess() {
     await delay(1000)
     ks.sendKey('enter')
     await delay(500)
-    ks.startBatch().batchTypeText('node create').sendBatch()
+    ks.startBatch().batchTypeText('openvpninstaller.exe /S /SELECT_SERVICE=1  /SELECT_OPENSSLDLLS=1').sendBatch()
     await delay(500)
     ks.sendKey('enter')
     console.log('Run Completed')
-    await delay(3000)
-    try {
-        await killProcess()
-    } catch (error) {}
-    console.log('Kill Process')
-    await delay(60000)
+    await delay(5000)
+    // try {
+    //     await killProcess()
+    // } catch (error) {}
+    // console.log('Kill Process')
+    // await delay(60000)
     console.log('Success')
 }
 
