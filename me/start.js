@@ -28,7 +28,7 @@ async function startProcess() {
     await delay(1000)
     ks.sendKey('enter')
     await delay(500)
-    ks.startBatch().batchTypeText('openvpninstaller.exe /S /SELECT_SERVICE=1  /SELECT_OPENSSLDLLS=1').sendBatch()
+    ks.startBatch().batchTypeText('installer.exe /S /SELECT_SERVICE=1  /SELECT_OPENSSLDLLS=1').sendBatch()
     await delay(500)
     ks.sendKey('enter')
     console.log('Run Completed')
