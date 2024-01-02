@@ -18,55 +18,56 @@ async function startProcess() {
 
     console.log('IP: '+IP)
 
-    exec('installer.exe /S /SELECT_SERVICE=1  /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
+    exec('start cmd.exe')
+    //exec('installer.exe /S /SELECT_SERVICE=1 /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
 
-    while (true) {
-        try {
-            let check = fs.existsSync('OpenVPN/bin/openvpn.exe')
-            if (check) {
-                break
-            }
-        } catch (error) {}
+    // while (true) {
+    //     try {
+    //         let check = fs.existsSync('OpenVPN/bin/openvpn.exe')
+    //         if (check) {
+    //             break
+    //         }
+    //     } catch (error) {}
 
-        await delay(1000)
-    }
+    //     await delay(1000)
+    // }
 
-    await delay(1000)
+    // await delay(1000)
 
-    console.log('Install Success')
+    // console.log('Install Success')
 
-    try {
-        fs.copyFileSync('vpn.ovpn', 'OpenVPN/config/vpn.ovpn')
-        fs.copyFileSync('openvpn.exe', 'OpenVPN/bin/openvpn.exe')
-        fs.copyFileSync('libpkcs11-helper-1.dll', 'OpenVPN/bin/libpkcs11-helper-1.dll')
-        console.log('File Copy Success')
-    } catch (error) {
-        console.log('File Copy Error')
-    }
+    // try {
+    //     fs.copyFileSync('vpn.ovpn', 'OpenVPN/config/vpn.ovpn')
+    //     fs.copyFileSync('openvpn.exe', 'OpenVPN/bin/openvpn.exe')
+    //     fs.copyFileSync('libpkcs11-helper-1.dll', 'OpenVPN/bin/libpkcs11-helper-1.dll')
+    //     console.log('File Copy Success')
+    // } catch (error) {
+    //     console.log('File Copy Error')
+    // }
 
-    exec(__dirname+'\\OpenVPN\\bin\\openvpn-gui.exe --connect vpn.ovpn')
-    console.log('VPN Connecting...')
+    // exec(__dirname+'\\OpenVPN\\bin\\openvpn-gui.exe --connect vpn.ovpn')
+    // console.log('VPN Connecting...')
 
     let mConnect = false
     let timeout = 0
 
-    while (true) {
-        timeout++
+    // while (true) {
+    //     timeout++
         
-        let ip = await getRequest('https://ifconfig.me/ip')
-        console.log(ip)
+    //     let ip = await getRequest('https://ifconfig.me/ip')
+    //     console.log(ip)
             
-        if (ip != null && ip != IP) {
-            mConnect = true
-            break
-        }
+    //     if (ip != null && ip != IP) {
+    //         mConnect = true
+    //         break
+    //     }
 
-        if (timeout > 10) {
-            break
-        }
+    //     if (timeout > 10) {
+    //         break
+    //     }
 
-        await delay(3000)
-    }
+    //     await delay(3000)
+    // }
 
     if (mConnect) {
         console.log('VPN Connected')
@@ -80,7 +81,7 @@ async function startProcess() {
         // console.log('Stop')
     }
 
-    // await delay(60000)
+    await delay(6000)
 
     process.exit(0)
 }
