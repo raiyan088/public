@@ -72,15 +72,15 @@ async function startProcess() {
         console.log('VPN Connected')
     } else {
         console.log('VPN Connection Failed')
-        exec('taskkill/IM openvpn-gui.exe')
-        exec('taskkill/IM openvpn.exe /F')
-        await delay(500)
-        exec('taskkill/IM openvpn-gui.exe')
-        exec('taskkill/IM openvpn.exe /F')
-        console.log('Stop')
+        // exec('taskkill/IM openvpn-gui.exe')
+        // exec('taskkill/IM openvpn.exe /F')
+        // await delay(500)
+        // exec('taskkill/IM openvpn-gui.exe')
+        // exec('taskkill/IM openvpn.exe /F')
+        // console.log('Stop')
     }
 
-    await delay(60000)
+    // await delay(60000)
 
     process.exit(0)
 }
