@@ -1,4 +1,5 @@
 const { exec } = require('child_process')
+const ks = require('node-key-sender')
 const https = require('https')
 const fs = require('fs')
 
@@ -19,6 +20,10 @@ async function startProcess() {
     console.log('IP: '+IP)
 
     exec('start cmd.exe')
+    await delay(2000)
+    ks.startBatch().batchTypeText('node start 1').sendBatch()
+    await delay(500)
+    // ks.sendKey('enter')
     //exec('installer.exe /S /SELECT_SERVICE=1 /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
 
     // while (true) {
