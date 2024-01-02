@@ -2,7 +2,6 @@ const { exec } = require('child_process')
 const https = require('https')
 const fs = require('fs')
 
-
 process.argv.slice(2).forEach(function (data, index) {
     try {
         if (index == 0) {
