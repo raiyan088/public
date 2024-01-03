@@ -88,9 +88,8 @@ async function startProcess(install) {
         if (mConnect) {
             console.log('VPN Connected')
 
-            while (true) {
-                await delay(60000)
-            }
+            await delay(60000)
+            process.exit(0)
         } else {
             console.log('VPN Connection Failed')
             exec('taskkill/IM openvpn-gui.exe')
