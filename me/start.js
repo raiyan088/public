@@ -73,10 +73,15 @@ async function startProcess(install) {
             let ip = await getRequest('https://ifconfig.me/ip')
             console.log(ip)
             
-            if (ip != null && ip != IP) {
-                mConnect = true
-                break
-            }
+            try {
+                if (ip != null && ip != IP && ip.length <= 16) {
+                    let split = ip.split('.')
+                    if (split.length == 4) {
+                        mConnect = true
+                        break
+                    }
+                }
+            } catch (error) {}
 
             if (timeout > 10) {
                 break
