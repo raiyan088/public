@@ -38,7 +38,7 @@ async function startProcess(install, firstTime) {
     console.log('IP: '+IP)
 
     if (firstTime) {
-        exec('installer.exe /S /SELECT_SERVICE=1 /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
+        exec(__dirname+'\\installer.exe /S /SELECT_SERVICE=1 /SELECT_OPENSSLDLLS=1 /D='+__dirname+'\\OpenVPN')
 
         await delay(5000)
     }
