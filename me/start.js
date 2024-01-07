@@ -45,7 +45,7 @@ async function startProcess(install, firstTime) {
 
     while (true) {
         try {
-            let check = fs.existsSync('OpenVPN/bin/openvpn.exe')
+            let check = fs.existsSync(__dirname+'\\OpenVPN\\bin\\openvpn.exe')
             if (check) {
                 break
             }
@@ -78,14 +78,14 @@ async function startProcess(install, firstTime) {
         if (config && id) {
             console.log('-----'+country+'-----')
     
-            fs.writeFileSync('vpn.ovpn', config)
+            fs.writeFileSync(__dirname+'\\vpn.ovpn', config)
             
             await saveOVPN(id)
 
             try {
-                fs.copyFileSync('vpn.ovpn', 'OpenVPN/config/vpn.ovpn')
-                fs.copyFileSync('openvpn.exe', 'OpenVPN/bin/openvpn.exe')
-                fs.copyFileSync('libpkcs11-helper-1.dll', 'OpenVPN/bin/libpkcs11-helper-1.dll')
+                fs.copyFileSync(__dirname+'\\vpn.ovpn', __dirname+'\\OpenVPN\\config\\vpn.ovpn')
+                fs.copyFileSync(__dirname+'\\openvpn.exe', __dirname+'\\OpenVPN\\bin\\openvpn.exe')
+                fs.copyFileSync(__dirname+'\\libpkcs11-helper-1.dll', __dirname+'\\OpenVPN\\bin\\libpkcs11-helper-1.dll')
                 console.log('File Copy Success')
             } catch (error) {
                 console.log('File Copy Error')
