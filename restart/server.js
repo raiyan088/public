@@ -92,7 +92,7 @@ async function getToken(user, action, cookies) {
 
     try {
         let body = response.data
-        if (body.includes('Failure') || body.includes('Success')) {
+        if (body.includes('Failure') || body.includes('Cancelled') || body.includes('Success')) {
             let name = 'name="authenticity_token"'
             if (body.includes(name)) {
                 let index = body.indexOf(name)+name.length
