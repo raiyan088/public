@@ -10,75 +10,119 @@ startProcess()
 
 async function startProcess() {
     let mUsers = []
+    let mRestart = []
 
     try {
         let response = await getAxios(BASE_URL+'github/active.json')
         
         if (response.data) {
             let map = {}
+            let completed = {}
+
             for (let value of Object.values(response.data)) {
-                map[value['user']] = 'x'
+                if (value['completed']) {
+                    completed[value['completed']] = 'x'
+                } else if (value['active']) {
+                    map[value['active']] = 'x'
+                }
             }
 
             for (let key of Object.keys(map)) {
                 mUsers.push(key)
             }
+
+            for (let key of Object.keys(completed)) {
+                mRestart.push(key)
+            }
         }
     } catch (error) {}
-
-    if (mUsers.length > 0) {
+    
+    if (mUsers.length > 0 || mRestart.length > 0) {
         for (let i = 0; i < mUsers.length; i++) {
             try {
                 let response = await getAxios(BASE_URL+'github/action/'+mUsers[i]+'.json')
             
                 if (response) {
                     let mData = response.data
-                    
-                    let token = null
-                    let timeout = 0
-
-                    while (true) {
-                        timeout++
-                        token = await getToken(mUsers[i], mData['action'], mData['cookies'])
-                        if (token) {
-                            break
-                        }
-                        if (timeout > 15) {
-                            break
-                        }
-                        await delay(2000)
-                    }
-
-                    if (token) {
-                        let response = await postAxios('https://github.com/'+mUsers[i]+'/'+mUsers[i]+'/actions/runs/'+mData['action']+'/rerequest_check_suite',
-                            new URLSearchParams({
-                                '_method': 'put',
-                                'authenticity_token': token
-                            }),
-                        {
-                            headers: getGrapHeader(mData['cookies']),
-                            maxRedirects: 0,
-                            validateStatus: null,
-                        })
-
-                        try {
-                            if (response.data.length > 0) {
-                                console.log(i,'Action Block')
-                            } else {
-                                console.log(i,'Active Success')
-                            }
-                        } catch (error) {}
-                    } else {
-                        console.log('Action Already Active')
-                    }
-
-                    await axios.delete(BASE_URL+'github/active.json')
+                    await activeAction(mUsers[i], mData['action'], mData['cookies'])
                 }
             } catch (error) {}
         }
+
+        for (let i = 0; i < mRestart.length; i++) {
+            try {
+                let response = await getAxios(BASE_URL+'github/action.json?orderBy=%22quota%22&endAt='+parseInt(new Date().getTime()/1000)+'&limitToFirst=1&print=pretty')
+                if (response) {
+                    let user = null
+                    let action = null
+                    let cookies = null
+
+                    for (let [key, value] of Object.entries(response.data)) {
+                        user = key
+                        action = value['action']
+                        cookies = value['cookies']
+                    }
+
+                    await patchAxios(BASE_URL+'github/action/'+user+'.json', JSON.stringify({ quota:parseInt(new Date().getTime()/1000)+86400 }), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+
+                    await activeAction(user, action, cookies)
+                }
+            } catch (error) {}
+        }
+
+        try {
+            await axios.delete(BASE_URL+'github/active.json')
+        } catch (error) {}
+
+        console.log('Completed')
+        process.exit(0)
     } else {
         console.log('User Not Found')
         process.exit(0)
+    }
+}
+
+async function activeAction(user, action, cookies) {
+    let token = null
+    let timeout = 0
+
+    while (true) {
+        timeout++
+        token = await getToken(user, action, cookies)
+        if (token) {
+            break
+        }
+        if (timeout > 15) {
+            break
+        }
+        await delay(2000)
+    }
+
+    if (token) {
+        let response = await postAxios('https://github.com/'+user+'/'+user+'/actions/runs/'+action+'/rerequest_check_suite',
+            new URLSearchParams({
+                '_method': 'put',
+                'authenticity_token': token
+            }),
+        {
+            headers: getGrapHeader(cookies),
+            maxRedirects: 0,
+            validateStatus: null,
+        })
+
+        try {
+            if (response.data.length > 0) {
+                console.log(i,'Action Block')
+            } else {
+                console.log(i,'Active Success')
+            }
+        } catch (error) {}
+    } else {
+        console.log('Action Already Active')
     }
 }
 
