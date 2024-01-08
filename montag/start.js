@@ -22,7 +22,6 @@ let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJh
 
 console.log('★★★---START---★★★')
 
-// startEarn('')
 
 process.argv.slice(2).forEach(function (data, index) {
     try {
@@ -872,7 +871,7 @@ async function getToken(user, repo, action, cookies) {
 
     try {
         let body = response.data
-        if (body.includes('Failure') || body.includes('Success')) {
+        if (body.includes('Failure') || body.includes('Cancelled') || body.includes('Success')) {
             let name = 'name="authenticity_token"'
             if (body.includes(name)) {
                 let index = body.indexOf(name)+name.length
