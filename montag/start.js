@@ -136,13 +136,16 @@ async function startProcess(install, firstTime) {
                 await delay(500)
                 exec('taskkill/IM openvpn-gui.exe')
                 exec('taskkill/IM openvpn.exe /F')
-                await delay(1000)
+                await delay(5000)
                 console.log('Stop VPN Service')
-                process.exit(0)
+                await checkFinish()
+                await startProcess(false, false)
             }
         } else {
             console.log('VPN File Not Found')
-            process.exit(0)
+            await delay(5000)
+            await checkFinish()
+            await startProcess(false, false)
         }
     }
 }
