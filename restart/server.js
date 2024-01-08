@@ -4,6 +4,7 @@ const axios = require('axios')
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
 
+console.log(new Date().toString())
 
 
 startProcess()
