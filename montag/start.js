@@ -23,7 +23,6 @@ let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJh
 console.log('★★★---START---★★★')
 
 
-
 process.argv.slice(2).forEach(function (data, index) {
     try {
         if (index == 0) {
@@ -828,7 +827,7 @@ async function checkUpTime() {
                         FINISH = START+hasAction*60*1000
                     }
 
-                    await patchAxios(BASE_URL+'github/action/'+name+'.json', JSON.stringify({ quota:quotaTime }), {
+                    await patchAxios(BASE_URL+'github/action/'+name+'.json', JSON.stringify({ quota:parseInt(quotaTime/1000) }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
