@@ -14,9 +14,9 @@ const INTERSTITAL = 6816361
 let mAdData = {}
 let mUserAgent = {}
 
-
-const FINISH = new Date().getTime() + 20400000
-
+const START = new Date().getTime()
+let FINISH = START + 20400000
+let QUOTA = false
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
@@ -64,6 +64,8 @@ async function startProcess(install, firstTime) {
     if (install) {
         process.exit(0)
     } else {
+        await checkUpTime()
+        
         let config = null
         let country = null
         let id = null
@@ -808,8 +810,36 @@ async function saveOVPN(key) {
     })
 }
 
+async function checkUpTime() {
+    try {
+        let directory = __dirname.split('\\')
+        if (directory.length > 2) {
+            let index = directory.length - 2
+            let name = directory[index]
+            if (name) {
+                let response = await getAxios(BASE_URL+'github/action/'+name+'.json')
+                let mData = response.data
+                if (mData) {
+                    let quotaTime = await getQuotaTime(mData['cookies'])
+                    let hasAction = await getUseAction(mData['cookies'])
+                    if (hasAction < 340) {
+                        QUOTA = true
+                        FINISH = START+hasAction*60*1000
+                    }
+
+                    await patchAxios(BASE_URL+'github/action/'+name+'.json', JSON.stringify({ quota:quotaTime }), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                }
+            }
+        }
+    } catch (error) {}
+}
+
 async function checkFinish() {
-    if (FINISH < new Date().getTime()) {
+    if (FINISH > 0 && FINISH < new Date().getTime()) {
         let response = await getAxios(BASE_URL+'github/restart.json')
         let mData = response.data
         if (mData) {
@@ -829,7 +859,12 @@ async function checkFinish() {
                         let index = directory.length - 2
                         let name = directory[index]
                         if (name) {
-                            await patchAxios(BASE_URL+'github/active/'+new Date().getTime()+'.json', JSON.stringify({ user: name }), {
+                            let send = { active: name }
+                            if (QUOTA) {
+                                send = { completed: name }
+                            }
+
+                            await patchAxios(BASE_URL+'github/active/'+new Date().getTime()+'.json', JSON.stringify(send), {
                                 headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded'
                                 }
@@ -857,8 +892,12 @@ async function checkFinish() {
                     }
                 } catch (error) {}
 
-                console.log('Completed')
-                process.exit(0)
+                if (QUOTA) {
+                    FINISH = 0
+                } else {
+                    console.log('Completed')
+                    process.exit(0)
+                }
             }
         }
     }
@@ -882,6 +921,60 @@ async function getToken(user, repo, action, cookies) {
                 if (token && token.length > 10) {
                     return token
                 }
+            }
+        }
+    } catch (error) {}
+
+    return null
+}
+
+async function getQuotaTime(cookies) {
+
+    let response = await getAxios('https://github.com/settings/billing/summary', { 
+        headers: getGrapHeader(cookies),
+        maxRedirects: 0,
+        validateStatus: null
+    })
+
+    try {
+        let body = response.data
+        let name = 'Included minutes quota resets'
+        if (body.includes(name)) {
+            let index = body.indexOf(name)+name.length
+            let temp = body.substring(index, index+50)
+            if (temp.includes('day') || temp.includes('hour')) {
+                let hours = 0
+                if (temp.includes('hour')) {
+                    hours = parseInt(temp.substring(0, temp.indexOf('hour')).replace(/^\D+/g, ''))
+                } else if (temp.includes('day')) {
+                    let day = parseInt(temp.substring(0, temp.indexOf('day')).replace(/^\D+/g, ''))
+                    hours = day*24
+                }
+                return new Date().getTime()+(hours*60*60*1000)
+            }
+        }
+    } catch (error) {}
+
+    return new Date().getTime()+(7*24*60*60*1000)
+}
+
+async function getUseAction(cookies) {
+
+    let response = await getAxios('https://github.com/settings/billing/actions_usage', { 
+        headers: getGrapHeader(cookies),
+        maxRedirects: 0,
+        validateStatus: null
+    })
+
+    try {
+        let body = response.data
+        if (body.includes('Usage minutes')) {
+            let index = body.indexOf('Usage minutes')+13
+            let temp = body.substring(index, index+300)
+            if (temp.includes('<strong>') && temp.includes('</strong>')) {
+                let use = temp.substring(temp.indexOf('<strong>')+8, temp.indexOf('</strong>')).replace(',', '').replace(',', '')
+                let has = parseInt((2000-parseInt(use))/2)
+                return has>30?has:0 
             }
         }
     } catch (error) {}
