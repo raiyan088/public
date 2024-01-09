@@ -45,38 +45,32 @@ async function startProcess() {
             
                 if (response) {
                     let mData = response.data
-                    await activeAction(mUsers[i], mData['action'], mData['cookies'])
+                    await activeAction(i, mUsers[i], mData['action'], mData['cookies'], false)
                 }
             } catch (error) {}
         }
 
         for (let i = 0; i < mRestart.length; i++) {
             try {
-                let response = await getAxios(BASE_URL+'github/action.json?orderBy=%22quota%22&endAt='+parseInt(new Date().getTime()/1000)+'&limitToFirst=1&print=pretty')
+                let response = await getAxios(BASE_URL+'github/action.json?orderBy=%22quota%22&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&limitToFirst=1&print=pretty')
                 if (response) {
                     let user = null
                     let action = null
                     let cookies = null
-
+                    
                     for (let [key, value] of Object.entries(response.data)) {
                         user = key
                         action = value['action']
                         cookies = value['cookies']
                     }
 
-                    await patchAxios(BASE_URL+'github/action/'+user+'.json', JSON.stringify({ quota:parseInt(new Date().getTime()/1000)+86400 }), {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        }
-                    })
-
-                    await activeAction(user, action, cookies)
+                    await activeAction(i, user, action, cookies, true)
                 }
             } catch (error) {}
         }
 
         try {
-            //await axios.delete(BASE_URL+'github/active.json')
+            await axios.delete(BASE_URL+'github/active.json')
         } catch (error) {}
 
         console.log('Completed', mUsers.length, mRestart.length)
@@ -87,7 +81,7 @@ async function startProcess() {
     }
 }
 
-async function activeAction(user, action, cookies) {
+async function activeAction(size, user, action, cookies, update) {
     let token = null
     let timeout = 0
 
@@ -117,12 +111,18 @@ async function activeAction(user, action, cookies) {
 
         try {
             if (response.data.length > 0) {
-                console.log(i,'Action Block: '+user)
+                console.log(size,'Action Block: '+user)
             } else {
-                console.log(i,'Active Success: '+user)
+                console.log(size,'Active Success: '+user)
             }
+
+            await patchAxios(BASE_URL+'github/action/'+user+'.json', JSON.stringify({ quota:parseInt(new Date().getTime()/1000)+86400 }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
         } catch (error) {
-            console.log(i,'Action Error: '+user)
+            console.log(size,'Action Error: '+user)
         }
     } else {
         console.log('Action Already Active: '+user)
