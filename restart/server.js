@@ -117,13 +117,15 @@ async function activeAction(user, action, cookies) {
 
         try {
             if (response.data.length > 0) {
-                console.log(i,'Action Block')
+                console.log(i,'Action Block: '+user)
             } else {
-                console.log(i,'Active Success')
+                console.log(i,'Active Success: '+user)
             }
-        } catch (error) {}
+        } catch (error) {
+            console.log(i,'Action Error: '+user)
+        }
     } else {
-        console.log('Action Already Active')
+        console.log('Action Already Active: '+user)
     }
 }
 
