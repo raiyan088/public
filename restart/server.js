@@ -6,7 +6,6 @@ let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJh
 
 console.log(new Date().toString())
 
-
 startProcess()
 
 
@@ -77,10 +76,10 @@ async function startProcess() {
         }
 
         try {
-            await axios.delete(BASE_URL+'github/active.json')
+            //await axios.delete(BASE_URL+'github/active.json')
         } catch (error) {}
 
-        console.log('Completed')
+        console.log('Completed', mUsers.length, mRestart.length)
         process.exit(0)
     } else {
         console.log('User Not Found')
