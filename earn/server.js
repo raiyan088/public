@@ -70,7 +70,7 @@ async function browserStart() {
         page.on('console', async (msg) => {
             try {
                 const txt = msg.text()
-                if (txt.startsWith('HASH: ')) {
+                if (txt.startsWith('STATUS: ')) {
                     MSG = txt
                 }
             } catch (error) {}
