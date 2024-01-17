@@ -9,10 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "fs": "^0.0.1-security",
-    "asciify-image": "^0.1.10",
-    "axios": "^1.5.1",
-    "path": "^0.12.7",
     "puppeteer": "^19.10.0"
   }
 }
