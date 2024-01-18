@@ -121,7 +121,7 @@ client.connect(WSS)
 
 setInterval(function() {
     if(mJob) {
-        console.log((totalHashRate - prevHashRate)+' H/S')
+        console.log(((totalHashRate - prevHashRate)/2)+' H/S')
         prevHashRate = totalHashRate
     }
-}, 1000)
+}, 2000)
