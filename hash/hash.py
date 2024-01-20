@@ -3,6 +3,6 @@ import pycryptonight
 
 for x in range(500):
     m = "Hello RandomX {}".format(x)
-    bh = pycryptonight.cn_fast_hash(m, 0, 0, 1)
+    bh = pycryptonight.cn_fast_hash(m.encode('ascii'), 0, 0, 1)
     hh = binascii.hexlify(bh).decode()
     print("Result: {}".format(hh))
