@@ -11,6 +11,7 @@ import time
 from multiprocessing import Process, Queue
 
 
+
 pool_host = 'xmr-asia1.nanopool.org'
 pool_port = 10300
 pool_pass = 'raiyan088'
