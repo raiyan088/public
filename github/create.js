@@ -41,6 +41,10 @@ async function readData() {
             G_RECOVERY = value['recovery']
         }
 
+        try {
+            await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
+        } catch (error) {}
+
         USER = getRandomUser()
         GIT_PASS = getRandomPassword()
 
@@ -129,7 +133,7 @@ async function createGithub() {
             size++
             try {
                 let end = parseInt(new Date().getTime()/1000)
-                let start = end-600
+                let start = end-3600
                 let response = await getAxios(BASE_URL+'github/captcha.json?orderBy=%22time%22&startAt='+start+'&endAt='+end+'&limitToFirst=1')
                 for (let [key, value] of Object.entries(response.data)) {
                     captcha = value['token']
@@ -181,7 +185,6 @@ async function createGithub() {
         }
     } else {
         console.log('---GMAIL-EXEST---')
-        await deleteUser()
         console.log('---EXIT---')
         process.exit(0)
     }
@@ -305,8 +308,6 @@ async function saveData() {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
         })
-
-        await deleteUser()
     } catch (error) {}
 }
 
@@ -431,7 +432,6 @@ async function logInGmail() {
                         }
                     })
                 }
-                await deleteUser()
                 console.log('---EXIT---')
                 process.exit(0)
             }
@@ -444,12 +444,6 @@ async function logInGmail() {
         console.log('---EXIT---')
         process.exit(0)
     }
-}
-
-async function deleteUser() {
-    try {
-        await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
-    } catch (error) {}
 }
 
 async function getOTP() {
@@ -535,7 +529,9 @@ async function setOTP(otp) {
 
     await delay(5000)
 
+    let timeout = 0
     while (true) {
+        timeout++
         try {
             let url = await github.url()
             if (url == 'https://github.com' || url == 'https://github.com/') {
@@ -544,17 +540,19 @@ async function setOTP(otp) {
         } catch (error) {}
 
         await delay(1000)
+
+        if (timeout > 15) {
+            await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:g_recovery }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+            console.log('---TIMEOUT---')
+            process.exit(0)
+        }
     }
 
     await delay(1000)
-
-    try {
-        mGmail[0]['status'] = 'repo'
-        fs.writeFileSync('gmail.json', JSON.stringify(mGmail))
-
-        let g_cookies = await github.cookies()
-        fs.writeFileSync('cookies_github.json', JSON.stringify(g_cookies))
-    } catch (error) {}
 }
 
 async function waitForLoginStatus() {
