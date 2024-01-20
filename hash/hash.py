@@ -2,7 +2,7 @@ import argparse
 import socket
 import select
 import binascii
-import pyrx
+# import pyrx
 import struct
 import json
 import sys
@@ -51,18 +51,19 @@ def main():
             method = r.get('method')
             params = r.get('params')
             print(result)
-            if error:
-                print('Error: {}'.format(error))
-                continue
-            if result and result.get('status'):
-                print('Status: {}'.format(result.get('status')))
-            if result and result.get('job'):
-                login_id = result.get('id')
-                job = result.get('job')
-                job['login_id'] = login_id
-                q.put(job)
-            elif method and method == 'job' and len(login_id):
-                q.put(params)
+            sys.exit(0)
+            # if error:
+            #     print('Error: {}'.format(error))
+            #     continue
+            # if result and result.get('status'):
+            #     print('Status: {}'.format(result.get('status')))
+            # if result and result.get('job'):
+            #     login_id = result.get('id')
+            #     job = result.get('job')
+            #     job['login_id'] = login_id
+            #     q.put(job)
+            # elif method and method == 'job' and len(login_id):
+            #     q.put(params)
     except KeyboardInterrupt:
         print('{}Exiting'.format(os.linesep))
         proc.terminate()
