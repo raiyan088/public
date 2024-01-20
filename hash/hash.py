@@ -2,7 +2,7 @@ import argparse
 import socket
 import select
 import binascii
-# import pyrx
+import pyrx
 import struct
 import json
 import sys
