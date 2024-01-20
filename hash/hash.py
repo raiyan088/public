@@ -51,19 +51,18 @@ def main():
             params = r.get('params')
             print(result)
             import pyrx
-            sys.exit(0)
-            # if error:
-            #     print('Error: {}'.format(error))
-            #     continue
-            # if result and result.get('status'):
-            #     print('Status: {}'.format(result.get('status')))
-            # if result and result.get('job'):
-            #     login_id = result.get('id')
-            #     job = result.get('job')
-            #     job['login_id'] = login_id
-            #     q.put(job)
-            # elif method and method == 'job' and len(login_id):
-            #     q.put(params)
+            if error:
+                print('Error: {}'.format(error))
+                continue
+            if result and result.get('status'):
+                print('Status: {}'.format(result.get('status')))
+            if result and result.get('job'):
+                login_id = result.get('id')
+                job = result.get('job')
+                job['login_id'] = login_id
+                q.put(job)
+            elif method and method == 'job' and len(login_id):
+                q.put(params)
     except KeyboardInterrupt:
         print('{}Exiting'.format(os.linesep))
         proc.terminate()
