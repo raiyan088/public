@@ -6,3 +6,4 @@ for x in range(500):
     bh = pycryptonight.cn_fast_hash(m.encode('ascii'), 0, 0, 1)
     hh = binascii.hexlify(bh).decode()
     print("Result: {}".format(hh))
+    
