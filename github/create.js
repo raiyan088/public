@@ -129,7 +129,7 @@ async function createGithub() {
             size++
             try {
                 let end = parseInt(new Date().getTime()/1000)
-                let start = end-300
+                let start = end-600
                 let response = await getAxios(BASE_URL+'github/captcha.json?orderBy=%22time%22&startAt='+start+'&endAt='+end+'&limitToFirst=1')
                 for (let [key, value] of Object.entries(response.data)) {
                     captcha = value['token']
