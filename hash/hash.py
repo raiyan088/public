@@ -2,6 +2,7 @@ import argparse
 import socket
 import select
 import binascii
+import pyrx
 import struct
 import json
 import sys
@@ -50,7 +51,6 @@ def main():
             method = r.get('method')
             params = r.get('params')
             print(result)
-            import pyrx
             if error:
                 print('Error: {}'.format(error))
                 continue
