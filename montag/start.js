@@ -74,6 +74,7 @@ async function checkData(userData) {
     }
 }
 
+
 async function startProcess(install, firstTime, noVPV) {
     let IP = await getIpAdress()
 
