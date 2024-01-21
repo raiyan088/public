@@ -205,7 +205,7 @@ async function startEarn(IP) {
 
     await checkFinish()
 
-    exec('node server')
+    exec('node '+__dirname+'\\server.js')
 
     await loadAdRequest()
 }
