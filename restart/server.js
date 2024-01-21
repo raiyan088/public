@@ -14,7 +14,7 @@ async function startProcess() {
     let mRestart = []
 
     try {
-        let response = await getAxios(BASE_URL+'github/active.json')
+        let response = await getAxios(BASE_URL+'github/reactive.json')
         
         if (response.data) {
             let map = {}
@@ -70,7 +70,7 @@ async function startProcess() {
         }
 
         try {
-            await axios.delete(BASE_URL+'github/active.json')
+            await axios.delete(BASE_URL+'github/reactive.json')
         } catch (error) {}
 
         console.log('Completed', mUsers.length, mRestart.length)
