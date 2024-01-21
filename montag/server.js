@@ -84,7 +84,7 @@ async function startBrowser() {
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
 
         // await getMyWebsite(URL['me'])
-        console.log('----SUCCESS----', 1)
+        // console.log('----SUCCESS----', 1)
 
         await getFiveSecond(URL['adfoc'], '#showTimer[style="display: none;"]', '#showSkip > a', false)
         console.log('----SUCCESS----', 2)
@@ -95,8 +95,8 @@ async function startBrowser() {
         await getOuo(URL['ouo'])
         console.log('----SUCCESS----', 4)
 
-        await getZagl(URL['zagl'])
-        console.log('----SUCCESS----', 5)
+        // await getZagl(URL['zagl'])
+        // console.log('----SUCCESS----', 5)
 
         await getDirectLink(URL['direct'])
         console.log('----SUCCESS----', 6)
