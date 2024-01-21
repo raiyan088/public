@@ -23,7 +23,6 @@ let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJh
 console.log('★★★---START---★★★')
 
 
-
 process.argv.slice(2).forEach(function (data, index) {
     try {
         if (index == 0) {
