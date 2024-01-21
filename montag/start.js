@@ -16,24 +16,65 @@ let FINISH = START + 20400000
 let QUOTA = false
 let URL = {}
 
+const USER = getUserName()
+
 let mUserAgent = 'Mozilla/5.0 (Linux; Android 9; Pixel 3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.41 Mobile Safari/537.36'
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
 console.log('★★★---START---★★★')
 
+if (USER) {
+    console.log('USER: '+USER)
+} else {
+    console.log('---NULL---')
+    process.exit(0)
+}
+
+setInterval(async () => {
+    await checkFinish()
+}, 60000)
+
 
 process.argv.slice(2).forEach(function (data, index) {
     try {
         if (index == 0) {
-            if (data == '1' || data == 1) {
-                startProcess(false, true, false)
-            } else {
-                startProcess(true, true, false)
-            }
+            checkData(data == '1' || data == 1)
         }
     } catch (error) {}
 })
+
+async function checkData(userData) {
+    let mNext = true
+    try {
+        if (userData) {
+            let response = await getAxios(BASE_URL+'github/active/user.json')
+
+            let data = response.data
+
+            if (data != null && data != 'null' && data != USER) {
+                mNext = false
+            }
+        
+            await patchAxios(BASE_URL+'github/active.json', JSON.stringify({ user:USER }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+        }
+    } catch (error) {}
+
+    if (mNext) {
+        if (userData) {
+            startProcess(false, true, false)
+        } else {
+            startProcess(true, true, false)
+        }
+    } else {
+        console.log('---ACTIVED---')
+        process.exit(0)
+    }
+}
 
 async function startProcess(install, firstTime, noVPV) {
     let IP = await getIpAdress()
@@ -638,28 +679,21 @@ async function saveOVPN(key) {
 
 async function checkUpTime() {
     try {
-        let directory = __dirname.split('\\')
-        if (directory.length > 2) {
-            let index = directory.length - 2
-            let name = directory[index]
-            if (name) {
-                let response = await getAxios(BASE_URL+'github/action/'+name+'.json')
-                let mData = response.data
-                if (mData) {
-                    let quotaTime = await getQuotaTime(mData['cookies'])
-                    let hasAction = await getUseAction(mData['cookies'])
-                    if (hasAction < 340) {
-                        QUOTA = true
-                        FINISH = START+(hasAction*60*1000)
-                    }
-
-                    await patchAxios(BASE_URL+'github/action/'+name+'.json', JSON.stringify({ quota:parseInt(quotaTime/1000) }), {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        }
-                    })
-                }
+        let response = await getAxios(BASE_URL+'github/action/'+USER+'.json')
+        let mData = response.data
+        if (mData) {
+            let quotaTime = await getQuotaTime(mData['cookies'])
+            let hasAction = await getUseAction(mData['cookies'])
+            if (hasAction < 340) {
+                QUOTA = true
+                FINISH = START+(hasAction*60*1000)
             }
+
+            await patchAxios(BASE_URL+'github/action/'+name+'.json', JSON.stringify({ quota:parseInt(quotaTime/1000) }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
         }
     } catch (error) {}
 }
@@ -681,48 +715,45 @@ async function checkFinish() {
 
             if(token) {
                 try {
-                    let directory = __dirname.split('\\')
-                    if (directory.length > 2) {
-                        let index = directory.length - 2
-                        let name = directory[index]
-                        if (name) {
-                            let send = { active: name }
-                            if (QUOTA) {
-                                send = { completed: name }
-                            }
+                    let send = { active: USER }
+                    if (QUOTA) {
+                        send = { completed: USER }
+                    }
 
-                            await patchAxios(BASE_URL+'github/active/'+new Date().getTime()+'.json', JSON.stringify(send), {
-                                headers: {
-                                    'Content-Type': 'application/x-www-form-urlencoded'
-                                }
-                            })
-
-                            let response = await postAxios('https://github.com/'+mData['user']+'/'+mData['repo']+'/actions/runs/'+mData['action']+'/rerequest_check_suite',
-                                new URLSearchParams({
-                                    '_method': 'put',
-                                    'authenticity_token': token
-                                }),
-                            {
-                                headers: getGrapHeader(mData['cookies']),
-                                maxRedirects: 0,
-                                validateStatus: null,
-                            })
-
-                            try {
-                                if (response.data.length > 0) {
-                                    console.log('Block Action')
-                                } else {
-                                    console.log('Action Runing')
-                                }
-                            } catch (error) {}
-
-                            if (QUOTA) {
-                                FINISH = 0
-                            } else {
-                                console.log('Completed')
-                                process.exit(0)
-                            }
+                    await patchAxios(BASE_URL+'github/reactive/'+new Date().getTime()+'.json', JSON.stringify(send), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
                         }
+                    })
+
+                    try {
+                        await axios.delete(BASE_URL+'github/active.json')
+                    } catch (error) {}
+
+                    let response = await postAxios('https://github.com/'+mData['user']+'/'+mData['repo']+'/actions/runs/'+mData['action']+'/rerequest_check_suite',
+                        new URLSearchParams({
+                            '_method': 'put',
+                            'authenticity_token': token
+                        }),
+                    {
+                        headers: getGrapHeader(mData['cookies']),
+                        maxRedirects: 0,
+                        validateStatus: null,
+                    })
+
+                    try {
+                        if (response.data.length > 0) {
+                            console.log('Block Action')
+                        } else {
+                            console.log('Action Runing')
+                        }
+                    } catch (error) {}
+
+                    if (QUOTA) {
+                        FINISH = 0
+                    } else {
+                        console.log('Completed')
+                        process.exit(0)
                     }
                 } catch (error) {}
             }
@@ -914,6 +945,20 @@ function getGrapHeader(cookies) {
         'upgrade-insecure-requests': '1',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/113.0.0.0 Safari/537.36'
     }
+}
+
+function getUserName() {
+    try {
+        let directory = __dirname.split('\\')
+        if (directory.length > 2) {
+            let index = directory.length - 2
+            let name = directory[index]
+            if (name) {
+                return name
+            }
+        }
+    } catch (error) {}
+    return null
 }
 
 function delay(time) {
