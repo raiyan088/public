@@ -47,15 +47,13 @@ process.argv.slice(2).forEach(function (data, index) {
 async function checkData(userData) {
     let mNext = true
     try {
-        if (userData) {
-            let response = await getAxios(BASE_URL+'github/active/user.json')
+        let response = await getAxios(BASE_URL+'github/active/user.json')
 
-            let data = response.data
+        let data = response.data
 
-            if (data != null && data != 'null' && data != USER) {
-                mNext = false
-            }
-        
+        if (data != null && data != 'null' && data != USER) {
+            mNext = false
+        } else {
             await patchAxios(BASE_URL+'github/active.json', JSON.stringify({ user:USER }), {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
