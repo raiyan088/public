@@ -1,4 +1,3 @@
-const { exec } = require('child_process')
 const net = require('net')
 
 let mClient = null
@@ -33,15 +32,6 @@ net.createServer(function(socket) {
     })
 }).listen(9099, () => {  
     console.log('Server Start')
-
-    let process = exec('python server.py')
-
-    process.stdout.on('data', (data) => {
-        let log = data.toString().trimStart().trimEnd()
-        if (log.length > 0) {
-            console.log(log.trim())
-        }
-    })
 })
 
 
