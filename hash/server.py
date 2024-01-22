@@ -7,10 +7,12 @@ import json
 import sys
 import os
 import time
-import pycryptonight
 import pyrx
 from multiprocessing import Process, Queue
 
+print('start')
+pyrx.get_rx_hash("raiyan", seed_hash, 1)
+print('hash')
 
 def pack_nonce(blob, nonce):
     b = binascii.unhexlify(blob)
@@ -51,8 +53,6 @@ def worker(q, s):
             bin = pack_nonce(blob, nonce)
             if cnv > 5:
                 hash = pyrx.get_rx_hash(bin, seed_hash, height)
-            else:
-                hash = pycryptonight.cn_slow_hash(bin, cnv, 0, height)
             hash_count += 1
             hex_hash = binascii.hexlify(hash).decode()
             r64 = struct.unpack('Q', hash[24:])[0]
