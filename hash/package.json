@@ -1,5 +1,5 @@
 {
-  "name": "mining",
+  "name": "proxy",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -9,8 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "child_process": "^1.0.2",
-    "ws": "^8.16.0",
-    "net": "^1.0.2"
+    "net": "^1.0.2",
+    "ws": "^8.16.0"
   }
 }
