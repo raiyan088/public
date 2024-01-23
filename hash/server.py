@@ -10,9 +10,11 @@ import time
 import pyrx
 from multiprocessing import Process, Queue
 
-print('start')
-pyrx.get_rx_hash("raiyan", seed_hash, 1)
-print('hash')
+seed_hash = binascii.unhexlify('63eceef7919087068ac5d1b7faffa23fc90a58ad0ca89ecb224a2ef7ba282d48')
+
+print('Start Program')
+hash = pyrx.get_rx_hash('raiyan', seed_hash, 1)
+print('Hash Test: {}'.format(binascii.hexlify(hash).decode()))
 
 def pack_nonce(blob, nonce):
     b = binascii.unhexlify(blob)
@@ -53,28 +55,30 @@ def worker(q, s):
             bin = pack_nonce(blob, nonce)
             if cnv > 5:
                 hash = pyrx.get_rx_hash(bin, seed_hash, height)
-            hash_count += 1
-            hex_hash = binascii.hexlify(hash).decode()
-            r64 = struct.unpack('Q', hash[24:])[0]
-            if r64 < target:
-                elapsed = time.time() - started
-                hr = int(hash_count / elapsed)
-                print('{}Hashrate: {} H/s'.format(os.linesep, hr))
-                submit = {
-                    'method':'submit',
-                    'params': {
-                        'id': login_id,
-                        'job_id': job_id,
-                        'nonce': binascii.hexlify(struct.pack('<I', nonce)).decode(),
-                        'result': hex_hash
-                    },
-                    'id':1
-                }
-                s.sendall(str(json.dumps(submit)+'\n').encode('utf-8'))
-                select.select([s], [], [], 3)
-                if not q.empty():
-                    break
-            nonce += 1
+                hash_count += 1
+                hex_hash = binascii.hexlify(hash).decode()
+                r64 = struct.unpack('Q', hash[24:])[0]
+                if r64 < target:
+                    elapsed = time.time() - started
+                    hr = int(hash_count / elapsed)
+                    print('{}Hashrate: {} H/s'.format(os.linesep, hr))
+                    submit = {
+                        'method':'submit',
+                        'params': {
+                            'id': login_id,
+                            'job_id': job_id,
+                            'nonce': binascii.hexlify(struct.pack('<I', nonce)).decode(),
+                            'result': hex_hash
+                        },
+                        'id':1
+                    }
+                    s.sendall(str(json.dumps(submit)+'\n').encode('utf-8'))
+                    select.select([s], [], [], 3)
+                    if not q.empty():
+                        break
+                nonce += 1
+            else:
+                break
 
 if __name__ == '__main__':
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
