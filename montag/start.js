@@ -709,7 +709,6 @@ async function checkFinish() {
                 if (token) {
                     break
                 }
-                await delay(5000)
             }
 
             if(token) {
