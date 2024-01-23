@@ -12,7 +12,7 @@ let BANNER = 6902703
 let INTERSTITAL = 6902700
 
 let START = new Date().getTime()
-let FINISH = START + 20400000
+let FINISH = START + 21000000
 let QUOTA = false
 let URL = {}
 
