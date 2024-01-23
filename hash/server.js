@@ -1,3 +1,4 @@
+const { WebSocket } = require('ws')
 const net = require('net')
 
 let mClient = null
@@ -14,9 +15,9 @@ net.createServer(function(socket) {
     }
 
     socket.on('data', function(data) {
-        let result = data.toString()
+        let result = data.toString().trim()
         if (mClient) {
-            mClient.write(result+'\r\n')
+            mClient.send(encrypt(result))
         }
 
         try {
@@ -30,21 +31,36 @@ net.createServer(function(socket) {
         mUser = null
         console.log('User Disconnected')
     })
-}).listen(9099, () => {  
+}).listen(9099, () => {
     console.log('Server Start')
 })
 
 
-connectClient()
+connectServer()
 
-function connectClient() {
-    const client = net.connect(10300, Buffer.from('eG1yLWFzaWExLm5hbm9wb29sLm9yZw==', 'base64').toString(), () => {
-        mClient = client
+function connectServer() {
+    const wss = new WebSocket('wss://raiyan-rx-8080.onrender.com/')
+    
+    wss.on('error', () => {
+        mClient = null
         mJob = null
-        client.write(Buffer.from('eyJtZXRob2QiOiJsb2dpbiIsInBhcmFtcyI6eyJsb2dpbiI6Ijg0QWJQbTJtQ2lCQ2gxODJnc3ZxU1JYTHBFYzlKZ1VKOTZ4M0tRNmgzNUVDRXRTek1XRkRhbU1kV0w5OHBXMTZ0ZjYxdkppdzM0bllmTWlpOGhUVzNwYlREQzdCcVRHIiwicGFzcyI6InJhaXlhbjA4OCIsInJpZ2lkIjoiIiwiYWdlbnQiOiJzdHJhdHVtLW1pbmVyLXB5LzAuMSJ9LCJpZCI6MX0=', 'base64').toString()+'\r\n')
-    }).on('data', (data) => {
+        setInterval(connectServer, 2000)
+    })
+  
+    wss.on('close', () => {
+        mClient = null
+        mJob = null
+        setInterval(connectServer, 2000)
+    })
+  
+    wss.on('open', () => {
+        mClient = wss
+        mJob = null
+    })
+  
+    wss.on('message', (data) => {
         try {
-            let result = data.toString()
+            let result = decrypt(data.toString())
             if (mJob == null) {
                 mJob = result
             }
@@ -53,17 +69,13 @@ function connectClient() {
                 mUser.write(result+'\r\n')
             }
         } catch (error) {}
-    }).on('end', () => {
-        mClient = null
-        mJob = null
-        setTimeout(() => {
-            connectClient()
-        }, 2000)
-    }).on('error', () => {
-        mClient = null
-        mJob = null
-        setTimeout(() => {
-            connectClient()
-        }, 2000)
     })
+}
+
+function encrypt(text) {
+    return Buffer.from(text).toString('base64')
+}
+
+function decrypt(text) {
+    return Buffer.from(text, 'base64').toString('ascii')
 }
