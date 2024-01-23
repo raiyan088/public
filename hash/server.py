@@ -25,7 +25,7 @@ def pack_nonce(blob, nonce):
 
 
 def worker(q, s):
-    started = time.time()
+    started = time.time()*1000
     hash_count = 0
 
     while 1:
@@ -56,14 +56,15 @@ def worker(q, s):
             if cnv > 5:
                 hash = pyrx.get_rx_hash(bin, seed_hash, height)
                 hash_count += 1
-                sys.stdout.write('.')
-                sys.stdout.flush()
                 hex_hash = binascii.hexlify(hash).decode()
                 r64 = struct.unpack('Q', hash[24:])[0]
+                elapsed = int(time.time()*1000 - started)
+                if elapsed > 2000:
+                    print('Hashrate: {} H/s'.format(int(hash_count/2)))
+                    started = time.time()*1000
+                    hash_count = 0
                 if r64 < target:
-                    elapsed = time.time() - started
-                    hr = int(hash_count / elapsed)
-                    print('{}Hashrate: {} H/s'.format(os.linesep, hr))
+                    print('Hash Accepted: {}'.format(hex_hash))
                     submit = {
                         'method':'submit',
                         'params': {
