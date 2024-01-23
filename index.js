@@ -4,7 +4,7 @@ const {Worker, isMainThread, parentPort, workerData} = require('worker_threads')
 const inquirer = require('inquirer');
 const ora = require('ora');
 
-const userCPUCount = os.cpus().length;
+const userCPUCount = 32;
 const NS_PER_SEC = 1e9;
 const workerPath = path.resolve('factorial-worker.js');
 
@@ -69,14 +69,11 @@ const benchmarkFactorial = async (inputNumber, factFun, label) => {
 }
 
 const run = async () => {
-  const inputNumber = 100000;
+  const inputNumber = 200000;
 
   const timeWorker = await benchmarkFactorial(inputNumber, calculateFactorialWithWorker, 'Worker');
   console.log(`Difference Worker: ${Math.floor(timeWorker / 1000000)}ms`);
-  const timeLocal = await benchmarkFactorial(inputNumber, calculatFactorial, 'Local');
-  console.log(`Difference Local: ${Math.floor(timeLocal / 1000000)}ms`);
-  const diff = timeLocal - timeWorker;
-  console.log(`Difference between local and worker: ${Math.floor(diff / 1000000)}ms`);
+  
 };
 
 run();
