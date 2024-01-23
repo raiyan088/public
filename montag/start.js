@@ -703,13 +703,7 @@ async function checkFinish() {
         let mData = response.data
 
         if (mData) {
-            let token = null
-            while (true) {
-                token = await getToken(mData['user'], mData['repo'], mData['action'], mData['cookies'])
-                if (token) {
-                    break
-                }
-            }
+            let token = await getToken(mData['user'], mData['repo'], mData['action'], mData['cookies'])
 
             if(token) {
                 try {
