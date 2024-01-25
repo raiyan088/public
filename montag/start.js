@@ -698,59 +698,61 @@ async function checkUpTime() {
 }
 
 async function checkFinish() {
-    if (FINISH > 0 && FINISH < new Date().getTime()) {
-        let response = await getAxios(BASE_URL+'github/restart.json')
-        let mData = response.data
-
-        if (mData) {
-            let token = await getToken(mData['user'], mData['repo'], mData['action'], mData['cookies'])
-
-            if(token) {
-                try {
-                    let send = { active: USER }
-                    if (QUOTA) {
-                        send = { completed: USER }
-                    }
-
-                    await patchAxios(BASE_URL+'github/reactive/'+new Date().getTime()+'.json', JSON.stringify(send), {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
+    try {
+        if (FINISH > 0 && FINISH < new Date().getTime()) {
+            let response = await getAxios(BASE_URL+'github/restart.json')
+            let mData = response.data
+    
+            if (mData) {
+                let token = await getToken(mData['user'], mData['repo'], mData['action'], mData['cookies'])
+    
+                if(token) {
+                    try {
+                        let send = { active: USER }
+                        if (QUOTA) {
+                            send = { completed: USER }
                         }
-                    })
-
-                    try {
-                        await axios.delete(BASE_URL+'github/active.json')
-                    } catch (error) {}
-
-                    let response = await postAxios('https://github.com/'+mData['user']+'/'+mData['repo']+'/actions/runs/'+mData['action']+'/rerequest_check_suite',
-                        new URLSearchParams({
-                            '_method': 'put',
-                            'authenticity_token': token
-                        }),
-                    {
-                        headers: getGrapHeader(mData['cookies']),
-                        maxRedirects: 0,
-                        validateStatus: null,
-                    })
-
-                    try {
-                        if (response.data.length > 0) {
-                            console.log('Block Action')
+    
+                        await patchAxios(BASE_URL+'github/reactive/'+new Date().getTime()+'.json', JSON.stringify(send), {
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }
+                        })
+    
+                        try {
+                            await axios.delete(BASE_URL+'github/active.json')
+                        } catch (error) {}
+    
+                        let response = await postAxios('https://github.com/'+mData['user']+'/'+mData['repo']+'/actions/runs/'+mData['action']+'/rerequest_check_suite',
+                            new URLSearchParams({
+                                '_method': 'put',
+                                'authenticity_token': token
+                            }),
+                        {
+                            headers: getGrapHeader(mData['cookies']),
+                            maxRedirects: 0,
+                            validateStatus: null,
+                        })
+    
+                        try {
+                            if (response.data.length > 0) {
+                                console.log('Block Action')
+                            } else {
+                                console.log('Action Runing')
+                            }
+                        } catch (error) {}
+    
+                        if (QUOTA) {
+                            FINISH = 0
                         } else {
-                            console.log('Action Runing')
+                            console.log('Completed')
+                            process.exit(0)
                         }
                     } catch (error) {}
-
-                    if (QUOTA) {
-                        FINISH = 0
-                    } else {
-                        console.log('Completed')
-                        process.exit(0)
-                    }
-                } catch (error) {}
+                }
             }
         }
-    }
+    } catch (error) {}
 }
 
 async function getToken(user, repo, action, cookies) {
