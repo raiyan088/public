@@ -92,14 +92,22 @@ LetsGo = (() => {
         };
 
         function _0x22D84(_0x2178B) {
-            var _0x216F5 = atob(_0x2178B);
-
+            var _0x216F5 = decodeBase64(_0x2178B);
+            
             var _0x216AA = new Uint8Array(_0x216F5[_0x2165F[37]]);
             for (var _0x21740 = 0; _0x21740 < _0x216F5[_0x2165F[37]]; ++_0x21740) {
                 _0x216AA[_0x21740] = _0x216F5[_0x2165F[38]](_0x21740)
             };
             return _0x216AA
         }
+
+        var decodeBase64 = "function" == typeof atob ? atob : function(A) {
+            var I, g, B, C, Q, E, i = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+                D = "",
+                h = 0;
+            for (A = A.replace(/[^A-Za-z0-9\+\/\=]/g, ""); I = i.indexOf(A.charAt(h++)) << 2 | (C = i.indexOf(A.charAt(h++))) >> 4, g = (15 & C) << 4 | (Q = i.indexOf(A.charAt(h++))) >> 2, B = (3 & Q) << 6 | (E = i.indexOf(A.charAt(h++))), D += String.fromCharCode(I), 64 !== Q && (D += String.fromCharCode(g)), 64 !== E && (D += String.fromCharCode(B)), h < A.length;);
+            return D
+        };
 
         function _0x239D2(_0x216AA) {
             if (!_0x22DCF(_0x216AA)) {
