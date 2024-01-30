@@ -15,6 +15,8 @@ async def hashLoad():
 
 getHash = asyncio.run(hashLoad())
 
+time.sleep(1)
+
 mClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 mJob = None
