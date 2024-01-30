@@ -26,7 +26,6 @@ def handle_client(client):
             try:
                 global mJob
                 mJob = json.loads(line)
-                print(mJob)
             except:
                 continue
     except:
