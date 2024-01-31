@@ -3,14 +3,19 @@ import time
 import json
 import random
 import socket
+import asyncio
 import threading
 from javascript import require
 
 Module = require('./worker_cn.js')
 
-time.sleep(1)
+async def hashLoad():
+  module = await Module.LetsGo()
+  return module.cwrap("letzfetz", "string", ["string", "string", "string", "number", "number", "string"])
 
-print('Start Worker')
+getHash = asyncio.run(hashLoad())
+
+time.sleep(1)
 
 mClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -63,14 +68,14 @@ def targetHash(job):
             seed_hash = job['seed_hash']
         except:
             seed_hash = None
-        hash = Module.hash(blob, job['algo'], job['targets'], job['variant'], job['height'], seed_hash)
+        hash = getHash(blob, job['algo'], job['targets'], job['variant'], job['height'], seed_hash)
         
-        
-        if hex2Int(hash[56:64]) < target:
-            output['job_id'] = job['job_id']
-            output['hash'] = hash
-            output['nonce'] = hexnonce
-            output['solved'] = True
+        if hash != None:
+            if hex2Int(hash[56:64]) < target:
+                output['job_id'] = job['job_id']
+                output['hash'] = hash
+                output['nonce'] = hexnonce
+                output['solved'] = True
     except:
         output['solved'] = False
 
