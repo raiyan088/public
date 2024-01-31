@@ -158,6 +158,7 @@ async function startBrowser() {
                 await delay(500)
                 await page.click('button[type="submit"]')
                 await waitForNextPage()
+                console.log('Set Profile')
                 await delay(1000)
                 await page.select('div[class="inline w-full"] > div:nth-child(2) > select', 'Student')
                 await delay(500)
@@ -167,6 +168,7 @@ async function startBrowser() {
                 await delay(500)
                 await page.click('button[type="submit"]')
                 await waitForCreate()
+                console.log('Create Success')
                 await page.goto('https://app.community.saturnenterprise.io/dash/o/community/user-details/', { waitUntil: 'load', timeout: 0 })
                 await delay(1000)
                 await waitForElement('span[title="Show"]')
@@ -177,6 +179,8 @@ async function startBrowser() {
                     token = await page.evaluate(() => document.querySelector('input[readonly="readonly"]').value)
                     if (token != null && !token.includes('*******')) {
                         break
+                    } else {
+                        console.log(token)
                     }
                     await delay(1000)
                 }
