@@ -1,14 +1,12 @@
 {
-  "name": "Earn",
-  "version": "1.0.0",
-  "description": "",
-  "main": "server.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "puppeteer": "^19.10.0"
+    "axios": "^1.6.7",
+    "cloudflare-scraper": "^2.0.0",
+    "fs": "^0.0.1-security",
+    "humanoid": "^0.0.8",
+    "puppeteer": "^19.10.0",
+    "puppeteer-core": "^19.10.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   }
 }
