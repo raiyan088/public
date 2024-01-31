@@ -77,7 +77,7 @@ async function startBrowser() {
 
             browser = await puppeteer.launch({
                 headless: false,
-                headless: 'new',
+                // headless: 'new',
                 args: [
                     '--no-sandbox',
                     '--disable-setuid-sandbox',
@@ -174,7 +174,7 @@ async function startBrowser() {
                 await waitForElement('span[title="Show"]')
                 let token = null
                 while (true) {
-                    await page.click('span[title="Show"]')
+                    await page.evaluate(() => document.querySelector('span[title="Show"]').click())
                     await delay(1000)
                     token = await page.evaluate(() => document.querySelector('input[readonly="readonly"]').value)
                     if (token != null && !token.includes('*******')) {
