@@ -49,7 +49,6 @@ const viewport = [
 
 console.log('-----START-----')
 
-
 try {
     startBrowser()
 } catch (error) {}
@@ -75,7 +74,7 @@ async function startBrowser() {
                 let split = response.data.split('|')
                 mUserAgent = 'Mozilla/5.0 (Linux; Android '+split[0]+'; '+split[1]+') AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/'+split[2]+' Mobile Safari/537.36'
             } catch (error) {}
-            
+
             browser = await puppeteer.launch({
                 headless: false,
                 headless: 'new',
@@ -340,11 +339,9 @@ async function waitForCreate() {
         try {
             let url = await page.url()
             if (url.startsWith('https://app.community.saturnenterprise.io/dash/')) {
-                let data = await exists('button[class="btn btn-primary btn-confirm"]')
-                if (data) {
-                    break
-                }
+                break
             }
+            console.log(url)
         } catch (error) {}
 
         await delay(1000)
