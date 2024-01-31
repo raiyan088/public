@@ -145,9 +145,11 @@ async function startBrowser() {
                 await delay(2000)
             }
 
+            console.log('Verification Link Send')
+
             let link = await waitForVerification()
             if (link) {
-                console.log('Verification Link')
+                console.log('Verification Link Received')
                 await page.goto(link, { waitUntil: 'load', timeout: 0 })
                 await delay(3000)
                 await page.type('input[placeholder="Password"]', PASS)
