@@ -163,49 +163,55 @@ async function startBrowser() {
                     let list1 = [ 'Data Scientist', 'Student', 'Hobbyist', 'Engineer', 'Researcher', 'Developer', 'Something else']
                     let list2 = [ 'just me', '2-5', '6-20', '20+' ]
                     let list3 = [ 'Training ML models', 'Deploying a model', 'Building MLOps capabilities', 'Training LLMs', 'Exploring data', 'Learning about machine learning', 'Something else']
-                    await delay(1000)
+                    await delay(2000)
                     await page.select('div[class="inline w-full"] > div:nth-child(2) > select', list1[getRandom(0, list1.length)])
-                    await delay(500)
+                    await delay(1000)
                     await page.select('div[class="inline w-full"] > div:nth-child(4) > select', list2[getRandom(0, list2.length)])
-                    await delay(500)
+                    await delay(1000)
                     await page.select('div[class="inline w-full"] > div:nth-child(6) > select', list3[getRandom(0, list3.length)])
-                    await delay(500)
+                    await delay(1000)
                     await page.keyboard.press('Enter')
                     mSuccess = await waitForCreate()
                     if (mSuccess) {
                         console.log('Create Success')
+                        await delay(5000)
                         await page.goto('https://app.community.saturnenterprise.io/dash/o/community/user-details/', { waitUntil: 'load', timeout: 0 })
                         await delay(1000)
-                        await waitForElement('span[title="Show"]')
-                        let token = null
-                        while (true) {
-                            await page.evaluate(() => document.querySelector('span[title="Show"]').click())
-                            await delay(1000)
-                            token = await page.evaluate(() => document.querySelector('input[readonly="readonly"]').value)
-                            if (token != null && !token.includes('*******')) {
-                                break
+                        mSuccess = await waitForElement('span[title="Show"]')
+                        if (mSuccess) {
+                            let token = null
+                            while (true) {
+                                await page.evaluate(() => document.querySelector('span[title="Show"]').click())
+                                await delay(1000)
+                                token = await page.evaluate(() => document.querySelector('input[readonly="readonly"]').value)
+                                if (token != null && !token.includes('*******')) {
+                                    break
+                                }
+                                await delay(1000)
                             }
-                            await delay(1000)
-                        }
 
-                        console.log(token)
-                        
-                        let send = {
-                            gmail: GMAIL,
-                            token: token,
-                            pass: PASS,
-                            quote: parseInt(new Date().getTime()/1000)
-                        }
-
-                        await patchAxios(BASE_URL+'jupyter/'+USER+'.json', JSON.stringify(send), {
-                            headers: {
-                                'Content-Type': 'application/x-www-form-urlencoded'
+                            console.log(token)
+                            
+                            let send = {
+                                gmail: GMAIL,
+                                token: token,
+                                pass: PASS,
+                                quote: parseInt(new Date().getTime()/1000)
                             }
-                        })
 
-                        console.log('-----COMPLETED-----')
-                        await delay(10000)
-                        process.exit(0)
+                            await patchAxios(BASE_URL+'jupyter/'+USER+'.json', JSON.stringify(send), {
+                                headers: {
+                                    'Content-Type': 'application/x-www-form-urlencoded'
+                                }
+                            })
+
+                            console.log('-----COMPLETED-----')
+                            await delay(10000)
+                            process.exit(0)
+                        } else {
+                            console.log('-----FAILED-----')
+                            process.exit(0)
+                        }
                     } else {
                         console.log('-----FAILED-----')
                         process.exit(0)
@@ -387,13 +393,22 @@ async function waitForCreate() {
 }
 
 async function waitForElement(element) {
+    let success = false
+    let timeout = 0
     while (true) {
+        timeout++
         let data = await exists(element)
         if (data) {
+            success = true
+            break
+        }
+
+        if (timeout > 15) {
             break
         }
         await delay(1000)
     }
+    return success
 }
 
 async function exists(evement) {
