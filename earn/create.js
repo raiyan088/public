@@ -186,13 +186,10 @@ async function startBrowser() {
                         }
 
                         console.log(token)
-
-                        let lab = await createLab(getRandomName(), token)
                         
                         let send = {
                             gmail: GMAIL,
                             token: token,
-                            lab: lab,
                             pass: PASS,
                             quote: parseInt(new Date().getTime()/1000)
                         }
