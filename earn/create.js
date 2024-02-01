@@ -362,10 +362,20 @@ async function waitForCreate() {
             if (url.startsWith('https://app.community.saturnenterprise.io/dash/')) {
                 success = true
                 break
+            } else if (url.startsWith('https://saturncloud.io/thanks')) {
+                timeout = 0
+            } else if (url.startsWith('https://app.community.saturnenterprise.io/auth/welcome')) {
+                let chatbox = await exists('div[class="intercom-app"]')
+                if (chatbox) {
+                    await page.evaluate(() => document.querySelector('div[class="intercom-app"]').style.visibility = "hidden")
+                    await delay(500)
+                    await page.click('button[type="submit"]')
+                    await delay(2000)
+                }
             }
         } catch (error) {}
 
-        if (timeout > 15) {
+        if (timeout > 30) {
             break
         }
 
