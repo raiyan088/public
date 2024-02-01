@@ -108,10 +108,10 @@ async function startBrowser() {
                 await delay(1000)
 
                 await page.type('input[name="username"]', USER)
-                await delay(500)
+                await delay(1000)
                 await page.type('input[name="email"]', GMAIL)
-                await delay(500)
-                await page.click('button[type="submit"]')
+                await delay(1000)
+                await page.keyboard.press('Enter')
 
                 let mSuccess = false
 
@@ -160,14 +160,17 @@ async function startBrowser() {
                 let mSuccess = await waitForNextPage()
                 if (mSuccess) {
                     console.log('Set Profile')
+                    let list1 = [ 'Data Scientist', 'Student', 'Hobbyist', 'Engineer', 'Researcher', 'Developer', 'Something else']
+                    let list2 = [ 'just me', '2-5', '6-20', '20+' ]
+                    let list3 = [ 'Training ML models', 'Deploying a model', 'Building MLOps capabilities', 'Training LLMs', 'Exploring data', 'Learning about machine learning', 'Something else']
                     await delay(1000)
-                    await page.select('div[class="inline w-full"] > div:nth-child(2) > select', 'Student')
+                    await page.select('div[class="inline w-full"] > div:nth-child(2) > select', list1[getRandom(0, list1.length)])
                     await delay(500)
-                    await page.select('div[class="inline w-full"] > div:nth-child(4) > select', 'just me')
+                    await page.select('div[class="inline w-full"] > div:nth-child(4) > select', list2[getRandom(0, list2.length)])
                     await delay(500)
-                    await page.select('div[class="inline w-full"] > div:nth-child(6) > select', 'Deploying a model')
+                    await page.select('div[class="inline w-full"] > div:nth-child(6) > select', list3[getRandom(0, list3.length)])
                     await delay(500)
-                    await page.click('button[type="submit"]')
+                    await page.keyboard.press('Enter')
                     mSuccess = await waitForCreate()
                     if (mSuccess) {
                         console.log('Create Success')
@@ -201,6 +204,7 @@ async function startBrowser() {
                         })
 
                         console.log('-----COMPLETED-----')
+                        await delay(10000)
                         process.exit(0)
                     } else {
                         console.log('-----FAILED-----')
