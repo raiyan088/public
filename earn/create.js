@@ -296,7 +296,7 @@ async function waitForVerification() {
             }
         } catch (error) {}
 
-        if (timeout > 15) {
+        if (timeout > 60) {
             break
         }
 
