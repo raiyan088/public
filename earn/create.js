@@ -156,7 +156,7 @@ async function startBrowser() {
                 await delay(500)
                 await page.type('input[placeholder="Confirm Password"]', PASS)
                 await delay(500)
-                await page.click('button[type="submit"]')
+                await page.keyboard.press('Enter')
                 let mSuccess = await waitForNextPage()
                 if (mSuccess) {
                     console.log('Set Profile')
