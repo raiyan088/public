@@ -57,8 +57,6 @@ module.exports = class {
                 timeout++
 
                 let link = await this.waitForVerification(gmail, cookies['token'], 'XSRF-TOKEN='+encodeURIComponent(cookies['token'])+'; gmailnator_session='+encodeURIComponent(cookies['session']))
-
-                console.log(link)
                 
                 if (link && link.length > 10) {
                     verification = link

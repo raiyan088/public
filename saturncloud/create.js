@@ -208,6 +208,8 @@ async function startBrowser() {
                                 if (data) {
                                     await startLab(data['id'])
 
+                                    console.log(data['url'])
+
                                     let send = {
                                         id: data['id'],
                                         url: data['url'],
