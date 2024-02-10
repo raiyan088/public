@@ -290,10 +290,10 @@ async function createLab(name, token) {
                 validateStatus: null,
             })
 
-        let id = response.data['url']
-        let url = response.data['id']
+        let id = response.data['id']
+        let url = response.data['url']
 
-        return { id:id, url:url}
+        return { id:id, url:url }
     } catch (error) {
         console.log(error)
     }
