@@ -9,7 +9,7 @@ import multiprocessing
 from websocket import create_connection
 
 
-mWorkerNumber = 1
+mWorkerNumber = multiprocessing.cpu_count() - 1
 mClients = []
 mServer = None
 mJob = None
