@@ -26,8 +26,8 @@ def handle_client(client):
             try:
                 global mServer
                 global mSolved
-                data = client.makefile().readline()
-                print(data)
+                line = client.makefile().readline()
+                data = base64.b64encode(line.encode('utf-8')).decode('utf-8')
                 mSolved += 1
                 if mServer != None:
                     mServer.send(data)
@@ -46,7 +46,7 @@ def sendData(msg):
 
     for i,client in enumerate(mClients):
         try:
-            client.sendall(msg.encode('utf-8'))
+            client.sendall(str(msg+'\n').encode('utf-8'))
         except:
             del mClients[i]
             continue
@@ -55,13 +55,9 @@ def sendData(msg):
 def handle_wss_server(client):
     try:
         while True:
-            line = client.recv()
-            try:
-                data = json.loads(line)
-                if data['identifier'] == 'job':
-                    sendData(line)
-            except:
-                continue
+            e_data = client.recv()
+            data = base64.b64decode(e_data).decode('utf-8')    
+            sendData(data)
             
     except:
         print('Server Connection Failed')
@@ -72,8 +68,7 @@ def connectServer():
     try:
         global mServer
         print('Server Connecting...')
-        mServer = create_connection(base64.b64decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==').decode('utf-8'))
-        mServer.send(base64.b64decode('eyJpZGVudGlmaWVyIjoiaGFuZHNoYWtlIiwicG9vbCI6ImZhc3Rlci54bXIiLCJyaWdodGFsZ28iOiJjbi9yIiwibG9naW4iOiI4NEFiUG0ybUNpQkNoMTgyZ3N2cVNSWExwRWM5SmdVSjk2eDNLUTZoMzVFQ0V0U3pNV0ZEYW1NZFdMOThwVzE2dGY2MXZKaXczNG5ZZk1paThoVFczcGJUREM3QnFURyIsInBhc3N3b3JkIjoidXJsLW1pbmVyIiwidXNlcmlkIjoiIiwidmVyc2lvbiI6MTMsImludHZlcnNpb24iOjEzMzcsIm15ZG9tYWluIjoiV0VCIFNjcmlwdCAxNi0xMS0yMyBQZXJmZWt0IGh0dHBzOi8vd3d3LnJhaXlhbjA4OC54eXoifQ==').decode('utf-8'))
+        mServer = create_connection('wss://raiyan-rx-8080.onrender.com/')
         print('Server Connected')
         threading.Thread(target=handle_wss_server, args=(mServer,)).start()
     except:
@@ -118,7 +113,7 @@ if __name__ == '__main__':
             mClient, mAdress = mSocket.accept()
             mClients.append(mClient)
             if mJob != None:
-                mClient.sendall(mJob.encode('utf-8'))
+                mClient.sendall(str(mJob+'\n').encode('utf-8'))
             threading.Thread(target=handle_client, args=(mClient,)).start()
     except:
         sys.exit(0)
