@@ -1,0 +1,17 @@
+{
+  "name": "saturn-cloud",
+  "version": "1.0.0",
+  "description": "",
+  "main": "create.js",
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.7",
+    "puppeteer": "^19.10.0",
+    "puppeteer-core": "^19.10.0"
+  }
+}
