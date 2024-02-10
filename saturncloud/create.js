@@ -108,12 +108,12 @@ async function startBrowser() {
 
             while (true) {
                 await page.goto('https://app.community.saturnenterprise.io/auth/signup', { waitUntil: 'load', timeout: 0 })
-                await delay(1000)
+                await delay(2000)
 
                 await page.type('input[name="username"]', USER)
-                await delay(1000)
+                await delay(3000)
                 await page.type('input[name="email"]', GMAIL)
-                await delay(1000)
+                await delay(2000)
                 await page.keyboard.press('Enter')
 
                 let mSuccess = false
@@ -152,13 +152,16 @@ async function startBrowser() {
 
             let link = await GR.getVerificationLink(GMAIL)
             if (link) {
+                await delay(2000)
+
+                page = await browser.newPage()
                 console.log('Verification Link Received')
                 await page.goto(link, { waitUntil: 'load', timeout: 0 })
                 await delay(3000)
                 await page.type('input[placeholder="Password"]', PASS)
-                await delay(500)
+                await delay(2000)
                 await page.type('input[placeholder="Confirm Password"]', PASS)
-                await delay(500)
+                await delay(2000)
                 await page.keyboard.press('Enter')
                 let mSuccess = await waitForNextPage()
                 if (mSuccess) {
@@ -166,20 +169,20 @@ async function startBrowser() {
                     let list1 = [ 'Data Scientist', 'Student', 'Hobbyist', 'Engineer', 'Researcher', 'Developer', 'Something else']
                     let list2 = [ 'just me', '2-5', '6-20', '20+' ]
                     let list3 = [ 'Training ML models', 'Deploying a model', 'Building MLOps capabilities', 'Training LLMs', 'Exploring data', 'Learning about machine learning', 'Something else']
-                    await delay(2000)
+                    await delay(3000)
                     await page.select('div[class="inline w-full"] > div:nth-child(2) > select', list1[getRandom(0, list1.length)])
-                    await delay(1000)
+                    await delay(2000)
                     await page.select('div[class="inline w-full"] > div:nth-child(4) > select', list2[getRandom(0, list2.length)])
-                    await delay(1000)
+                    await delay(2000)
                     await page.select('div[class="inline w-full"] > div:nth-child(6) > select', list3[getRandom(0, list3.length)])
-                    await delay(1000)
+                    await delay(3000)
                     await page.keyboard.press('Enter')
                     mSuccess = await waitForCreate()
                     if (mSuccess) {
                         console.log('Create Success')
                         await delay(5000)
                         await page.goto('https://app.community.saturnenterprise.io/dash/o/community/user-details/', { waitUntil: 'load', timeout: 0 })
-                        await delay(1000)
+                        await delay(2000)
                         mSuccess = await waitForElement('span[title="Show"]')
                         if (mSuccess) {
                             let token = null
@@ -202,11 +205,17 @@ async function startBrowser() {
 
                             if (token) {
                                 console.log(token)
+
+                                await page.goto('https://app.community.saturnenterprise.io/dash/o/community/user-details/', { waitUntil: 'load', timeout: 0 })
+                                await delay(3000)
                                 
                                 let data = await createLab(getRandomName(), token)
 
                                 if (data) {
-                                    await startLab(data['id'])
+                                    await page.goto('https://app.community.saturnenterprise.io/dash/o/community/resources/deployment/'+data['id'], { waitUntil: 'load', timeout: 0 })
+                                    await delay(3000)
+
+                                    await startLab(data['id'], token)
 
                                     console.log(data['url'])
 
