@@ -10,6 +10,7 @@ let mArrowUp = true
 let browser = null
 let page = null
 let github = null
+let account = null
 let SERVER = ''
 let mLog = false
 let mData = 0
@@ -29,8 +30,8 @@ let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJh
 
 puppeteer.use(StealthPlugin())
 
-
 readData()
+
 
 async function readData() {
     try {
@@ -41,14 +42,10 @@ async function readData() {
             G_RECOVERY = value['recovery']
         }
 
-        try {
-            await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
-        } catch (error) {}
-
         USER = getRandomUser()
         GIT_PASS = getRandomPassword()
 
-        startBrowser()
+        await startBrowser()
     } catch (error) {
         console.log(error)
         console.log('---EXIT---')
@@ -59,6 +56,7 @@ async function readData() {
 async function startBrowser() {
     try {
         browser = await puppeteer.launch({
+            // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             headless: false,
             headless: 'new',
             args: [
@@ -96,19 +94,83 @@ async function startBrowser() {
         await delay(1000)
         await createRepo()
 
-        await saveData()
+        console.log('---UPLOAD---')
+
+        await uploadFile()
+
+        let mStatus = await checkStatus()
+
+        if (mStatus) {
+            await saveData(true)
+        } else {
+            console.log('---CHANGE---')
+
+            await changeEmail()
+
+            await saveData(false)
+        }
 
         console.log('---SUCCESS---')
         await delay(1000)
         process.exit(0)
     } catch (error) {
+        console.log(error)
         console.log('---EXIT---')
         process.exit(0)
     }
 }
 
+async function checkStatus() {
+    try {
+        await github.goto('https://app.cyclic.sh/api/login', { waitUntil: 'load', timeout: 0 })
+
+        await delay(1000)
+        let url = await github.url()
+        if (url.startsWith('https://github.com/login/oauth/authorize')) {
+            return true
+        }
+    } catch (error) {}
+
+    return false
+}
+
+async function uploadFile() {
+    await github.goto('https://github.com/'+USER+'/'+USER+'/upload', { waitUntil: 'load', timeout: 0 })
+    await delay(1000)
+    const upload = await github.$('input[type="file"]')
+    upload.uploadFile('upload/module.js')
+    await delay(1000)
+    upload.uploadFile('upload/package.json')
+    await delay(1000)
+    upload.uploadFile('upload/server.js')
+    await delay(1000)
+    upload.uploadFile('upload/vercel.json')
+    await waitForUpload()
+    await github.click('button[data-edit-text="Commit changes"]')
+    await delay(5000)
+}
+
+async function waitForUpload() {
+    await delay(1000)
+    
+    while (true) {
+        try {
+            let child = await github.evaluate(() => document.querySelector('div[class="js-manifest-file-list-root"]').childElementCount)
+            if (child == 4) {
+                break
+            }
+        } catch (error) {}
+
+        await delay(1000)
+    }
+
+    await delay(1000)
+}
+
 async function createGithub() {
-    github = await browser.newPage()
+    if (github == null) {
+        github = await browser.newPage()
+    }
 
     await github.goto('https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home', { waitUntil: 'load', timeout: 0 })
     await delay(3000)
@@ -156,16 +218,19 @@ async function createGithub() {
         }
 
         await github.evaluate((token) => document.querySelector('[name="octocaptcha-token"]').value = token, captcha+'|r=ap-southeast-1|meta=3|meta_width=300|metabgclr=transparent|metaiconclr=%23555555|guitextcolor=%23000000|pk=747B83EC-2CA3-43AD-A7DF-701F286FBABA|dc=1|at=40|ag=101|cdn_url=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-ap-southeast-1.arkoselabs.com|surl=https%3A%2F%2Fgithub-api.arkoselabs.com|smurl=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager')
-        await github.evaluate(() => document.querySelector('#captcha-and-submit-container > button').removeAttribute('hidden'))
-        await github.evaluate(() => document.querySelector('#captcha-and-submit-container > button').removeAttribute('disabled'))
-
-        await delay(1000)
-
-        await github.click('#captcha-and-submit-container > button')
+        
+        await github.evaluate(() => {
+            let root = document.querySelector('#captcha-and-submit-container').querySelector('button')
+            if (root) {
+                root.removeAttribute('hidden')
+                root.removeAttribute('disabled')
+                root.click()
+            }
+        })
 
         let mError = true
 
-        for (let i = 0; i < 5; i++) {
+        for (let i = 0; i < 10; i++) {
             try {
                 let url = await github.url()
                 if (url.startsWith('https://github.com/account_verifications')) {
@@ -179,6 +244,7 @@ async function createGithub() {
 
         if (mError) {
             console.log('---ERROR---')
+            await delay(3000)
             await createGithub()
         } else {
             console.log('---OTP-SEND---')
@@ -191,17 +257,27 @@ async function createGithub() {
 }
 
 async function changeEmail() {
+    let temp = getRandomUser()
     github.on('dialog', async dialog => dialog.type() == "confirm" && dialog.accept())
     
     await github.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
-    await github.type('#email', USER+'@txcct.com')
+    await github.type('#email', temp+'@txcct.com')
     await delay(500)
     await github.keyboard.press('Enter')
     await delay(1000)
-    let link = await getLink(USER)
+    let link = await getLink(temp)
     await github.goto(link, { waitUntil: 'load', timeout: 0 })
     await github.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
-    await deleteGmail(github)
+    await github.evaluate(() => {
+        try {
+            let root = document.querySelector('#settings-emails')
+            if (root) {
+                if (root.querySelector('h3').innerText.includes('@gmail.com')) {
+                    root.querySelector('button').click()
+                }
+            }
+        } catch (error) {}
+    })
     await delay(3000)
 }
 
@@ -248,18 +324,6 @@ async function getLink(user) {
     return link
 }
 
-async function deleteGmail(_page) {
-    await _page.evaluate(() => {
-        try {
-            let root = document.querySelector('#settings-emails')
-            if (root) {
-                if (root.querySelector('h3').innerText.includes('@gmail.com')) {
-                    root.querySelector('button').click()
-                }
-            }
-        } catch (error) {}
-    })
-}
 
 async function createRepo() {
     try {
@@ -283,31 +347,43 @@ async function createRepo() {
     } catch (error) {}
 }
 
-async function saveData() {
+async function saveData(success) {
     try {
-        let cookie = ''
-        let g_cookies = await github.cookies()
-        
-        for (let i = 0; i < g_cookies.length; i++) {
-            try {
-                cookie += g_cookies[i]['name']+'='+g_cookies[i]['value']+'; '
-            } catch (error) {}
-        }
-
-        let data = {
-            g_user: G_USER,
-            g_pass: G_PASS,
-            g_recovery: G_RECOVERY,
-            pass: GIT_PASS,
-            cookies: cookie,
-            quota: parseInt(new Date().getTime()/1000)
-        }
-
-        await putAxios(BASE_URL+'github/repo/'+USER+'.json', JSON.stringify(data), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+        if (success) {
+            let cookie = ''
+            let g_cookies = await github.cookies()
+            
+            for (let i = 0; i < g_cookies.length; i++) {
+                try {
+                    cookie += g_cookies[i]['name']+'='+g_cookies[i]['value']+'; '
+                } catch (error) {}
             }
-        })
+
+            let data = {
+                g_user: G_USER,
+                g_pass: G_PASS,
+                g_recovery: G_RECOVERY,
+                pass: GIT_PASS,
+                cookies: cookie,
+                quota: parseInt(new Date().getTime()/1000)
+            }
+
+            await putAxios(BASE_URL+'github/repo/'+USER+'.json', JSON.stringify(data), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+        } else {
+            await putAxios(BASE_URL+'github/gmail/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recovery:G_RECOVERY }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+        }
+        
+        try {
+            await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
+        } catch (error) {}
     } catch (error) {}
 }
 
@@ -426,12 +502,20 @@ async function logInGmail() {
                 await page.goto('about:blank')
             } else {
                 if (status == 9) {
-                    await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:g_recovery }), {
+                    await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:G_RECOVERY }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
                     })
                 }
+
+                try {
+                    await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
+                    console.log('---DELETE---')
+                } catch (error) {
+                    console.log(error)
+                }
+
                 console.log('---EXIT---')
                 process.exit(0)
             }
@@ -441,6 +525,7 @@ async function logInGmail() {
             process.exit(0)
         }
     } catch (error) {
+        console.log(error)
         console.log('---EXIT---')
         process.exit(0)
     }
@@ -457,15 +542,17 @@ async function getOTP() {
     while (true) {
         try {
             let click = await page.evaluate(() => {
-                let root = document.querySelector('table[class="F cf zt"] > tbody')
-                if (root) {
-                    let child = root.childNodes
+                try {
+                    let root = document.querySelector('div[role="main"]').querySelector('tbody')
+                    if (root) {
+                        let child = root.childNodes
 
-                    if (child && child.length>0) {
-                        child[0].click()
-                        return true
+                        if (child && child.length>0) {
+                            child[0].click()
+                            return true
+                        }
                     }
-                }
+                } catch (error) {}
                 return false
             })
 
@@ -517,6 +604,7 @@ async function getOTP() {
 async function setOTP(otp) {
     await github.bringToFront()
     await github.goto('https://github.com', { waitUntil: 'load', timeout: 0 })
+    await delay(1000)
     
     try {
         let number = otp.split('')
@@ -542,12 +630,12 @@ async function setOTP(otp) {
         await delay(1000)
 
         if (timeout > 15) {
-            await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:g_recovery }), {
+            await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:G_RECOVERY }), {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             })
-            console.log('---TIMEOUT---')
+            console.log('---EXIT---')
             process.exit(0)
         }
     }
