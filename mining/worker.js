@@ -10,10 +10,10 @@ startWorker()
 async function startWorker() {
     try {
         let url = mData['url']
-        let timeout = 9000
-        // if (url.endsWith('vercel.app')) {
-        //     timeout = 9000
-        // }
+        let timeout = 28000
+        if (url.endsWith('vercel.app')) {
+            timeout = 9000
+        }
 
         let response = await axios.post(url+'/job', { data:encrypt(JSON.stringify(mJob)), timeout:timeout }, {
             headers: {
@@ -21,9 +21,17 @@ async function startWorker() {
             }
         })
     
-        let data = response.data
-        if (data['status'] == 'SOLVED') {
-            sendSolve(JSON.parse(decrypt(data['msg'])))
+        try {
+            let data = response.data
+            if (Object.keys(data).length > 0) {
+                if (data['status'] == 'SOLVED') {
+                    sendSolve(JSON.parse(decrypt(data['msg'])))
+                }
+            } else {
+                console.log(data)
+            }
+        } catch (error) {
+            console.log(mData['url'], 'Error: '+error)
         }
     } catch (error) {
         console.log('Error: '+mData['url'])

