@@ -31,6 +31,10 @@ async function readData() {
             G_USER = key
             G_PASS = value['pass']
             G_RECOVERY = value['recovery']
+
+            try {
+                await axios.delete(BASE_URL+'github/check/'+key+'.json')
+            } catch (error) {}
         }
 
         USER = getRandomUser()
@@ -256,6 +260,7 @@ async function waitForGoogleConneted() {
                 if(exists) {
                     await account.click('div[data-authuser="0"]')
                     mStatus = true
+                    break
                 }
             }
         } catch (error) {}
@@ -268,7 +273,7 @@ async function waitForGoogleConneted() {
     }
 
     if (mStatus) {
-        await delay(3000)
+        await delay(2000)
 
         mStatus = false
         timeout = 0
@@ -428,6 +433,55 @@ async function connectGithub() {
         }
 
         return mSuccess
+    } else {
+        let click = await account.evaluate(() => {
+            let output = false
+            try {
+                let root = document.querySelectorAll('button[type="button"]')
+                for (let i = 0; i < root.length; i++) {
+                    try {
+                        if (root[i].innerText == 'Google') {
+                            root[i].click()
+                            output = true
+                        }
+                    } catch (error) {}
+                }
+            } catch (error) {}
+
+            return output
+        })
+
+        if (click) {
+            let timeout = 0
+            let mSuccess = false
+            
+            while (true) {
+                timeout++
+                try {
+                    mSuccess = await account.evaluate(() => {
+                        let root = document.querySelector('button[data-testid="connect-GITHUB-button"]')
+                        if (root) {
+                            return true
+                        }
+                        return false
+                    })
+
+                    if (mSuccess) {
+                        break
+                    }
+                } catch (error) {}
+
+                if (timeout > 15) {
+                    break
+                }
+    
+                await delay(1000)
+            }
+
+            if (mSuccess) {
+                return await connectGithub()
+            }
+        }
     }
 
     return false
@@ -444,7 +498,7 @@ async function vercelPersission() {
         timeout++
         try {
             let url = await account.url()
-            if (url.startsWith('https://github.com/apps/render/installations/new/permissions')) {
+            if (url.startsWith('https://github.com/apps/vercel/installations/new/permissions')) {
                 let exists = await account.evaluate(() => {
                     let root = document.querySelector('button[data-octo-click="install_integration"]')
                     if (root) {
@@ -454,7 +508,7 @@ async function vercelPersission() {
                 })
 
                 if (exists) {
-                    await delay(1000)
+                    await delay(2000)
                     await account.click('button[data-octo-click="install_integration"]')
 
                     await delay(3000)
@@ -607,10 +661,6 @@ async function createGithub() {
             }
         })
 
-        try {
-            await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
-        } catch (error) {}
-
         console.log('---GMAIL-EXEST---')
         console.log('---EXIT---')
         process.exit(0)
@@ -752,10 +802,6 @@ async function saveData(success) {
                 }
             })
         }
-        
-        try {
-            await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
-        } catch (error) {}
     } catch (error) {}
 }
 
@@ -880,11 +926,6 @@ async function logInGmail() {
                         }
                     })
                 }
-
-                try {
-                    await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
-                    console.log('---DELETE---')
-                } catch (error) {}
 
                 console.log('---EXIT---')
                 process.exit(0)
