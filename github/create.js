@@ -3,21 +3,12 @@ const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 const fs = require('fs')
 
-let mPrevLog = ''
-let mLoginFailed = false
-let mLogStart = false
-let mArrowUp = true
 let browser = null
 let page = null
 let github = null
 let account = null
-let SERVER = ''
-let mLog = false
 let mData = 0
-let mSize = 0
-let mGmail = []
-let cookies = null
-let g_cookies = null
+let mRender = false
 let USER = null
 let GIT_PASS = null
 let G_USER = null
@@ -41,6 +32,8 @@ async function readData() {
             G_PASS = value['pass']
             G_RECOVERY = value['recovery']
         }
+
+        console.log(G_USER, G_PASS, G_RECOVERY)
 
         USER = getRandomUser()
         GIT_PASS = getRandomPassword()
@@ -101,6 +94,14 @@ async function startBrowser() {
         let mStatus = await checkStatus()
 
         if (mStatus) {
+            console.log('---RENDER---')
+
+            await createRender()
+
+            console.log('---VERCEL---')
+
+            await vercelPersission()
+
             await saveData(true)
         } else {
             console.log('---CHANGE---')
@@ -113,10 +114,350 @@ async function startBrowser() {
         console.log('---SUCCESS---')
         await delay(1000)
         process.exit(0)
+
     } catch (error) {
         console.log(error)
         console.log('---EXIT---')
         process.exit(0)
+    }
+}
+
+async function createRender() {
+    account = await browser.newPage()
+
+    await account.goto('https://dashboard.render.com/register', { waitUntil: 'load', timeout: 0 })
+    await delay(1000)
+    let mSuccess = await waitForGoogleConneted()
+    if (mSuccess) {
+        await account.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
+        await delay(1000)
+        mSuccess = await connectGithub()
+        if (mSuccess) {
+            await delay(1000)
+            await connectRepo()
+            await delay(500)
+            await account.type('#serviceName', USER)
+            await delay(500)
+            await account.focus('#buildCommand')
+            await account.keyboard.down('Control')
+            await account.keyboard.press('A')
+            await account.keyboard.up('Control')
+            await account.keyboard.press('Backspace')
+            await delay(500)
+            await account.type('#buildCommand', 'npm install')
+            await delay(500)
+            await account.click('div[id*="headlessui-radiogroup-option"]')
+            await delay(1000)
+            await account.click('button[type="submit"]')
+            await delay(5000)
+
+            mRender = true
+        } else {
+            console.log('---FAILED---')
+        }
+    } else {
+        console.log('---FAILED---')
+    }
+}
+
+async function connectRepo() {
+    let timeout = 0
+    while (true) {
+        timeout++
+        try {
+            let exists = await account.evaluate(() => {
+                let root = document.querySelectorAll('button[type="button"]')
+                if (root && root.length > 0) {
+                    let click = false
+                    for (let i = 0; i < root.length; i++) {
+                        try {
+                            if (root[i].innerText == 'Connect') {
+                                root[i].click()
+                                click = true
+                            }
+                        } catch (error) {}
+                    }
+                    return click
+                }
+                return false
+            })
+
+            if (exists) {
+                break
+            }
+        } catch (error) {}
+
+        if (timeout > 5) {
+            break
+        }
+
+        await delay(1000)
+    }
+
+    timeout = 0
+    while (true) {
+        timeout++
+        try {
+            let exists = await account.evaluate(() => {
+                try {
+                    let root = document.querySelector('#serviceName')
+                    if (root && root.value.length == 0) {
+                        return true
+                    }
+                } catch (error) {}
+                return false
+            })
+
+            if (exists) {
+                await delay(1000)
+                break
+            }
+        } catch (error) {}
+
+        if (timeout > 10) {
+            break
+        }
+
+        await delay(1000)
+    }
+}
+
+async function waitForGoogleConneted() {
+    await account.evaluate(() => {
+        try {
+            let root = document.querySelectorAll('button[type="button"]')
+            for (let i = 0; i < root.length; i++) {
+                try {
+                    if (root[i].innerText == 'Google') {
+                        root[i].click()
+                    }
+                } catch (error) {}
+            }
+        } catch (error) {}
+    })
+
+    await delay(3000)
+
+    let timeout = 0
+    let mStatus = false
+
+    while (true) {
+        timeout++
+
+        try {
+            let url = await account.url()
+            if (url.startsWith('https://accounts.google.com/') && url.includes('oauthchooseaccount')) {
+                let exists = await account.evaluate(() => {
+                    let root = document.querySelector('div[data-authuser="0"]')
+                    if (root) {
+                        return true
+                    }
+                    return false
+                })
+
+                if(exists) {
+                    await account.click('div[data-authuser="0"]')
+                    mStatus = true
+                }
+            }
+        } catch (error) {}
+
+        if (timeout > 10) {
+            break
+        }
+
+        await delay(1000)
+    }
+
+    if (mStatus) {
+        await delay(3000)
+
+        mStatus = false
+        timeout = 0
+
+        while (true) {
+            timeout++
+
+            try {
+                let url = await account.url()
+                if (url.startsWith('https://accounts.google.com/signin/oauth/id')) {
+                    try {
+                        let root = document.querySelectorAll('button[type="button"]')
+                        for (let i = 0; i < root.length; i++) {
+                            try {
+                                if (root[i].innerText == 'Continue') {
+                                    root[i].click()
+                                }
+                            } catch (error) {}
+                        }
+                    } catch (error) {}
+                }
+            } catch (error) {}
+
+            if (timeout > 15) {
+                break
+            }
+
+            await delay(1000)
+        }
+
+        await delay(2000)
+    }
+
+    timeout = 0
+
+    while (true) {
+        timeout++
+
+        try {
+            let url = await account.url()
+            if (url.startsWith('https://dashboard.render.com')) {
+                mStatus = true
+                break
+            }
+        } catch (error) {}
+
+        if (timeout > 10) {
+            break
+        }
+
+        await delay(1000)
+    }
+
+    return mStatus
+}
+
+async function connectGithub() {
+    let exists = await account.evaluate(() => {
+        let root = document.querySelector('button[data-testid="connect-GITHUB-button"]')
+        if (root) {
+            return true
+        }
+        return false
+    })
+
+    if (exists) {
+        await account.click('button[data-testid="connect-GITHUB-button"]')
+
+        let mSuccess = false
+        let timeout = 0
+        while (true) {
+            timeout++
+            try {
+                let url = await account.url()
+                if (url.startsWith('https://github.com/login/oauth/authorize')) {
+                    let exists = await account.evaluate(() => {
+                        let root = document.querySelector('button[name="authorize"][value="1"]')
+                        if (root && root.getAttribute('disabled') == null) {
+                            return true
+                        }
+                        return false
+                    })
+
+                    if (exists) {
+                        await delay(500)
+                        try {
+                            await account.click('button[name="authorize"][value="1"]')
+                        } catch (error) {}
+
+                        mSuccess = true
+                        break
+                    } else {
+                        try {
+                            await account.mouse.click(100, 100)
+                        } catch (error) {}
+                    }
+                } else if(url == 'https://dashboard.render.com/' || url == 'https://dashboard.render.com') {
+                    break
+                }
+            } catch (error) {}
+
+            if (timeout > 15) {
+                break
+            }
+
+            await delay(1000)
+        }
+
+        if (!mSuccess) {
+            return false
+        }
+
+        await delay(3000)
+
+        timeout = 0
+        while (true) {
+            timeout++
+            try {
+                let url = await account.url()
+                if (url.startsWith('https://github.com/apps/render/installations/new/permissions')) {
+                    let exists = await account.evaluate(() => {
+                        let root = document.querySelector('button[data-octo-click="install_integration"]')
+                        if (root) {
+                            return true
+                        }
+                        return false
+                    })
+
+                    if (exists) {
+                        await delay(1000)
+                        await account.click('button[data-octo-click="install_integration"]')
+
+                        await delay(3000)
+                        mSuccess = true
+                        break
+                    }
+                }
+            } catch (error) {}
+
+            if (timeout > 15) {
+                break
+            }
+
+            await delay(1000)
+        }
+
+        return mSuccess
+    }
+
+    return false
+}
+
+async function vercelPersission() {
+    account = await browser.newPage()
+
+    await account.goto('https://github.com/apps/vercel/installations/new', { waitUntil: 'load', timeout: 0 })
+    await delay(1000)
+
+    let timeout = 0
+    while (true) {
+        timeout++
+        try {
+            let url = await account.url()
+            if (url.startsWith('https://github.com/apps/render/installations/new/permissions')) {
+                let exists = await account.evaluate(() => {
+                    let root = document.querySelector('button[data-octo-click="install_integration"]')
+                    if (root) {
+                        return true
+                    }
+                    return false
+                })
+
+                if (exists) {
+                    await delay(1000)
+                    await account.click('button[data-octo-click="install_integration"]')
+
+                    await delay(3000)
+                    break
+                }
+            }
+        } catch (error) {}
+
+        if (timeout > 15) {
+            break
+        }
+
+        await delay(1000)
     }
 }
 
@@ -250,6 +591,16 @@ async function createGithub() {
             console.log('---OTP-SEND---')
         }
     } else {
+        await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:G_RECOVERY }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+
+        try {
+            await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
+        } catch (error) {}
+
         console.log('---GMAIL-EXEST---')
         console.log('---EXIT---')
         process.exit(0)
@@ -373,6 +724,17 @@ async function saveData(success) {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             })
+
+            if (mRender) {
+                let data = {}
+                data[USER+'_onrender_com'] = 1
+
+                await patchAxios(BASE_URL+'website.json', JSON.stringify(data), {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+            }
         } else {
             await putAxios(BASE_URL+'github/gmail/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recovery:G_RECOVERY }), {
                 headers: {
@@ -512,9 +874,7 @@ async function logInGmail() {
                 try {
                     await axios.delete(BASE_URL+'github/check/'+G_USER+'.json')
                     console.log('---DELETE---')
-                } catch (error) {
-                    console.log(error)
-                }
+                } catch (error) {}
 
                 console.log('---EXIT---')
                 process.exit(0)
@@ -781,110 +1141,6 @@ async function waitForPasswordType(password) {
     }
 }
 
-async function waitForFinish() {
-    let time = 0
-    while (true) {
-        await delay(3000)
-        time += 3
-        try {
-            let check = await page.evaluate(() => {
-                let root = document.querySelector('[aria-label="Run cell"]')
-                if (root) {
-                    let status = root.shadowRoot.querySelector('#status')
-                    if (status) {
-                        return true
-                    }
-                }
-                return false
-            })
-
-            if (check) {
-                break
-            } else {
-                await removeCaptha()
-
-                if (time >= 60) {
-                    time = 0
-                    if(mArrowUp) {
-                        mArrowUp = false
-                        await page.keyboard.press('ArrowDown')
-                    } else {
-                        mArrowUp = true
-                        await page.keyboard.press('ArrowUp')
-                    }
-                }
-                
-                let data = await page.evaluate(() => {
-                    let root = document.querySelector('colab-static-output-renderer')
-                    if (root) {
-                        return root.innerText
-                    }
-                    return null
-                })
-
-                if (data) {
-                    if (data.includes('|R|---START---|R|')) {
-                        mLogStart = true
-                    }
-                    
-                    if (mLogStart) {
-                        let log = data.replace(mPrevLog, '').trimStart().trimEnd()
-                        if (log.length > 0) {
-                            let split = log.split('\n')
-                            for (let i = 0; i < split.length; i++) {
-                                console.log(split[i]+getID())
-                            }
-                        }
-                        mPrevLog = data
-                    }
-                }
-            }
-        } catch (error) {}
-    }
-}
-
-async function waitForDisconnected() {
-    await page.click('#runtime-menu-button')
-    for (var j = 0; j < 9; j++) {
-        await delay(50)
-        await page.keyboard.press('ArrowDown')
-    }
-    await delay(420)
-    await page.keyboard.down('Control')
-    await page.keyboard.press('Enter')
-    await page.keyboard.up('Control')
-    await waitForSelector('mwc-dialog[class="yes-no-dialog"]')
-    await delay(500)
-    await page.keyboard.press('Enter')
-    await delay(2000)
-}
-
-async function removeCaptha() {
-    await page.evaluate(() => { 
-        let recapture = document.querySelector('colab-recaptcha-dialog')
-        if(recapture) { 
-            let cancel = recapture.shadowRoot.querySelector('mwc-button')
-            if (cancel) {
-                cancel.click()
-            }
-        } 
-    })
-}
-
-
-async function waitForSelector(element) {
-    while (true) {
-        await delay(1000)
-        try {
-            let data = await exists(page, element)
-            if (data) {
-                break
-            }
-        } catch (error) {}
-    }
-}
-
-
 async function exists(_page, evement) {
     return await _page.evaluate((evement) => {
         let root = document.querySelector(evement)
@@ -969,6 +1225,27 @@ async function putAxios(url, body, data) {
         try {
             data.timeout = 10000
             responce = await axios.put(url, body, data)
+            break
+        } catch (error) {
+            loop++
+
+            if (loop >= 5) {
+                break
+            } else {
+                await delay(3000)
+            }
+        }
+    }
+    return responce
+}
+
+async function patchAxios(url, body, data) {
+    let loop = 0
+    let responce = null
+    while (true) {
+        try {
+            data.timeout = 10000
+            responce = await axios.patch(url, body, data)
             break
         } catch (error) {
             loop++
