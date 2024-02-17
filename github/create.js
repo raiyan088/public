@@ -33,8 +33,6 @@ async function readData() {
             G_RECOVERY = value['recovery']
         }
 
-        console.log(G_USER, G_PASS, G_RECOVERY)
-
         USER = getRandomUser()
         GIT_PASS = getRandomPassword()
 
@@ -281,16 +279,28 @@ async function waitForGoogleConneted() {
             try {
                 let url = await account.url()
                 if (url.startsWith('https://accounts.google.com/signin/oauth/id')) {
-                    try {
-                        let root = document.querySelectorAll('button[type="button"]')
-                        for (let i = 0; i < root.length; i++) {
-                            try {
-                                if (root[i].innerText == 'Continue') {
-                                    root[i].click()
-                                }
-                            } catch (error) {}
-                        }
-                    } catch (error) {}
+                    let click = await account.evaluate(() => {
+                        let output = false
+
+                        try {
+                            let root = document.querySelectorAll('button[type="button"]')
+                            for (let i = 0; i < root.length; i++) {
+                                try {
+                                    if (root[i].innerText == 'Continue') {
+                                        root[i].click()
+                                        output = true
+                                    }
+                                } catch (error) {}
+                            }
+                        } catch (error) {}
+
+                        return output
+                    })
+
+                    if (click) {
+                        await delay(2000)
+                        break
+                    }
                 }
             } catch (error) {}
 
