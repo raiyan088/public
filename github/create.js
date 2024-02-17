@@ -131,11 +131,11 @@ async function createRender() {
     await delay(1000)
     let mSuccess = await waitForGoogleConneted()
     if (mSuccess) {
+        await account.screenshot({
+            "path": "screenshot_3.png"
+        })
         await account.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
         await delay(1000)
-        await account.screenshot({
-            "path": "screenshot_1.png"
-        })
         mSuccess = await connectGithub()
         if (mSuccess) {
             await delay(1000)
@@ -159,7 +159,7 @@ async function createRender() {
             mRender = true
         } else {
             await account.screenshot({
-                "path": "screenshot_2.png"
+                "path": "screenshot_4.png"
             })
             console.log('---FAILED-2---')
         }
@@ -278,6 +278,12 @@ async function waitForGoogleConneted() {
         await delay(1000)
     }
 
+    await account.screenshot({
+        "path": "screenshot_1.png"
+    })
+
+    console.log(1, mStatus)
+
     if (mStatus) {
         await delay(2000)
 
@@ -308,6 +314,8 @@ async function waitForGoogleConneted() {
                         return output
                     })
 
+                    console.log('Click: ', click);
+
                     if (click) {
                         await delay(2000)
                         break
@@ -324,6 +332,12 @@ async function waitForGoogleConneted() {
 
         await delay(2000)
     }
+
+    await account.screenshot({
+        "path": "screenshot_2.png"
+    })
+
+    console.log(2, mStatus)
 
     timeout = 0
 
@@ -400,8 +414,6 @@ async function connectGithub() {
             await delay(1000)
         }
 
-        console.log(1, mSuccess)
-
         if (!mSuccess) {
             return false
         }
@@ -439,8 +451,6 @@ async function connectGithub() {
 
             await delay(1000)
         }
-
-        console.log(2, mSuccess)
 
         return mSuccess
     } else {
@@ -487,8 +497,6 @@ async function connectGithub() {
     
                 await delay(1000)
             }
-
-            console.log(3, mSuccess)
 
             if (mSuccess) {
                 return await connectGithub()
