@@ -75,11 +75,11 @@ async function startBrowser() {
 
         await createGithub()
 
-        console.log('---OTP---')
+        console.log('---OTP-SEND---')
 
-        await delay(1000)
+        await delay(3000)
         let otp = await getOTP()
-            
+        
         console.log(otp)
 
         await setOTP(otp)
@@ -133,6 +133,9 @@ async function createRender() {
     if (mSuccess) {
         await account.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
         await delay(1000)
+        await account.screenshot({
+            "path": "screenshot_1.png"
+        })
         mSuccess = await connectGithub()
         if (mSuccess) {
             await delay(1000)
@@ -155,10 +158,10 @@ async function createRender() {
 
             mRender = true
         } else {
-            console.log('---FAILED-2---')
             await account.screenshot({
-                "path": "screenshot.png"
+                "path": "screenshot_2.png"
             })
+            console.log('---FAILED-2---')
         }
     } else {
         console.log('---FAILED-1---')
@@ -397,6 +400,8 @@ async function connectGithub() {
             await delay(1000)
         }
 
+        console.log(1, mSuccess)
+
         if (!mSuccess) {
             return false
         }
@@ -434,6 +439,8 @@ async function connectGithub() {
 
             await delay(1000)
         }
+
+        console.log(2, mSuccess)
 
         return mSuccess
     } else {
@@ -480,6 +487,8 @@ async function connectGithub() {
     
                 await delay(1000)
             }
+
+            console.log(3, mSuccess)
 
             if (mSuccess) {
                 return await connectGithub()
@@ -654,8 +663,6 @@ async function createGithub() {
             console.log('---ERROR---')
             await delay(3000)
             await createGithub()
-        } else {
-            console.log('---OTP-SEND---')
         }
     } else {
         await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:G_RECOVERY }), {
