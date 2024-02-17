@@ -156,6 +156,9 @@ async function createRender() {
             mRender = true
         } else {
             console.log('---FAILED-2---')
+            await account.screenshot({
+                "path": "screenshot.png"
+            })
         }
     } else {
         console.log('---FAILED-1---')
