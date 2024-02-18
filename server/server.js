@@ -31,21 +31,18 @@ app.get('/', async (req, res) => {
     res.end('SOLVED: '+mJobSolve)
 })
 
-app.post('/job', function (req, res) {
+app.post('/job', async function (req, res) {
     try {
-        if (mJobTime < new Date().getTime()) {
-            if(req.body) {
-                let timeout = parseInt(req.body.timeout)
-                mJobTime = new Date().getTime()+timeout
-                solveJob(res, decrypt(req.body.data), parseInt(timeout/1000))
-            } else {
-                mJobTime = 0
-                res.end(JSON.stringify({ status:'BAD', msg:'Error' }))
-            }
+        let now = new Date().getTime()
+        if (mJobTime > now) {
+            await delay(mJobTime - now)
+        }
+
+        if(req.body) {
+            let data = await solveJob(decrypt(req.body.data), parseInt(req.body.timeout))
+            res.end(JSON.stringify(data))
         } else {
-            setTimeout(() => {
-                res.end(JSON.stringify({ status:'BAD', msg:'Job Runing' }))
-            }, 5000)
+            res.end(JSON.stringify({ status:'BAD', msg:'Error' }))
         }
     } catch (error) {
         res.end(JSON.stringify({ status:'BAD', msg:'Error' }))
@@ -70,8 +67,10 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-async function solveJob(res, job, devide) {
+async function solveJob(job, timeout) {
     try {
+        let mTimeout = new Date().getTime()+timeout
+        let devide = parseInt(timeout/1000)
         let mJob = JSON.parse(job)
         let target = hex2int(mJob.target)
         let mSolve = false
@@ -79,7 +78,7 @@ async function solveJob(res, job, devide) {
         let mHash = []
         let hashSolved = 0
 
-        while (mJobTime > new Date().getTime()) {
+        while (mTimeout > new Date().getTime()) {
             var hexnonce = int2hex(getRandomInt(0, 0xFFFFFFFF))
             var blob = mJob.blob.substring(0, 78) + hexnonce + mJob.blob.substring(86, mJob.blob.length)
             if (mJob.algo == 'ghostrider') {
@@ -104,15 +103,20 @@ async function solveJob(res, job, devide) {
 
         if (mSolve) {
             if (mHash.length > 0) {
-                res.end(JSON.stringify({ status:'SOLVED', hash:parseInt(hashSolved/devide), msg:encrypt(JSON.stringify({ id:mJob.job_id, nonce:mNonce, hash:mHash })) }))
+                return { status:'SOLVED', hash:parseInt(hashSolved/devide), msg:encrypt(JSON.stringify({ id:mJob.job_id, nonce:mNonce, hash:mHash })) }
             } else {
-                res.end(JSON.stringify({ status:'OK', hash:parseInt(hashSolved/devide), msg:'No Solved' }))
+                return { status:'OK', hash:parseInt(hashSolved/devide), msg:'No Solved' }
             }
         } else {
-            res.end(JSON.stringify({ status:'HASH', hash:parseInt(hashSolved/devide), msg:'No Hash' }))
+            return { status:'HASH', hash:parseInt(hashSolved/devide), msg:'No Hash' }
         }
     } catch (error) {
-        mJobTime = 0
-        res.end(JSON.stringify({ status:'BAD', msg:'Error' }))
+        return { status:'BAD', msg:'Error' }
     }
+}
+
+function delay(time) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve, time)
+    })
 }
