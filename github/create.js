@@ -1,7 +1,6 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
-const fs = require('fs')
 
 let browser = null
 let page = null
@@ -96,13 +95,13 @@ async function startBrowser() {
         let mStatus = await checkStatus()
 
         if (mStatus) {
-            console.log('---RENDER---')
-
-            await createRender()
-
             console.log('---VERCEL---')
 
             await vercelPersission()
+
+            console.log('---RENDER---')
+
+            await renderPersission()
 
             await saveData(true)
         } else {
@@ -116,395 +115,11 @@ async function startBrowser() {
         console.log('---SUCCESS---')
         await delay(1000)
         process.exit(0)
-
     } catch (error) {
         console.log(error)
         console.log('---EXIT---')
         process.exit(0)
     }
-}
-
-async function createRender() {
-    account = await browser.newPage()
-
-    await account.goto('https://dashboard.render.com/register', { waitUntil: 'load', timeout: 0 })
-    await delay(1000)
-    let mSuccess = await waitForGoogleConneted()
-    if (mSuccess) {
-        await account.screenshot({
-            "path": "screenshot_3.png"
-        })
-        await account.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
-        await delay(1000)
-        mSuccess = await connectGithub()
-        if (mSuccess) {
-            await delay(1000)
-            await connectRepo()
-            await delay(500)
-            await account.type('#serviceName', USER)
-            await delay(500)
-            await account.focus('#buildCommand')
-            await account.keyboard.down('Control')
-            await account.keyboard.press('A')
-            await account.keyboard.up('Control')
-            await account.keyboard.press('Backspace')
-            await delay(500)
-            await account.type('#buildCommand', 'npm install')
-            await delay(500)
-            await account.click('div[id*="headlessui-radiogroup-option"]')
-            await delay(1000)
-            await account.click('button[type="submit"]')
-            await delay(5000)
-
-            mRender = true
-        } else {
-            await account.screenshot({
-                "path": "screenshot_4.png"
-            })
-            console.log('---FAILED-2---')
-        }
-    } else {
-        console.log('---FAILED-1---')
-    }
-}
-
-async function connectRepo() {
-    let timeout = 0
-    while (true) {
-        timeout++
-        try {
-            let exists = await account.evaluate(() => {
-                let root = document.querySelectorAll('button[type="button"]')
-                if (root && root.length > 0) {
-                    let click = false
-                    for (let i = 0; i < root.length; i++) {
-                        try {
-                            if (root[i].innerText == 'Connect') {
-                                root[i].click()
-                                click = true
-                            }
-                        } catch (error) {}
-                    }
-                    return click
-                }
-                return false
-            })
-
-            if (exists) {
-                break
-            }
-        } catch (error) {}
-
-        if (timeout > 5) {
-            break
-        }
-
-        await delay(1000)
-    }
-
-    timeout = 0
-    while (true) {
-        timeout++
-        try {
-            let exists = await account.evaluate(() => {
-                try {
-                    let root = document.querySelector('#serviceName')
-                    if (root && root.value.length == 0) {
-                        return true
-                    }
-                } catch (error) {}
-                return false
-            })
-
-            if (exists) {
-                await delay(1000)
-                break
-            }
-        } catch (error) {}
-
-        if (timeout > 10) {
-            break
-        }
-
-        await delay(1000)
-    }
-}
-
-async function waitForGoogleConneted() {
-    await account.evaluate(() => {
-        try {
-            let root = document.querySelectorAll('button[type="button"]')
-            for (let i = 0; i < root.length; i++) {
-                try {
-                    if (root[i].innerText == 'Google') {
-                        root[i].click()
-                    }
-                } catch (error) {}
-            }
-        } catch (error) {}
-    })
-
-    await delay(3000)
-
-    let timeout = 0
-    let mStatus = false
-
-    while (true) {
-        timeout++
-
-        try {
-            let url = await account.url()
-            if (url.startsWith('https://accounts.google.com/') && url.includes('oauthchooseaccount')) {
-                let exists = await account.evaluate(() => {
-                    let root = document.querySelector('div[data-authuser="0"]')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if(exists) {
-                    await account.click('div[data-authuser="0"]')
-                    mStatus = true
-                    break
-                }
-            }
-        } catch (error) {}
-
-        if (timeout > 10) {
-            break
-        }
-
-        await delay(1000)
-    }
-
-    await account.screenshot({
-        "path": "screenshot_1.png"
-    })
-
-    console.log(1, mStatus)
-
-    if (mStatus) {
-        await delay(2000)
-
-        mStatus = false
-        timeout = 0
-
-        while (true) {
-            timeout++
-
-            try {
-                let url = await account.url()
-                if (url.startsWith('https://accounts.google.com/signin/oauth/id')) {
-                    let click = await account.evaluate(() => {
-                        let output = false
-
-                        try {
-                            let root = document.querySelectorAll('button[type="button"]')
-                            for (let i = 0; i < root.length; i++) {
-                                try {
-                                    if (root[i].innerText == 'Continue') {
-                                        root[i].click()
-                                        output = true
-                                    }
-                                } catch (error) {}
-                            }
-                        } catch (error) {}
-
-                        return output
-                    })
-
-                    console.log('Click: ', click);
-
-                    if (click) {
-                        await delay(2000)
-                        break
-                    }
-                }
-            } catch (error) {}
-
-            if (timeout > 15) {
-                break
-            }
-
-            await delay(1000)
-        }
-
-        await delay(2000)
-    }
-
-    await account.screenshot({
-        "path": "screenshot_2.png"
-    })
-
-    console.log(2, mStatus)
-
-    timeout = 0
-
-    while (true) {
-        timeout++
-
-        try {
-            let url = await account.url()
-            if (url.startsWith('https://dashboard.render.com')) {
-                mStatus = true
-                break
-            }
-        } catch (error) {}
-
-        if (timeout > 10) {
-            break
-        }
-
-        await delay(1000)
-    }
-
-    return mStatus
-}
-
-async function connectGithub() {
-    let exists = await account.evaluate(() => {
-        let root = document.querySelector('button[data-testid="connect-GITHUB-button"]')
-        if (root) {
-            return true
-        }
-        return false
-    })
-
-    if (exists) {
-        await account.click('button[data-testid="connect-GITHUB-button"]')
-
-        let mSuccess = false
-        let timeout = 0
-        while (true) {
-            timeout++
-            try {
-                let url = await account.url()
-                if (url.startsWith('https://github.com/login/oauth/authorize')) {
-                    let exists = await account.evaluate(() => {
-                        let root = document.querySelector('button[name="authorize"][value="1"]')
-                        if (root && root.getAttribute('disabled') == null) {
-                            return true
-                        }
-                        return false
-                    })
-
-                    if (exists) {
-                        await delay(500)
-                        try {
-                            await account.click('button[name="authorize"][value="1"]')
-                        } catch (error) {}
-
-                        mSuccess = true
-                        break
-                    } else {
-                        try {
-                            await account.mouse.click(100, 100)
-                        } catch (error) {}
-                    }
-                } else if(url == 'https://dashboard.render.com/' || url == 'https://dashboard.render.com') {
-                    break
-                }
-            } catch (error) {}
-
-            if (timeout > 15) {
-                break
-            }
-
-            await delay(1000)
-        }
-
-        if (!mSuccess) {
-            return false
-        }
-
-        await delay(3000)
-
-        timeout = 0
-        while (true) {
-            timeout++
-            try {
-                let url = await account.url()
-                if (url.startsWith('https://github.com/apps/render/installations/new/permissions')) {
-                    let exists = await account.evaluate(() => {
-                        let root = document.querySelector('button[data-octo-click="install_integration"]')
-                        if (root) {
-                            return true
-                        }
-                        return false
-                    })
-
-                    if (exists) {
-                        await delay(1000)
-                        await account.click('button[data-octo-click="install_integration"]')
-
-                        await delay(3000)
-                        mSuccess = true
-                        break
-                    }
-                }
-            } catch (error) {}
-
-            if (timeout > 15) {
-                break
-            }
-
-            await delay(1000)
-        }
-
-        return mSuccess
-    } else {
-        let click = await account.evaluate(() => {
-            let output = false
-            try {
-                let root = document.querySelectorAll('button[type="button"]')
-                for (let i = 0; i < root.length; i++) {
-                    try {
-                        if (root[i].innerText == 'Google') {
-                            root[i].click()
-                            output = true
-                        }
-                    } catch (error) {}
-                }
-            } catch (error) {}
-
-            return output
-        })
-
-        if (click) {
-            let timeout = 0
-            let mSuccess = false
-            
-            while (true) {
-                timeout++
-                try {
-                    mSuccess = await account.evaluate(() => {
-                        let root = document.querySelector('button[data-testid="connect-GITHUB-button"]')
-                        if (root) {
-                            return true
-                        }
-                        return false
-                    })
-
-                    if (mSuccess) {
-                        break
-                    }
-                } catch (error) {}
-
-                if (timeout > 15) {
-                    break
-                }
-    
-                await delay(1000)
-            }
-
-            if (mSuccess) {
-                return await connectGithub()
-            }
-        }
-    }
-
-    return false
 }
 
 async function vercelPersission() {
@@ -519,6 +134,44 @@ async function vercelPersission() {
         try {
             let url = await account.url()
             if (url.startsWith('https://github.com/apps/vercel/installations/new/permissions')) {
+                let exists = await account.evaluate(() => {
+                    let root = document.querySelector('button[data-octo-click="install_integration"]')
+                    if (root) {
+                        return true
+                    }
+                    return false
+                })
+
+                if (exists) {
+                    await delay(2000)
+                    await account.click('button[data-octo-click="install_integration"]')
+
+                    await delay(3000)
+                    break
+                }
+            }
+        } catch (error) {}
+
+        if (timeout > 15) {
+            break
+        }
+
+        await delay(1000)
+    }
+}
+
+async function renderPersission() {
+    account = await browser.newPage()
+
+    await account.goto('https://github.com/apps/render/installations/new', { waitUntil: 'load', timeout: 0 })
+    await delay(1000)
+
+    let timeout = 0
+    while (true) {
+        timeout++
+        try {
+            let url = await account.url()
+            if (url.startsWith('https://github.com/apps/render/installations/new/permissions')) {
                 let exists = await account.evaluate(() => {
                     let root = document.querySelector('button[data-octo-click="install_integration"]')
                     if (root) {
@@ -639,7 +292,7 @@ async function createGithub() {
                 console.log('---TRY-'+size+'---')
             }
 
-            await delay(5000)
+            await delay(10000)
         }
 
         await github.evaluate((token) => document.querySelector('[name="octocaptcha-token"]').value = token, captcha+'|r=ap-southeast-1|meta=3|meta_width=300|metabgclr=transparent|metaiconclr=%23555555|guitextcolor=%23000000|pk=747B83EC-2CA3-43AD-A7DF-701F286FBABA|dc=1|at=40|ag=101|cdn_url=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-ap-southeast-1.arkoselabs.com|surl=https%3A%2F%2Fgithub-api.arkoselabs.com|smurl=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager')
@@ -935,6 +588,7 @@ async function logInGmail() {
             
             if (status == 1) {
                 console.log('--LOGIN-OK-')
+                await delay(2000)
                 await page.goto('about:blank')
             } else {
                 if (status == 9) {
