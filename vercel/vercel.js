@@ -631,27 +631,25 @@ async function checkRenderGithub() {
 }
 
 async function saveData() {
-    if (mRender && mVercel) {
-        let data = mData[USER]
+    let data = mData[USER]
 
-        if (data['vercel']) {
-            delete data['vercel']
-        }
-    
-        if (data['render']) {
-            delete data['render']
-        }
-    
-        await putAxios(BASE_URL+'github/account/'+USER+'.json', JSON.stringify(data), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-        
-        try {
-            await axios.delete(BASE_URL+'github/render/'+USER+'.json')
-        } catch (error) {}
+    if (data['vercel']) {
+        delete data['vercel']
     }
+
+    if (data['render']) {
+        delete data['render']
+    }
+
+    await putAxios(BASE_URL+'github/account/'+USER+'.json', JSON.stringify(data), {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+    
+    try {
+        await axios.delete(BASE_URL+'github/render/'+USER+'.json')
+    } catch (error) {}
 
     if (mRender || mVercel) {
         let data = {}
