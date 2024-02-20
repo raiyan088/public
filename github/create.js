@@ -85,7 +85,6 @@ async function startBrowser() {
 
         console.log('---CREATE---')
 
-        await delay(1000)
         await createRepo()
 
         console.log('---UPLOAD---')
@@ -408,6 +407,7 @@ async function getLink(user) {
 
 
 async function createRepo() {
+    await delay(1000)
     try {
         await github.goto('https://github.com/new', { waitUntil: 'load', timeout: 0 })
         await github.type('input[aria-label="Repository"]', USER)
@@ -427,6 +427,8 @@ async function createRepo() {
             await delay(1000)
         }
     } catch (error) {}
+
+    await delay(2000)
 }
 
 async function saveData(success) {
