@@ -4,16 +4,21 @@ const axios = require('axios')
 let mData = workerData
 let mJob = mData['job']
 
+let timeout = 20000
 
-startWorker()
+if (mData['url'].endsWith('vercel.app')) {
+    timeout = 8000
+
+    for (let i = 0; i < 8; i++) {
+        startWorker()
+    }
+} else {
+    startWorker()
+}
 
 async function startWorker() {
     try {
         let url = mData['url']
-        let timeout = 28000
-        if (url.endsWith('vercel.app')) {
-            timeout = 9000
-        }
 
         let response = await axios.post(url+'/job', { data:encrypt(JSON.stringify(mJob)), timeout:timeout }, {
             headers: {
@@ -34,8 +39,8 @@ async function startWorker() {
             console.log(mData['url'], 'Error: '+error)
         }
     } catch (error) {
-        console.log('Error: '+mData['url'])
-        await delay(5000)
+        // console.log('Error: '+mData['url'])
+    //     await delay(5000)
     }
 
     await startWorker()
