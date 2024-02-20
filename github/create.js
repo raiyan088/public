@@ -102,6 +102,10 @@ async function startBrowser() {
 
             await renderPersission()
 
+            console.log('---CYCLIC---')
+
+            await cyclicPersission()
+
             await saveData(true)
         } else {
             console.log('---CHANGE---')
@@ -171,6 +175,44 @@ async function renderPersission() {
         try {
             let url = await account.url()
             if (url.startsWith('https://github.com/apps/render/installations/new/permissions')) {
+                let exists = await account.evaluate(() => {
+                    let root = document.querySelector('button[data-octo-click="install_integration"]')
+                    if (root) {
+                        return true
+                    }
+                    return false
+                })
+
+                if (exists) {
+                    await delay(2000)
+                    await account.click('button[data-octo-click="install_integration"]')
+
+                    await delay(3000)
+                    break
+                }
+            }
+        } catch (error) {}
+
+        if (timeout > 15) {
+            break
+        }
+
+        await delay(1000)
+    }
+}
+
+async function cyclicPersission() {
+    account = await browser.newPage()
+
+    await account.goto('https://github.com/apps/cyclic-sh/installations/new', { waitUntil: 'load', timeout: 0 })
+    await delay(1000)
+
+    let timeout = 0
+    while (true) {
+        timeout++
+        try {
+            let url = await account.url()
+            if (url.startsWith('https://github.com/apps/cyclic-sh/installations/new/permissions')) {
                 let exists = await account.evaluate(() => {
                     let root = document.querySelector('button[data-octo-click="install_integration"]')
                     if (root) {
