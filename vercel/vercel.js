@@ -139,8 +139,6 @@ async function createVercel() {
 
             mVercel = id+'_vercel_app'
 
-            console.log(mVercel)
-
             console.log('---CREATED---')
         } catch (error) {
             console.log('---ERROR---')
@@ -383,7 +381,7 @@ async function createRender() {
         await delay(5000)
 
         mRender = USER+'_onrender_com'
-        console.log(mRender)
+        
         console.log('---CREATED---')
     } else {
         console.log('---FAILED---')
