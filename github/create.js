@@ -410,8 +410,9 @@ async function createRepo() {
     await delay(1000)
     try {
         await github.goto('https://github.com/new', { waitUntil: 'load', timeout: 0 })
-        await github.type('input[aria-label="Repository"]', USER)
-        await delay(500)
+        await delay(1000)
+        await typeGithubRepoName()
+        await delay(1000)
         await github.keyboard.press('Enter')
 
         while (true) {
@@ -429,6 +430,34 @@ async function createRepo() {
     } catch (error) {}
 
     await delay(2000)
+}
+
+async function typeGithubRepoName() {
+    try {
+        let exists = await github.evaluate(() => {
+            let root = document.querySelector('input[aria-label="Repository"]')
+            if (root) {
+                return true
+            }
+            return false
+        })
+    
+        if (exists) {
+            await github.type('input[aria-label="Repository"]', USER)
+        } else {
+            exists = await github.evaluate(() => {
+                let root = document.querySelector('input[data-testid="repository-name-input"]')
+                if (root) {
+                    return true
+                }
+                return false
+            })
+        
+            if (exists) {
+                await github.type('input[data-testid="repository-name-input"]', USER)
+            }
+        }
+    } catch (error) {}
 }
 
 async function saveData(success) {
@@ -809,10 +838,13 @@ async function waitForLoginSuccess(selection) {
             } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('selection')) {
                 status = 4
                 break
+            } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('iap')) {
+                status = 5
+                break
             } else if (pageUrl.startsWith('https://support.google.com/')) {
                 status = 9
                 break
-            }  else if (selection) {
+            } else if (selection) {
                 if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('kpe')) {
                     let data = await page.evaluate(() => {
                         let root = document.querySelector('#knowledge-preregistered-email-response') 
