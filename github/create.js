@@ -731,7 +731,7 @@ async function waitForLoginStatus() {
     let timeout = 0
     while (true) {
         timeout++
-        if (timeout >= 50) {
+        if (timeout >= 30) {
             status = 0
             break
         }
@@ -776,10 +776,7 @@ async function waitForLoginSuccess(selection) {
     
     while (true) {
         timeout++
-        if (timeout >= 50) {
-            status = 0
-            break
-        }
+        
         await delay(2000)
 
         try {
@@ -830,6 +827,11 @@ async function waitForLoginSuccess(selection) {
                 }
             }
         } catch (error) {}
+
+        if (timeout > 20) {
+            status = 0
+            break
+        }
     }
 
     return status
@@ -837,7 +839,7 @@ async function waitForLoginSuccess(selection) {
 
 async function waitForPasswordType(password) {
     
-    while (true) {
+    for (let i = 0; i < 10; i++) {
         await delay(1000)
 
         try {
