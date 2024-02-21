@@ -11,8 +11,9 @@ let mJob = null
 let mAccepted = 0
 let mPrevAcpt = 0
 let mWorker = {}
+let mTimeout = null
 
-
+const mVercel = getQuota()
 
 startServer()
 
@@ -82,7 +83,11 @@ const onMessage = function(solved) {
 
 async function updateUrl(key) {
     try {
-        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:parseInt(new Date().getTime()/1000)+86400 }), {
+        let quota = parseInt(new Date().getTime()/1000)+86400
+        if (key.endsWith('vercel.app') || key.endsWith('vercel_app')) {
+            quota = mVercel
+        }
+        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:quota }), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
@@ -97,7 +102,8 @@ function connneckClient() {
 
     client.on('connectFailed', function(error) {
         mClient = null
-        console.log('Re-Connect', error)
+        console.log('Re-Connect', 'Failed')
+        if (mTimeout) clearTimeout(mTimeout)
         setTimeout(() => connneckClient(), 2000)
     })
     
@@ -111,7 +117,8 @@ function connneckClient() {
     
         mClient.on('error', function(error) {
             mClient = null
-            console.log('Re-Connect')
+            console.log('Re-Connect', 'Error')
+            if (mTimeout) clearTimeout(mTimeout)
             setTimeout(() => connneckClient(), 2000)
         })
     
@@ -129,6 +136,22 @@ function connneckClient() {
     })
     
     client.connect(WSS)
+
+    mTimeout = setTimeout(() => {
+        try {
+            mClient.close()
+        } catch (error) {}
+        try {
+            client.close()
+        } catch (error) {}
+        try {
+            mClient = null
+            client = null
+        } catch (error) {}
+        
+        console.log('Re-Connect')
+        connneckClient()
+    }, 1500000)
 }
 
 function sendJob() {
@@ -143,6 +166,18 @@ function delay(time) {
     return new Promise(function(resolve) {
         setTimeout(resolve, time)
     })
+}
+
+function getQuota() {
+    let year = new Date().getFullYear()
+    let month = new Date().getMonth()+2
+
+    if (month > 12) {
+        month = 1
+        year++
+    }
+
+    return parseInt(new Date(month+'/1/'+year).getTime()/1000)
 }
 
 setInterval(function() {

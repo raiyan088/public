@@ -12,16 +12,13 @@ let mUrl = mData['url']
 let mLoop = 1
 
 if (mUrl.endsWith('vercel.app')) {
-    mTimeout = 8000
-    mLoop = 20
+    mTimeout = 9000
 } else if (mUrl.endsWith('cyclic.app')) {
     mTimeout = 8000
     mLoop = 50
-    
-    startWorker()
 }
 
-// startWorker()
+startWorker()
 
 async function startWorker() {
     try {
@@ -55,11 +52,23 @@ async function startWorker() {
             }
         } catch (error) {}
     } catch (error) {
+        let vercel = true
         try {
             let data = error.cause.toString()
             if(data.includes('getaddrinfo') && data.includes('ENOTFOUND')) {
                 mError++
+                vercel = false
                 await delay(3000)
+            }
+        } catch (error) {}
+
+        try {
+            if (vercel) {
+                let data = error.response.data
+                if (data.error.message == 'Payment required') {
+                    mError += 10
+                    await delay(3000)
+                }
             }
         } catch (error) {}
     }
