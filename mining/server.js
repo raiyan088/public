@@ -105,7 +105,7 @@ function connneckClient() {
                 if(data['identifier'] == 'job') {
                     mJob = data
                     
-                    console.log('New Job Received.')
+                    console.log('New Job Received...', data['algo'])
                     sendJob()
                 }
             } catch (e) {}
