@@ -19,20 +19,19 @@ startServer()
 async function startServer() {
     try {
         let size = 0
-        let mList = []
+        let response = await axios.get(BASE_URL+'website.json?orderBy="quota"&&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&print=pretty')
         await waitForJob()
-        let response = await axios.get(BASE_URL+'website.json')
         
         for (let key of Object.keys(response.data)) {
             try {
                 size++
-                let worker = await addWorker(size, 'https://'+key.replace(/__/g, '-').replace(/_/g, '.'), mJob)
+                let worker = await addWorker(key, 'https://'+key.replace(/__/g, '-').replace(/_/g, '.'), mJob)
                 worker.on('message', onMessage)
                 mWorker[key] = worker
             } catch (error) {}
         }
 
-        console.log('Worker Size: ', size)
+        console.log('Worker Size: ', Object.keys(response.data).length)
     } catch (error) {
         console.log('Start Server Error')
 
@@ -54,18 +53,41 @@ function decode(data) {
     return Buffer.from(data, 'base64').toString('ascii')
 }
 
-const addWorker = async (id, url, job) => {
+const addWorker = async (key, url, job) => {
     return new Promise((resolve, reject) => {
-        let worker = new Worker('./worker.js', { workerData: { id:id, url:url, job:job } })
+        let worker = new Worker('./worker.js', { workerData: { id:key, url:url, job:job } })
         resolve(worker)
     })
 }
 
 const onMessage = function(solved) {
-    mAccepted++
-    if (mClient) {
-        mClient.send(JSON.stringify(solved))
+    if (solved['status'] == 'SOLVED') {
+        mAccepted++
+        if (mClient) {
+            mClient.send(JSON.stringify(solved['job']))
+        }
+    } else if (solved['status'] == 'CLOSE') {
+        try {
+            if (mWorker[solved['id']]) {
+                try {
+                    mWorker[solved['id']].terminate()
+                } catch (error) {}
+                delete mWorker[solved['id']]
+
+                updateUrl(solved['id'])
+            }
+        } catch (error) {}
     }
+}
+
+async function updateUrl(key) {
+    try {
+        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:parseInt(new Date().getTime()/1000)+86400 }), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
+    } catch (error) {}
 }
 
 connneckClient()
@@ -93,19 +115,13 @@ function connneckClient() {
             setTimeout(() => connneckClient(), 2000)
         })
     
-        // mClient.on('close', function() {
-        //     mClient = null
-        //     console.log('Re-Connect')
-        //     setTimeout(() => connneckClient(), 2000)
-        // })
-    
         mClient.on('message', function(message) {
             try {
                 let data = JSON.parse(message.utf8Data)
                 if(data['identifier'] == 'job') {
                     mJob = data
                     
-                    console.log('New Job Received...', data['algo'])
+                    console.log('New Job Received...')
                     sendJob()
                 }
             } catch (e) {}

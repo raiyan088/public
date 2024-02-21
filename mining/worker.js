@@ -4,29 +4,26 @@ const axios = require('axios')
 let mData = workerData
 let mJob = mData['job']
 
-let timeout = 20000
+let mError = 0
+let mSuccess = false
+let mUpdate = true
+let mTimeout = 25000
+let mUrl = mData['url']
+let mLoop = 1
 
-if (mData['url'].endsWith('vercel.app')) {
-    timeout = 8000
-
-    for (let i = 0; i < 20; i++) {
-        startWorker()
-    }
-} else if (mData['url'].endsWith('cyclic.app')) {
-    // timeout = 25000
-
-    // for (let i = 0; i < 50; i++) {
-    //     startWorker()
-    // }
-} else {
-    startWorker()
+if (mUrl.endsWith('vercel.app')) {
+    mTimeout = 8000
+    mLoop = 20
+} else if (mUrl.endsWith('cyclic.app')) {
+    mTimeout = 8000
+    mLoop = 50
 }
+
+startWorker()
 
 async function startWorker() {
     try {
-        let url = mData['url']
-
-        let response = await axios.post(url+'/job', { data:encrypt(JSON.stringify(mJob)), timeout:timeout }, {
+        let response = await axios.post(mUrl+'/job', { data:encrypt(JSON.stringify(mJob)), timeout:mTimeout }, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
@@ -35,41 +32,46 @@ async function startWorker() {
         try {
             let data = response.data
             if (Object.keys(data).length > 0) {
+                mError = 0
+                mSuccess = true
                 if (data['status'] == 'SOLVED') {
-                    sendSolve(JSON.parse(decrypt(data['msg'])))
+                    let json = JSON.parse(decrypt(data['msg']))
+                    let hash = json['hash'][0]
+                    let nonce = json['nonce'][0]
+                    
+                    if (hash && nonce) {
+                        let solve = {
+                            identifier: 'solved',
+                            job_id: json['id'],
+                            nonce: nonce,
+                            result: hash
+                        }
+
+                        parentPort.postMessage({ status:'SOLVED', job:solve })
+                    }
                 }
-            } else {
-                console.log(data)
             }
-        } catch (error) {
-            console.log(mData['url'], 'Error: '+error)
-        }
+        } catch (error) {}
     } catch (error) {
-        // console.log('Error: '+mData['url'])
-    //     await delay(5000)
+        try {
+            let data = error.cause.toString()
+            if(data.includes('getaddrinfo') && data.includes('ENOTFOUND')) {
+                mError++
+                await delay(3000)
+            }
+        } catch (error) {}
     }
 
-    await startWorker()
-}
-
-function sendSolve(data) {
-    let length = data['hash'].length
-    let dev = 28/length
-
-    for (let i = 0; i < length; i++) {
-        sendPanding({
-            identifier: 'solved',
-            job_id: data['id'],
-            nonce: data['nonce'][i],
-            result: data['hash'][i]
-        }, (i+1)*dev*1000)
+    if (mSuccess == false && mError > 3) {
+        parentPort.postMessage({ status:'CLOSE', id:mData['id'] })
+    } else if (mSuccess && mUpdate) {
+        mUpdate = false
+        for (let i = 0; i < mLoop; i++) {
+            startWorker()
+        }
+    } else {
+        await startWorker()
     }
-}
-
-function sendPanding(job, timeout) {
-    setTimeout(() => {
-        parentPort.postMessage(job)
-    }, timeout)
 }
 
 function encrypt(text) {
