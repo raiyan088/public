@@ -13,11 +13,11 @@ if (mData['url'].endsWith('vercel.app')) {
         startWorker()
     }
 } else if (mData['url'].endsWith('cyclic.app')) {
-    timeout = 25000
+    // timeout = 25000
 
-    for (let i = 0; i < 50; i++) {
-        startWorker()
-    }
+    // for (let i = 0; i < 50; i++) {
+    //     startWorker()
+    // }
 } else {
     startWorker()
 }
