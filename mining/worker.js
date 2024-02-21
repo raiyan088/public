@@ -17,9 +17,11 @@ if (mUrl.endsWith('vercel.app')) {
 } else if (mUrl.endsWith('cyclic.app')) {
     mTimeout = 8000
     mLoop = 50
+    
+    startWorker()
 }
 
-startWorker()
+// startWorker()
 
 async function startWorker() {
     try {
