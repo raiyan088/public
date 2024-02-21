@@ -9,7 +9,13 @@ let timeout = 20000
 if (mData['url'].endsWith('vercel.app')) {
     timeout = 8000
 
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 20; i++) {
+        startWorker()
+    }
+} else if (mData['url'].endsWith('cyclic.app')) {
+    timeout = 25000
+
+    for (let i = 0; i < 50; i++) {
         startWorker()
     }
 } else {
