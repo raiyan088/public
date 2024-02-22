@@ -151,7 +151,7 @@ function connneckClient() {
         
         console.log('Re-Connect')
         connneckClient()
-    }, 1500000)
+    }, 600000)
 }
 
 function sendJob() {
