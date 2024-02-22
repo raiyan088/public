@@ -6,16 +6,11 @@ let mJob = mData['job']
 
 let mError = 0
 let mSuccess = false
-let mUpdate = true
 let mTimeout = 25000
 let mUrl = mData['url']
-let mLoop = 1
 
 if (mUrl.endsWith('vercel.app')) {
     mTimeout = 9000
-} else if (mUrl.endsWith('cyclic.app')) {
-    mTimeout = 8000
-    mLoop = 50
 }
 
 startWorker()
@@ -75,11 +70,6 @@ async function startWorker() {
 
     if (mSuccess == false && mError > 3) {
         parentPort.postMessage({ status:'CLOSE', id:mData['id'] })
-    } else if (mSuccess && mUpdate) {
-        mUpdate = false
-        for (let i = 0; i < mLoop; i++) {
-            startWorker()
-        }
     } else {
         await startWorker()
     }
