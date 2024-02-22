@@ -60,9 +60,19 @@ async function startWorker() {
         try {
             if (vercel) {
                 let data = error.response.data
-                if (data.error.message == 'Payment required') {
-                    mError += 10
-                    await delay(3000)
+                try {
+                    if (data.error.message == 'Payment required') {
+                        mError += 10
+                        vercel = false
+                        await delay(3000)
+                    }
+                } catch (error) {}
+
+                if (vercel) {
+                    if (data.includes('Not Found')) {
+                        mError += 10
+                        await delay(3000)
+                    }
                 }
             }
         } catch (error) {}
