@@ -836,6 +836,9 @@ async function waitForLoginStatus() {
                 } else if(pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/pk/presend')) {
                     status = 5
                     break
+                } else if(pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/recaptcha')) {
+                    status = 9
+                    break
                 }
             }
         } catch (error) {}
