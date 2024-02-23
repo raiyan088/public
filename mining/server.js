@@ -13,7 +13,7 @@ let mPrevAcpt = 0
 let mWorker = {}
 let mTimeout = null
 
-const mVercel = getQuota()
+const mQuota = getQuota()
 
 startServer()
 
@@ -83,11 +83,7 @@ const onMessage = function(solved) {
 
 async function updateUrl(key) {
     try {
-        let quota = parseInt(new Date().getTime()/1000)+86400
-        if (key.endsWith('vercel.app') || key.endsWith('vercel_app')) {
-            quota = mVercel
-        }
-        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:quota }), {
+        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:mQuota }), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
