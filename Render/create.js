@@ -30,24 +30,11 @@ async function startPrecess() {
     try {
         cookies = JSON.parse(fs.readFileSync('cookies.json'))
 
-        let response = await getAxios(BASE_URL+'render.json?orderBy="$key"&limitToFirst=1')
-        
-        if (response && response.data != null && response.data != 'null') {
-            let data = response.data
-            
-            for(let key of Object.keys(data)) {
-                GMAIL = key
-            }
+        let mLink = await getRenderData()
 
-            PASSWORD = data[GMAIL]['pass']
+        console.log('---START---')
 
-            console.log('---START---')
-
-            await startBrowser(data[GMAIL]['link'])
-        } else {
-            console.log('---DATA-NULL---')
-            process.exit(0)
-        }
+        await startBrowser(mLink)
     } catch (error) {
         console.log(error)
         console.log('---EXIT---')
@@ -59,7 +46,7 @@ async function startBrowser(mLink) {
     try {
         browser = await puppeteer.launch({
             headless: false,
-            headless: 'new',
+            //headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -98,7 +85,7 @@ async function startBrowser(mLink) {
                 await setupGithub()
     
                 let ststus = await renderRepoSetup()
-                if (ststus == 'GIT') {
+                if (ststus == 'GIT' || ststus == 'ERROR') {
                     await changeGithub(true)
                     await delay(2000)
                 } else if (ststus == 'OK') {
@@ -117,11 +104,38 @@ async function startBrowser(mLink) {
         await saveData()
 
         console.log('---COMPLETED---')
-        process.exit(0)
+        //process.exit(0)
     } catch (error) {
         console.log('---EXIT----')
-        process.exit(0)
+        //process.exit(0)
     }
+}
+
+async function getRenderData() {
+    let mLink = null
+
+    while (true) {
+        try {
+            let response = await getAxios(BASE_URL+'render.json?orderBy="$key"&limitToFirst=1')
+        
+            if (response && response.data != null && response.data != 'null') {
+                let data = response.data
+                
+                for(let key of Object.keys(data)) {
+                    GMAIL = key
+                }
+
+                PASSWORD = data[GMAIL]['pass']
+
+                mLink = data[GMAIL]['link']
+                break
+            }
+        } catch (error) {}
+
+        await delay(10000)
+    }
+
+    return mLink
 }
 
 async function setupGithub() {
