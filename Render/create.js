@@ -146,6 +146,8 @@ async function startBrowser(mLink) {
                     break
                 }
             }
+        } else {
+            console.log('---NEED-PAYMENT---')
         }
 
         await changeRenderGmail()
