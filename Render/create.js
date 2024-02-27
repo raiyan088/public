@@ -63,7 +63,7 @@ async function startPrecess() {
         if (TOKEN) {
             let count = await getMessageCount()
             if (count > 0) {
-                console.log('---SIZE:-'+count+'---')
+                console.log('---SIZE:'+count+'---')
                 let mCreate = await createAccount()
                 if (mCreate) {
                     console.log('---RENDER---')
@@ -557,7 +557,7 @@ async function createAccount() {
         } catch (error) {}
 
         let error = JSON.stringify(response.data)
-
+        
         if (error.includes('email') && error.includes('exists')) {
             mEmailHas = true
         } else if (error.includes('hcaptcha_token') && error.includes('invalid')) {
@@ -566,6 +566,7 @@ async function createAccount() {
     } catch (error) {}
 
     if (mEmailHas) {
+        console.log('---GMAIL-EXISTS---')
         await saveData(true)
     }
 
