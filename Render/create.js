@@ -46,7 +46,7 @@ async function startBrowser(mLink) {
     try {
         browser = await puppeteer.launch({
             headless: false,
-            //headless: 'new',
+            headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -104,10 +104,10 @@ async function startBrowser(mLink) {
         await saveData()
 
         console.log('---COMPLETED---')
-        //process.exit(0)
+        process.exit(0)
     } catch (error) {
         console.log('---EXIT----')
-        //process.exit(0)
+        process.exit(0)
     }
 }
 
