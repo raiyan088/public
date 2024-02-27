@@ -3,7 +3,6 @@ const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 const fs = require('fs')
 
-const GMAIL_NAME = 'token'
 let GITHUB_NAME = 'valied'
 
 let browser = null
@@ -12,18 +11,13 @@ let account = null
 let mData = {}
 let USER = null
 let GMAIL = null
-let mGmail = null
 let cookies = null
 let mRender = null
-let TOKEN = null
-let H_TOKEN = null
 let mAuth = null
 let mUserID = null
 let mRequestId = null
 let mHeader = null
 let PASSWORD = ''
-
-let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&emr=1&followup=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&ifkv=ASKXGp2AT5TaGFB2r-BGOTTaCsPqKzVi_ysRafPiaNTd67ESvokaq2QE4wy0pqB9z1sgy8PdFFnU&osid=1&passive=1209600&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S1442849146%3A1701858698016724&theme=glif'
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
@@ -40,12 +34,14 @@ async function startPrecess() {
         
         if (response && response.data != null && response.data != 'null') {
             let data = response.data
-
+            
             for(let key of Object.keys(data)) {
                 GMAIL = key
             }
 
             PASSWORD = data[GMAIL]['pass']
+
+            console.log('---START---')
 
             await startBrowser(data[GMAIL]['link'])
         } else {
@@ -567,206 +563,6 @@ async function waitForAuth() {
     }
 }
 
-async function authGmail() {
-    for (let i = 0; i < 10; i++) {
-        try {
-            let url = await account.url()
-            if (url.includes('oauthchooseaccount')) {
-                let exists = await account.evaluate(() => {
-                    let root = document.querySelector('div[data-authuser="0"]')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (exists) {
-                    await delay(1000)
-                    await account.evaluate(() => document.querySelector('div[data-authuser="0"]').click() )
-                    break
-                }
-            }
-        } catch (error) {}
-        
-        await delay(1000)
-    }
-
-    await delay(1000)
-
-    for (let i = 0; i < 15; i++) {
-        try {
-            let url = await account.url()
-            if (url.startsWith('https://accounts.google.com/signin/oauth/danger')) {
-                let exists = await account.evaluate(() => {
-                    let output = false
-                    let root = document.querySelectorAll('a[class="xTI6Gf vh6Iad"]')
-                    if (root && root.length > 0) {
-                        for (let i = 0; i < root.length; i++) {
-                            if (root[i].innerText.includes('Go to project')) {
-                                root[i].click()
-                                output = true
-                            }
-                        }
-                    }
-                    return output
-                })
-
-                if (exists) {
-                    break
-                }
-            } else if (url.includes('consentsummary')) {
-                let exists = await account.evaluate(() => {
-                    let output = false
-                    let root = document.querySelectorAll('button[type="button"]')
-                    if (root && root.length > 0) {
-                        for (let i = 0; i < root.length; i++) {
-                            if (root[i].innerText == 'Continue') {
-                                root[i].click()
-                                output = true
-                            }
-                        }
-                    }
-                    return output
-                })
-
-                if (exists) {
-                    break
-                }
-            } else if (url.includes('/gmail/callback')) {
-                break
-            }
-        } catch (error) {}
-
-        await delay(1000)
-    }
-
-    await delay(2000)
-
-    for (let i = 0; i < 15; i++) {
-        try {
-            let url = await account.url()
-            if (url.includes('consentsummary')) {
-                let exists = await account.evaluate(() => {
-                    let root = document.querySelector('input[aria-label="Select all"]')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (exists) {
-                    await account.click('input[aria-label="Select all"]')
-                    await delay(1000)
-                    await account.evaluate(() => {
-                        let root = document.querySelectorAll('button[type="button"]')
-                        if (root && root.length > 0) {
-                            for (let i = 0; i < root.length; i++) {
-                                if (root[i].innerText == 'Continue') {
-                                    root[i].click()
-                                }
-                            }
-                        }
-                    })
-                    break
-                }
-            } else if (url.includes('/gmail/callback')) {
-                break
-            }
-        } catch (error) {}
-
-        await delay(1000)
-    }
-}
-
-async function getMessageCount() {
-    try {
-        let response = await axios.get('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
-            headers: {
-                'authorization': 'Bearer '+TOKEN,
-                'content-type': 'application/json'
-            }
-        })
-        return response.data['messagesTotal']
-    } catch (error) {
-        console.log(error)
-        return -1
-    }
-}
-
-async function getGmailLink(count) {
-    let length = 0
-    let link = null
-
-    for (let i = 0; i < 30; i++) {
-        let size = await getMessageCount()
-        if (size > 0 && size > count) {
-            length = size-count
-            break
-        }
-
-        await delay(1000)
-    }
-
-    if (length > 0) {
-        try {
-            let response = await axios.get('https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults='+length, {
-                headers: {
-                    'authorization': 'Bearer '+TOKEN,
-                    'content-type': 'application/json'
-                }
-            })
-            
-            let list = response.data['messages']
-
-            for (let i = 0; i < list.length; i++) {
-                try {
-                    let response = await axios.get('https://gmail.googleapis.com/gmail/v1/users/me/messages/'+list[i]['id'], {
-                        headers: {
-                            'authorization': 'Bearer '+TOKEN,
-                            'content-type': 'application/json'
-                        }
-                    })
-
-                    let data = response.data['payload']['body']['data']
-                    let message = Buffer.from(data, 'base64').toString()
-                    
-                    message.split(/\r?\n/).forEach(function(line){
-                        if (line.includes('dashboard.render.com')) {
-                            link = line.trim()
-                        }
-                    })
-
-                    if (link) {
-                        break
-                    }
-                } catch (error) {
-                    console.log(error)
-                }
-            }
-        } catch (error) {}
-    }
-
-    return link
-}
-
-async function checkStatus() {
-    try {
-        github = await browser.newPage()
-
-        await github.goto('https://app.cyclic.sh/api/login', { waitUntil: 'load', timeout: 0 })
-
-        await delay(1000)
-        let url = await github.url()
-        if (url.startsWith('https://github.com/login/oauth/authorize')) {
-            return true
-        } else if (url.startsWith('https://app.cyclic.sh')) {
-            return true
-        }
-    } catch (error) {}
-
-    return false
-}
-
 async function disconnectGithub() {
     await page.goto('https://dashboard.render.com/settings', { waitUntil: 'load', timeout: 0 })
     await delay(2000)
@@ -819,78 +615,7 @@ async function disconnectGithub() {
     }
 }
 
-async function renderSingUp() {
-    await account.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
-    await delay(1000)
-    
-    let exists = await account.evaluate(() => {
-        let output = false
-        let root = document.querySelectorAll('button[type="button"]')
-        if (root && root.length > 0) {
-            for (let i = 0; i < root.length; i++) {
-                if (root[i].innerText == 'Google') {
-                    root[i].click()
-                    output = true
-                }
-            }
-        }
-        return output
-    })
-
-    if (exists) {
-        await delay(2000)
-    }
-
-    let mSuccess = false
-
-    for (let i = 0; i < 10; i++) {
-        try {
-            let url = await account.url()
-            if (url.startsWith('https://dashboard.render.com/select-repo')) {
-                let exists = await account.evaluate(() => {
-                    let root = document.querySelector('button[data-testid="connect-GITHUB-button"]')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (exists) {
-                    mSuccess = true
-                    break
-                } else {
-                    exists = await account.evaluate(() => {
-                        let root = document.querySelectorAll('button[type="button"]')
-                        if (root && root.length > 0) {
-                            let click = false
-                            for (let i = 0; i < root.length; i++) {
-                                try {
-                                    if (root[i].innerText == 'Connect') {
-                                        click = true
-                                    }
-                                } catch (error) {}
-                            }
-                            return click
-                        }
-                        return false
-                    })
-
-                    if (exists) {
-                        mSuccess = true
-                        break
-                    }
-                }
-            }
-        } catch (error) {}
-
-        await delay(1000)
-    }
-
-    return mSuccess
-}
-
 async function saveData() {
-
     if (mRender) {
         let data = {}
         
@@ -904,238 +629,10 @@ async function saveData() {
             }
         })
     }
-}
-
-async function logInGmail(data) {
 
     try {
-        await page.bringToFront()
-        
-        await page.goto(loginUrl, { waitUntil: 'load', timeout: 0 })
-        await delay(500)
-        await page.waitForSelector('#identifierId')
-        await page.type('#identifierId', data['g_user'])
-        await page.waitForSelector('#identifierNext')
-        await page.click('#identifierNext')
-
-        let status = await waitForLoginStatus()
-        if (status == 1) {
-            await delay(2000)
-            await waitForPasswordType(data['g_pass'])
-            await delay(500)
-            await page.click('#passwordNext')
-
-            let status = await waitForLoginSuccess(false)
-
-            if (status == 4) {
-                await delay(2000)
-                await page.click('div[data-challengetype="12"]')
-                status = await waitForLoginSuccess(true)
-                if (status == 5) {
-                    let recovery = data['g_recovery']
-                    if (!recovery.endsWith('.com')) {
-                        recovery += '@gmail.com'
-                    }
-                    await page.type('#knowledge-preregistered-email-response', recovery)
-                    await delay(500)
-                    await page.click('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]')
-                    await delay(2000)
-                    status = await waitForLoginSuccess(false)
-                }
-            }
-            
-            if (status == 1) {
-                await delay(1000)
-                console.log('--LOGIN-OK-')
-                await page.goto('about:blank')
-
-                return true
-            } else {
-                console.log('Password:',status)
-                console.log('---EXIT----')
-                process.exit(0)
-            }
-        } else if(status == 9) {
-            await delay(3000)
-            await page.goto('about:blank')
-        } else {
-            console.log('Login:',status)
-            console.log('---EXIT----')
-            process.exit(0)
-        }
-    } catch (error) {
-        console.log('---EXIT----')
-        process.exit(0)
-    }
-    return false
-}
-
-async function waitForLoginStatus() {
-    let status = 0
-    let timeout = 0
-    while (true) {
-        timeout++
-        if (timeout >= 50) {
-            status = 0
-            break
-        }
-        await delay(500)
-
-        try {
-            let pageUrl = await page.evaluate(() => window.location.href)
-            
-            if (pageUrl) {
-                if (pageUrl.startsWith('https://accounts.google.com/v3/signin/identifier')) {
-                    let captcha = await page.waitForRequest(req => req.url())
-                    if (captcha.url().startsWith('https://accounts.google.com/Captcha')) {
-                        status = 9
-                        break
-                    }
-
-                } else if (pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/pwd') || pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/pwd')) {
-                    status = 1
-                    break
-                } else if (pageUrl.startsWith('https://accounts.google.com/v3/signin/rejected')) {
-                    status = 2
-                    break
-                } else if (pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/dp')) {
-                    status = 3
-                    break
-                } else if (pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/selection')) {
-                    status = 4
-                    break
-                } else if(pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/pk/presend')) {
-                    status = 5
-                    break
-                } else if(pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/recaptcha')) {
-                    status = 9
-                    break
-                }
-            }
-        } catch (error) {}
-    }
-    return status
-}
-
-async function waitForLoginSuccess(selection) {
-    let status = 0
-    let timeout = 0
-    
-    while (true) {
-        timeout++
-        if (timeout >= 50) {
-            status = 0
-            break
-        }
-        await delay(2000)
-
-        try {
-            let pageUrl = await page.evaluate(() => window.location.href)
-            
-            if (pageUrl.startsWith('https://mail.google.com/')) {
-                status = 1
-                break
-            } else if (pageUrl.startsWith('https://gds.google.com/web/chip')) {
-                status = 1
-                break
-            } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('pwd')) {
-                let wrong = await page.evaluate(() => {
-                    let root = document.querySelector('div[class="OyEIQ uSvLId"] > div')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (wrong) {
-                    status = 2
-                    break
-                }
-            } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('ipp') && pageUrl.includes('collec')) {
-                status = 3
-                break
-            }  else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('selection')) {
-                status = 4
-                break
-            }  else if (selection) {
-                if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('kpe')) {
-                    let data = await page.evaluate(() => {
-                        let root = document.querySelector('#knowledge-preregistered-email-response') 
-                        if (root) {
-                            return true
-                        }
-                        return false
-                    })
-    
-                    if (data) {
-                        status = 5
-                        break
-                    }
-                }
-            }
-        } catch (error) {}
-    }
-
-    return status
-}
-
-async function waitForPasswordType(password) {
-    
-    while (true) {
-        await delay(1000)
-
-        try {
-            let data = await exists('input[type="password"]')
-            if (data) {
-                await page.type('input[type="password"]', password)
-
-                let success = await page.evaluate((password) => {
-                    try {
-                        let root = document.querySelector('input[type="password"]')
-                        if (root && root.value == password) {
-                            return true
-                        }
-                    } catch (error) {}
-
-                    return false
-                }, password)
-
-                if (success) {
-                    break
-                }
-            }
-        } catch (error) {}
-    }
-}
-
-async function exists(evement) {
-    return await page.evaluate((evement) => {
-        let root = document.querySelector(evement)
-        if (root) {
-            return true
-        }
-        return false
-    }, evement)
-}
-
-function getRandomPassword() {
-    let C = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
-    let S = ['a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z']
-    let N = ['0','1','2','3','4','5','6','7','8','9']
-    
-    let pass = C[Math.floor((Math.random() * 26))]
-    pass += S[Math.floor((Math.random() * 26))]
-    pass += S[Math.floor((Math.random() * 26))]
-    pass += S[Math.floor((Math.random() * 26))]
-    pass += S[Math.floor((Math.random() * 26))]
-    pass += S[Math.floor((Math.random() * 26))]
-    pass += S[Math.floor((Math.random() * 26))]
-    pass += N[Math.floor((Math.random() * 10))]
-    pass += N[Math.floor((Math.random() * 10))]
-    pass += N[Math.floor((Math.random() * 10))]
-    pass += N[Math.floor((Math.random() * 10))]
-    
-    return pass
+        await axios.delete(BASE_URL+'render/'+GMAIL+'.json')
+    } catch (error) {}
 }
 
 function getRandomUser() {
