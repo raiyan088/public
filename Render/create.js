@@ -550,21 +550,20 @@ async function createAccount() {
     })
 
     try {
-        console.log(response.data)
         try {
             if (response.data['data']['signUp']['user']) {
                 return true
             }
         } catch (error) {}
 
-        if (response.data['errors'].toString().includes('{"email":"exists"}')) {
+        let error = JSON.stringify(response.data)
+
+        if (error.includes('email') && error.includes('exists')) {
             mEmailHas = true
-        } else if (response.data['errors'].toString().includes('{"hcaptcha_token":"invalid"}')) {
+        } else if (error.includes('hcaptcha_token') && error.includes('invalid')) {
             return await createAccount()
         }
-    } catch (error) {
-        console.log(error)
-    }
+    } catch (error) {}
 
     if (mEmailHas) {
         await saveData(true)
