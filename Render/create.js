@@ -550,6 +550,7 @@ async function createAccount() {
     })
 
     try {
+        console.log(response.data)
         if (response.data['data']['signUp']['user']) {
             return true
         } else if (response.data['errors'].toString().includes('{"email":"exists"}')) {
@@ -557,7 +558,9 @@ async function createAccount() {
         } else if (response.data['errors'].toString().includes('{"hcaptcha_token":"invalid"}')) {
             return await createAccount()
         }
-    } catch (error) {}
+    } catch (error) {
+        console.log(error)
+    }
 
     if (mEmailHas) {
         await saveData(true)
