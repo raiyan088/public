@@ -1,6 +1,5 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
-const { google } = require('googleapis')
 const axios = require('axios')
 const fs = require('fs')
 
@@ -22,24 +21,11 @@ let mAuth = null
 let mUserID = null
 let mRequestId = null
 let mHeader = null
-
-let PASSWORD = getRandomPassword()
-
-
-const CLIENT_ID = '1088513366507-a9uvbpfut61ol1cd2nh9qqrdabblne6i.apps.googleusercontent.com'
-const CLIENT_SECRET = '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'
-const REDIRECT_URI = 'http://localhost:3000/gmail/callback'
+let PASSWORD = ''
 
 let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&emr=1&followup=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&ifkv=ASKXGp2AT5TaGFB2r-BGOTTaCsPqKzVi_ysRafPiaNTd67ESvokaq2QE4wy0pqB9z1sgy8PdFFnU&osid=1&passive=1209600&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S1442849146%3A1701858698016724&theme=glif'
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
-
-
-const oauth2Client = new google.auth.OAuth2(
-    CLIENT_ID,
-    CLIENT_SECRET,
-    REDIRECT_URI
-)
 
 
 puppeteer.use(StealthPlugin())
@@ -50,40 +36,20 @@ async function startPrecess() {
     try {
         cookies = JSON.parse(fs.readFileSync('cookies.json'))
 
-        await getGmailData()
-
-        oauth2Client.setCredentials({ refresh_token: mGmail[GMAIL]['token'] })
-
-        TOKEN = await new Promise((resolve, reject) => {
-            oauth2Client.getAccessToken((err, token) => {
-                resolve(err?null:token)
-            })
-        })
+        let response = await getAxios(BASE_URL+'render.json?orderBy="$key"&limitToFirst=1')
         
-        if (TOKEN) {
-            let count = await getMessageCount()
-            if (count > 0) {
-                console.log('---SIZE:'+count+'---')
-                let mCreate = await createAccount()
-                if (mCreate) {
-                    console.log('---RENDER---')
-                    let mLink = await getGmailLink(count)
-                    if (mLink) {
-                        await startBrowser(mLink)
-                    } else {
-                        console.log('---LINK-FAILED---')
-                        process.exit(0)
-                    }
-                } else {
-                    console.log('---CREATE-FAILED---')
-                    process.exit(0)
-                }
-            } else {
-                console.log('---GMAIL-ERROR---')
-                process.exit(0)
+        if (response && response.data != null && response.data != 'null') {
+            let data = response.data
+
+            for(let key of Object.keys(data)) {
+                GMAIL = key
             }
+
+            PASSWORD = data[GMAIL]['pass']
+
+            await startBrowser(data[GMAIL]['link'])
         } else {
-            console.log('---TOKEN-NULL---')
+            console.log('---DATA-NULL---')
             process.exit(0)
         }
     } catch (error) {
@@ -152,73 +118,13 @@ async function startBrowser(mLink) {
 
         await changeRenderGmail()
 
-        await saveData(false)
+        await saveData()
 
         console.log('---COMPLETED---')
         process.exit(0)
     } catch (error) {
         console.log('---EXIT----')
         process.exit(0)
-    }
-}
-
-async function startBrowserTest() {
-    try {
-        browser = await puppeteer.launch({
-            headless: false,
-            //headless: 'new',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-skip-list',
-                '--disable-dev-shm-usage'
-            ]
-        })
-    
-        page = (await browser.pages())[0]
-
-        page.on('request', request => {
-            if (mAuth == null && request.url() == 'https://api.render.com/graphql') {
-                if(request.method() == 'POST') {
-                    try {
-                        let header = request.headers()
-                        if (header['authorization'].startsWith('Bearer')) {
-                            mAuth = header['authorization']
-                            mRequestId = header['render-request-id']
-                        }
-                    } catch (error) {}
-                }
-            }
-        })
-        
-        page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
-        
-        cookies = JSON.parse(fs.readFileSync('cookies.json'))
-
-        await page.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
-        await delay(20000)
-
-        
-        while (true) {
-            await setupGithub()
-
-            let ststus = await renderRepoSetup()
-            if (ststus == 'GIT') {
-                await changeGithub(true)
-                await delay(2000)
-            } else if (ststus == 'OK') {
-                await disconnectGithub()
-                await changeRenderGmail()
-            } else {
-                break
-            }
-        }
-
-        
-    } catch (error) {
-        console.log('---EXIT----')
-        // process.exit(0)
     }
 }
 
@@ -274,29 +180,6 @@ async function getGithubAccount() {
             await getGithubAccount()
         }
     } catch (error) {}
-}
-
-async function getGmailData() {
-    while (true) {
-        try {
-            let response = await getAxios(BASE_URL+'github/'+GMAIL_NAME+'.json?orderBy="$key"&limitToFirst=1')
-        
-            if (response && response.data != null && response.data != 'null') {
-                mGmail = response.data
-
-                for(let key of Object.keys(mGmail)) {
-                    GMAIL = key
-                }
-
-                break
-            }
-        } catch (error) {
-            console.log(error)
-        }
-
-        console.log('---GMAIL-DATA-ERROR---')
-        await delay(600000)
-    }
 }
 
 async function changeGithub(error) {
@@ -507,106 +390,6 @@ async function connectRenderRepo() {
     }
 
     return mSuccess
-}
-
-async function createAccount() {
-    H_TOKEN = await getHtoken()
-    let mEmailHas = false
-    
-    const response = await postAxios('https://api.render.com/graphql',
-        {
-            'operationName': 'signUp',
-            'variables': {
-                'signup': {
-                    'email': GMAIL+'@gmail.com',
-                    'githubId': '',
-                    'name': '',
-                    'githubToken': '',
-                    'googleId': '',
-                    'gitlabId': '',
-                    'inviteCode': '',
-                    'password': PASSWORD,
-                    'newsletterOptIn': false,
-                    'hcaptchaToken': H_TOKEN
-                }
-            },
-            'query': 'mutation signUp($signup: SignupInput!) {\n  signUp(signup: $signup) {\n    ...authResultFields\n    __typename\n  }\n}\n\nfragment authResultFields on AuthResult {\n  idToken\n  expiresAt\n  user {\n    ...userFields\n    sudoModeExpiresAt\n    __typename\n  }\n  readOnly\n  __typename\n}\n\nfragment userFields on User {\n  id\n  active\n  createdAt\n  email\n  featureFlags\n  githubId\n  gitlabId\n  googleId\n  name\n  notifyOnPrUpdate\n  otpEnabled\n  passwordExists\n  tosAcceptedAt\n  intercomEmailHMAC\n  __typename\n}\n'
-        },
-        {
-        headers: {
-            'authority': 'api.render.com',
-            'accept': '*/*',
-            'accept-language': 'en-US,en;q=0.9',
-            'authorization': '',
-            'content-type': 'application/json',
-            'origin': 'https://dashboard.render.com',
-            'referer': 'https://dashboard.render.com/register',
-            'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-site',
-            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-        }
-    })
-
-    try {
-        try {
-            if (response.data['data']['signUp']['user']) {
-                return true
-            }
-        } catch (error) {}
-
-        let error = JSON.stringify(response.data)
-        
-        if (error.includes('email') && error.includes('exists')) {
-            mEmailHas = true
-        } else if (error.includes('hcaptcha_token') && error.includes('invalid')) {
-            return await createAccount()
-        }
-    } catch (error) {}
-
-    if (mEmailHas) {
-        console.log('---GMAIL-EXISTS---')
-        await saveData(true)
-    }
-
-    return false
-}
-
-async function getHtoken() {
-    let token = null
-    let loop = 0
-
-
-    while (true) {
-        loop++
-        let end = new Date().getTime()
-        let start = end-100000
-
-        let response = await getAxios(BASE_URL+'token.json?orderBy="$key"&startAt="'+start+'"&endAt="'+end+'"&limitToFirst=1')
-        
-        try {
-            for(let [key, value] of Object.entries(response.data)) {
-                token = value['token']
-                
-                try {
-                    await axios.delete(BASE_URL+'token/'+key+'.json')
-                } catch (error) {}
-            }
-        } catch (error) {}
-
-        if (token) {
-            break
-        }
-
-        console.log('---TRY-'+loop+'---')
-
-        await delay(10000)
-    }
-
-    return token
 }
 
 async function getRenderLink(user) {
@@ -1106,23 +889,7 @@ async function renderSingUp() {
     return mSuccess
 }
 
-async function saveData(error) {
-    let name = 'create'
-    if (error) {
-        name = 'render_gmail'
-    } else {
-        await changeGithub(false)
-    }
-
-    await putAxios(BASE_URL+'github/'+name+'/'+GMAIL+'.json', JSON.stringify(mGmail), {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
-    
-    try {
-        await axios.delete(BASE_URL+'github/'+GMAIL_NAME+'/'+GMAIL+'.json')
-    } catch (error) {}
+async function saveData() {
 
     if (mRender) {
         let data = {}
