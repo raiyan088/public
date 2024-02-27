@@ -123,6 +123,10 @@ async function getRenderData() {
                 
                 for(let key of Object.keys(data)) {
                     GMAIL = key
+
+                    try {
+                        await axios.delete(BASE_URL+'render/'+GMAIL+'.json')
+                    } catch (error) {}
                 }
 
                 PASSWORD = data[GMAIL]['pass']
@@ -180,6 +184,10 @@ async function getGithubAccount() {
 
             for(let key of Object.keys(mData)) {
                 USER = key
+
+                try {
+                    await axios.delete(BASE_URL+'github/'+GITHUB_NAME+'/'+USER+'.json')
+                } catch (error) {}
             }
         } else {
             if (GITHUB_NAME == 'valied') {
@@ -203,10 +211,6 @@ async function changeGithub(error) {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
     })
-    
-    try {
-        await axios.delete(BASE_URL+'github/'+GITHUB_NAME+'/'+USER+'.json')
-    } catch (error) {}
 }
 
 async function renderRepoSetup() {
@@ -643,10 +647,6 @@ async function saveData() {
             }
         })
     }
-
-    try {
-        await axios.delete(BASE_URL+'render/'+GMAIL+'.json')
-    } catch (error) {}
 }
 
 function getRandomUser() {
