@@ -30,6 +30,8 @@ async function startPrecess() {
     try {
         cookies = JSON.parse(fs.readFileSync('cookies.json'))
 
+        GITHUB_NAME = await getGitName()
+
         let mLink = await getRenderData()
 
         console.log('---START---')
@@ -142,6 +144,23 @@ async function getRenderData() {
     return mLink
 }
 
+async function getGitName() {
+    try {
+        let response = await getAxios(BASE_URL+'github/name.json')
+        return response.data['active']
+    } catch (error) {
+        return 'valied'
+    }
+}
+
+async function setGitName(name) {
+    await putAxios(BASE_URL+'github/name.json', JSON.stringify({ active:name }), {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+}
+
 async function setupGithub() {
     await getGithubAccount()
 
@@ -192,8 +211,10 @@ async function getGithubAccount() {
         } else {
             if (GITHUB_NAME == 'valied') {
                 GITHUB_NAME = 'account'
-            } else {
+                await setGitName(GITHUB_NAME)
+            } else if (GITHUB_NAME == 'account') {
                 GITHUB_NAME = 'valied'
+                await setGitName(GITHUB_NAME)
             }
             await getGithubAccount()
         }
@@ -206,7 +227,7 @@ async function changeGithub(error) {
         name = 'render_git'
     }
 
-    await putAxios(BASE_URL+'github/'+name+'/'+USER+'.json', JSON.stringify(mData), {
+    await putAxios(BASE_URL+'github/'+name+'/'+USER+'.json', JSON.stringify(mData[USER]), {
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         }
@@ -634,6 +655,8 @@ async function disconnectGithub() {
 }
 
 async function saveData() {
+    await changeGithub(false)
+
     if (mRender) {
         let data = {}
         
