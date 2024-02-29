@@ -172,6 +172,8 @@ async function startPrecess() {
 async function startBrowser(mLink) {
     try {
         if (browser == null) {
+            console.log('---BROWSER---')
+
             browser = await puppeteer.launch({
                 executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
                 headless: false,
@@ -209,6 +211,8 @@ async function startBrowser(mLink) {
         })
         
         await page.goto(mLink, { waitUntil: 'load', timeout: 0 })
+
+        console.log('---PAGE---')
 
         await delay(3000)
 
@@ -250,6 +254,7 @@ async function startBrowser(mLink) {
 
         return true
     } catch (error) {
+        console.log(error)
         console.log('---EXIT----')
     }
 
