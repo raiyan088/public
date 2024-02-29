@@ -1,6 +1,7 @@
+const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+const puppeteer = require('puppeteer-extra')
 const gmailApi = require('./gmail-api.js')
 const { exec } = require('child_process')
-const puppeteer = require('puppeteer')
 const axios = require('axios')
 const fs = require('fs')
 
@@ -19,6 +20,8 @@ let PASSWORD = getRandomPassword()
 const GR = new gmailApi()
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
+
+puppeteer.use(StealthPlugin())
 
 
 process.argv.slice(2).forEach(function (data, index) {
