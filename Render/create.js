@@ -122,8 +122,8 @@ async function startProcess(install) {
             }
     
             if (mIP) {
+                mSuccess = 0
                 console.log('VPN Connected')
-    
                 await delay(1000)
 
                 await startPrecess()
@@ -194,7 +194,6 @@ async function startBrowser(mLink) {
 
         mAuth = null
         mRequestId = null
-        mSuccess = 0
 
         page.on('request', request => {
             if (mAuth == null && request.url() == 'https://api.render.com/graphql') {
