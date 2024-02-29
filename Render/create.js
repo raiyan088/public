@@ -170,6 +170,7 @@ async function startBrowser(mLink) {
     try {
         if (browser == null) {
             browser = await puppeteer.launch({
+                executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
                 headless: false,
                 headless: 'new',
                 args: [
