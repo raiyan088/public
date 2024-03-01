@@ -407,7 +407,7 @@ async function getCurlIP() {
 }
 
 async function saveOVPN(key, error) {
-    let timeout = parseInt(new Date().getTime()/1000)+7200
+    let timeout = parseInt(new Date().getTime()/1000)+10800
 
     if (error) {
         timeout = parseInt(new Date().getTime()/1000)+72000000
