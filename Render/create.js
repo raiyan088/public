@@ -1,28 +1,16 @@
-const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-const puppeteer = require('puppeteer-extra')
-const gmailApi = require('./gmail-api.js')
 const { exec } = require('child_process')
 const axios = require('axios')
 const fs = require('fs')
 
-let browser = null
-let page = null
-let mAuth = null
-let mUserID = null
-let mHeader = null
-let mRequestId = null
-let GMAIL = null
 let mSuccess = 0
 
 let USER = getRandomUser()
 let PASSWORD = getRandomPassword()
 
-const GR = new gmailApi()
-
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
-puppeteer.use(StealthPlugin())
 
+createProcess()
 
 process.argv.slice(2).forEach(function (data, index) {
     try {
@@ -126,7 +114,7 @@ async function startProcess(install) {
                 console.log('VPN Connected')
                 await delay(1000)
 
-                await startPrecess()
+                await createProcess()
 
                 console.log('---NEXT---')
             } else {
@@ -150,14 +138,14 @@ async function startProcess(install) {
     }
 }
 
-async function startPrecess() {
+async function createProcess() {
     try {
         let mCreate = await createAccount()
         if (mCreate) {
             console.log('---RENDER---')
             let mLink = await getRenderLink(USER)
             if (mLink) {
-                await startBrowser(mLink)
+                await verification(mLink)
             } else {
                 console.log('---LINK-FAILED---')
             }
@@ -169,115 +157,66 @@ async function startPrecess() {
     }
 }
 
-async function startBrowser(mLink) {
+async function verification(mLink) {
     try {
-        if (browser == null) {
-            console.log('---BROWSER---')
-
-            browser = await puppeteer.launch({
-                executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-                headless: false,
-                headless: 'new',
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--ignore-certificate-errors',
-                    '--ignore-certificate-errors-skip-list',
-                    '--disable-dev-shm-usage'
-                ]
-            })
-        
-            page = (await browser.pages())[0]
-            
-            page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())    
-        }
-
-        mAuth = null
-        mRequestId = null
-
-        page.on('request', request => {
-            if (mAuth == null && request.url() == 'https://api.render.com/graphql') {
-                if(request.method() == 'POST') {
-                    try {
-                        let header = request.headers()
-                        if (header['authorization'].startsWith('Bearer')) {
-                            mAuth = header['authorization']
-                            mRequestId = header['render-request-id']
-                        }
-                    } catch (error) {}
-                }
-            }
+        let response = await axios.get(mLink, {
+            headers: getHeader(),
+            maxRedirects: 0,
+            validateStatus: null
         })
-        
-        await page.goto(mLink, { waitUntil: 'load', timeout: 0 })
 
-        console.log('---PAGE---')
+        let confirm = response.headers['location']
 
-        await delay(3000)
+        if (confirm && confirm.startsWith('https://dashboard.render.com/email-confirm')) {
+            try {
+                await axios.get(confirm, {
+                    headers: getHeader(),
+                    maxRedirects: 0,
+                    validateStatus: null
+                })
+            } catch (error) {}
 
-        await waitForAuth()
+            await delay(1000)
 
-        console.log('---AUTH---')
+            let token = confirm.substring(confirm.indexOf('token=')+6, confirm.length)
 
-        let mNext = await checkPaymentFree()
-
-        if (mNext) {
-            await saveData()
-            console.log('---SUCCESS---')
-            mSuccess++
-        } else {
-            GMAIL = await GR.getGmail()
-
-            console.log('---CHANGE---')
-
-            await changeRenderGmail()
-
-            let mNext = await checkPaymentFree()
-
-            if (mNext) {
-                await saveData()
-                console.log('---SUCCESS---')
-                mSuccess++
-            } else {
-                console.log('---PAYMENT-ERROR---')
+            if (confirm.lastIndexOf('next=') > 0) {
+                token = confirm.substring(confirm.indexOf('token=')+6, confirm.lastIndexOf('next=')-1)
             }
+
+            response = await axios.post('https://api.render.com/graphql', {
+                'operationName': 'verifyEmail',
+                'variables': {
+                    'token': token
+                },
+                'query': 'mutation verifyEmail($token: String!) {\n  verifyEmail(token: $token) {\n    ...authResultFields\n    __typename\n  }\n}\n\nfragment authResultFields on AuthResult {\n  idToken\n  expiresAt\n  user {\n    ...userFields\n    sudoModeExpiresAt\n    __typename\n  }\n  readOnly\n  __typename\n}\n\nfragment userFields on User {\n  id\n  active\n  createdAt\n  email\n  featureFlags\n  githubId\n  gitlabId\n  googleId\n  name\n  notifyOnPrUpdate\n  otpEnabled\n  passwordExists\n  tosAcceptedAt\n  intercomEmailHMAC\n  __typename\n}\n'
+            }, {
+                headers: getConfirmHeader(token)
+            })
+
+            await putAxios(BASE_URL+'render/'+USER+'.json', JSON.stringify({ pass:PASSWORD }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+
+            console.log('---SUCCESS---')
+
+            mSuccess++
+
+            await delay(10000)
+
+            if (mSuccess > 0 && 10 > mSuccess) {
+                return await createProcess()
+            }
+        } else {
+            console.log('---FAILED----')
         }
-
-        console.log('---COMPLETED---')
-
-        await clearBrowser()
-
-        if (mSuccess > 0 && 5 > mSuccess) {
-            return await startPrecess()
-        }
-
-        return true
     } catch (error) {
-        console.log(error)
         console.log('---EXIT----')
     }
 
     return false
-}
-
-async function clearBrowser() {
-    try {
-        await page.setCookie(...[])
-
-        await page.goto('about:blank')
-
-        await page.setCookie(...[])
-    } catch (error) {}
-}
-
-async function saveData() {
-    let user = GMAIL.replace('@gmail.com', '')
-
-    await putAxios(BASE_URL+'render/'+user+'.json', JSON.stringify({ pass:PASSWORD }), {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
 }
 
 async function createAccount() {
@@ -372,156 +311,6 @@ async function getHtoken() {
     }
 
     return token
-}
-
-async function waitForAuth() {
-    while (true) {
-        if (mAuth) {
-            break
-        }
-        await delay(500)
-    }
-
-    let cookies = ''
-
-    let cookie = await page.cookies()
-
-    for (let i = 0; i < cookie.length; i++) {
-        if (cookie[i]['name'] == 'ajs_user_id') {
-            mUserID = cookie[i]['value']
-        }
-        cookies += cookie[i]['name']+'='+cookie[i]['value']+'; '
-    }
-
-    mHeader = {
-        'authority': 'api.render.com',
-        'accept': '*/*',
-        'accept-language': 'en-US,en;q=0.9',
-        'authorization': mAuth,
-        'content-type': 'application/json',
-        'cookie': cookies,
-        'origin': 'https://dashboard.render.com',
-        'referer': 'https://dashboard.render.com/',
-        'sec-ch-ua': '"Not:A-Brand";v="99", "Chromium";v="112"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-site',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36'
-    }
-
-    if (mRequestId) {
-        mHeader['render-request-id'] = mRequestId
-    }
-}
-
-async function checkPaymentFree() {
-    let response = await postAxios('https://api.render.com/graphql', { 
-        'operationName': 'ownerBilling',
-        'variables': {
-            'ownerId': mUserID
-        },
-        'query': 'query ownerBilling($ownerId: String!) {\n  owner(ownerId: $ownerId) {\n    ...ownerFields\n    ...ownerBillingFields\n    __typename\n  }\n}\n\nfragment ownerBillingFields on Owner {\n  cardBrand\n  cardLast4\n  __typename\n}\n\nfragment ownerFields on Owner {\n  id\n  billingStatus\n  email\n  featureFlags\n  notEligibleFeatureFlags\n  projectsEnabled\n  tier\n  logEndpoint {\n    endpoint\n    token\n    updatedAt\n    __typename\n  }\n  userPermissions {\n    addTeamMember\n    deleteTeam\n    readBilling\n    removeTeamMember\n    updateBilling\n    updateFeatureFlag\n    updateTeam2FA\n    updateTeamEmail\n    updateTeamMemberRole\n    updateTeamName\n    __typename\n  }\n  permissions {\n    addTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    deleteTeam {\n      ...permissionResultFields\n      __typename\n    }\n    readBilling {\n      ...permissionResultFields\n      __typename\n    }\n    removeTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    updateBilling {\n      ...permissionResultFields\n      __typename\n    }\n    updateFeatureFlag {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeam2FA {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamEmail {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamMemberRole {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamName {\n      ...permissionResultFields\n      __typename\n    }\n    __typename\n  }\n  userRole\n  __typename\n}\n\nfragment permissionResultFields on PermissionResult {\n  permissionLevel\n  message\n  __typename\n}\n'
-    }, { headers: mHeader })
-
-    try {
-        let data = response.data['data']['owner']
-        if (data['billingStatus'] == 'PAYMENT_METHOD_REQUIRED') {
-            return false
-        }
-    } catch (error) {}
-
-    return true
-}
-
-async function changeRenderGmail() {
-    let response = await axios.post('https://api.render.com/graphql',{
-          'operationName': 'requestEmailReset',
-          'variables': {
-            'newEmail': GMAIL
-          },
-          'query': 'mutation requestEmailReset($newEmail: String!) {\n  requestEmailReset(newEmail: $newEmail)\n}\n'
-    }, { headers: mHeader })
-
-    let mError = true
-    try {
-        if(response.data['errors']) {
-            GMAIL = await GR.getGmail()
-
-            return await changeRenderGmail()
-        } else if(response.data['data']['requestEmailReset']) {
-            mError = false
-        }
-    } catch (error) {}
-
-    if (mError) {
-        await page.goto('https://dashboard.render.com/settings', { waitUntil: 'load', timeout: 0 })
-        await delay(1000)
-        
-        let click = await page.evaluate(() => {
-            let output = false
-            let root = document.querySelectorAll('button[type="button"]')
-            if (root && root.length > 0) {
-                for (let i = 0; i < root.length; i++) {
-                    if (root[i].innerText == 'Edit') {
-                        root[i].click()
-                        output = true
-                    }
-                }
-            }
-            return output
-        })
-    
-        if (click) {
-            await delay(1000)
-            await page.focus('input#email')
-            await page.keyboard.down('Control')
-            await page.keyboard.press('A')
-            await page.keyboard.up('Control')
-            await page.keyboard.press('Backspace')
-            await delay(500)
-            await page.type('input#email', GMAIL)
-            await delay(1000)
-            await page.evaluate(() => {
-                let root = document.querySelectorAll('button[type="submit"]')
-                if (root && root.length > 0) {
-                    for (let i = 0; i < root.length; i++) {
-                        if (root[i].innerText == 'Save Changes') {
-                            root[i].click()
-                        }
-                    }
-                }
-            })
-    
-            await delay(3000)
-
-            let error = await page.evaluate(() => {
-                let root = document.querySelector('div[class*="invalid-feedback"]')
-                if (root) {
-                    return true
-                }
-                return false
-            })
-
-            if (error) {
-                GMAIL = await GR.getGmail()
-                return await changeRenderGmail()
-            }
-        }
-    }
-
-    let link = await GR.getVerificationLink(GMAIL)
-    
-    if (link) {
-        await page.goto(link, { waitUntil: 'load', timeout: 0 })
-        await delay(3000)
-        
-        return true
-    } else {
-        GMAIL = await GR.getGmail()
-        return await changeRenderGmail()
-    }
 }
 
 async function getRenderLink(user) {
@@ -676,6 +465,30 @@ function getRandomUser() {
     return pass
 }
 
+function getRandomId() {
+    let N = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
+    
+    let output = ''
+
+    for (let i = 0; i < 32; i++) {
+        output += N[Math.floor((Math.random() * 16))]
+
+        if (output.length == 8) {
+            output += '-'
+        } else if (output.length == 8) {
+            output += '-'
+        } else if (output.length == 13) {
+            output += '-'
+        } else if (output.length == 18) {
+            output += '-'
+        } else if (output.length == 23) {
+            output += '-'
+        }
+    }
+
+    return output
+}
+
 async function getAxios(url) {
     let loop = 0
     let responce = null
@@ -759,6 +572,44 @@ async function patchAxios(url, body, data) {
         }
     }
     return responce
+}
+
+async function getHeader() {
+    return {
+        'authority': 'click.pstmrk.it',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'accept-language': 'en-US,en;q=0.9',
+        'cache-control': 'max-age=0',
+        'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'document',
+        'sec-fetch-mode': 'navigate',
+        'sec-fetch-site': 'none',
+        'sec-fetch-user': '?1',
+        'upgrade-insecure-requests': '1',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    }
+}
+
+async function getConfirmHeader(token) {
+    return {
+        'authority': 'api.render.com',
+        'accept': '*/*',
+        'accept-language': 'en-US,en;q=0.9',
+        'authorization': '',
+        'content-type': 'application/json',
+        'origin': 'https://dashboard.render.com',
+        'referer': 'https://dashboard.render.com/email-confirm/?token='+token+'&next=/',
+        'render-request-id': getRandomId(),
+        'sec-ch-ua': '"Chromium";v="122", "Not(A:Brand";v="24", "Google Chrome";v="122"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"Windows"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site',
+        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    }
 }
 
 function delay(time) {
