@@ -168,7 +168,34 @@ async function renderRepoSetup() {
     await page.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
     await delay(2000)
 
-    await page.screenshot({ path:'image_1.jpg' })
+    let mError = await page.evaluate(() => {
+        let root = document.querySelector('input[name="email"]')
+        if (root) {
+            root = document.querySelector('input[name="password"]')
+            if (root) {
+                return true
+            }
+        }
+        return false
+    })
+
+    if (mError) {
+        mAuth = null
+        mRequestId = null
+
+        await waitForLogin()
+
+        await delay(2000)
+
+        mSuccess = await waitForAuth()
+
+        if (mSuccess) {
+            console.log('---AUTH-AGAIN---')
+            return await renderRepoSetup()
+        } else {
+            await delay(2000)
+        }
+    }
     
     let connected = await page.evaluate(() => {
         let root = document.querySelector('button[data-testid="connect-GITHUB-button"]')
@@ -293,7 +320,6 @@ async function renderRepoSetup() {
             console.log('---ID-ERROR---')
         }
     } else {
-        await page.screenshot({ path:'image.jpg' })
         console.log('---ERROR---')
     }
 
