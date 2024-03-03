@@ -291,6 +291,7 @@ async function renderRepoSetup() {
             console.log('---ID-ERROR---')
         }
     } else {
+        await page.screenshot({ path:'image.jpg' })
         console.log('---ERROR---')
     }
 
