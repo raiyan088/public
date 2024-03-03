@@ -167,6 +167,8 @@ async function renderRepoSetup() {
 
     await page.goto('https://dashboard.render.com/select-repo?type=web', { waitUntil: 'load', timeout: 0 })
     await delay(2000)
+
+    await page.screenshot({ path:'image_1.jpg' })
     
     let connected = await page.evaluate(() => {
         let root = document.querySelector('button[data-testid="connect-GITHUB-button"]')
