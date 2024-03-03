@@ -115,8 +115,6 @@ async function startBrowser() {
             if (!mNext) {
                 GMAIL = await GR.getGmail()
 
-                console.log(GMAIL)
-
                 console.log('---CHANGE---')
 
                 await changeRenderGmail()
@@ -313,8 +311,6 @@ async function renderRepoSetup() {
 
             mRender = id+'_onrender_com'
 
-            console.log(mRender)
-            
             console.log('---CREATED---')
         } else {
             console.log('---ID-ERROR---')
@@ -462,6 +458,8 @@ async function saveData() {
 
     if (mRender) {
         data['url'] = mRender
+    } else {
+        data['url'] = 'error'
     }
 
     await putAxios(BASE_URL+'render_account/'+RENDER+'.json', JSON.stringify(data), {
