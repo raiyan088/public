@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const SYMBLE = '#'
 const NAME = 'server'
-const SIZE = 3
+const SIZE = 2
 
 let RELOAD = true
 
