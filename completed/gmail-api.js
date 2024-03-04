@@ -15,30 +15,41 @@ module.exports = class {
             try {
                 let gmail = null
 
-                for (let i = 0; i < 2; i++) {
+                while (true) {
                     try {
-                        let response = await axios.post('https://www.emailnator.com/generate-email', { 'email': [ 'plusGmail' ]}, {
-                            headers: {
-                                'cookie': 'XSRF-TOKEN='+encodeURIComponent(cookies['token'])+'; gmailnator_session='+encodeURIComponent(cookies['session']),
-                                'x-requested-with': 'XMLHttpRequest',
-                                'x-xsrf-token': cookies['token']
-                            },
-                            maxRedirects: 0,
-                            validateStatus: null
-                        })
+                        if (cookies) {
+                            let response = await axios.post('https://www.emailnator.com/generate-email', { 'email': [ 'plusGmail' ]}, {
+                                headers: {
+                                    'cookie': 'XSRF-TOKEN='+encodeURIComponent(cookies['token'])+'; gmailnator_session='+encodeURIComponent(cookies['session']),
+                                    'x-requested-with': 'XMLHttpRequest',
+                                    'x-xsrf-token': cookies['token']
+                                },
+                                maxRedirects: 0,
+                                validateStatus: null
+                            })
 
-                        let data = response.data
-                        try {
-                            if (data['email'].length > 0) {
-                                gmail = data['email'][0]
-                                break
+                            let data = response.data
+                            try {
+                                if (data['email'].length > 0) {
+                                    gmail = data['email'][0]
+                                    break
+                                }
+                            } catch (error) {
+                                mCookes = null
+                                cookies = await this.getCookies(false)
                             }
-                        } catch (error) {
-                            i = 0
+                        } else {
                             mCookes = null
+                            await this.delay(2000)
                             cookies = await this.getCookies(false)
                         }
                     } catch (error) {}
+
+                    if (gmail) {
+                        break
+                    }
+
+                    await this.delay(3000)
                 }
 
                 return gmail
@@ -144,8 +155,6 @@ module.exports = class {
                     }
                 } catch (error) {}
             }
-            
-            console.log('Token Genarate')
             
             if (PROXY) {
                 proxy = {

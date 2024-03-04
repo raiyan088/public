@@ -34,29 +34,39 @@ startPrecess()
 
 async function startPrecess() {
     try {
-        GMAIL = null
-        cookies = JSON.parse(fs.readFileSync('cookies.json'))
+        GMAIL = await GR.getGmail()
 
-        let response = await getAxios(BASE_URL+'render.json?orderBy="$key"&limitToFirst=1')
-        
-        for(let [key, value] of Object.entries(response.data)) {
-            RENDER = key
-            PASSWORD = value['pass']
+        if (GMAIL) {
+            cookies = JSON.parse(fs.readFileSync('cookies.json'))
 
-            if (value['user']) {
-                GMAIL = value['user']
+            let response = await getAxios(BASE_URL+'render.json?orderBy="$key"&limitToFirst=1')
+            
+            for(let [key, value] of Object.entries(response.data)) {
+                RENDER = key
+                PASSWORD = value['pass']
+
+                if (value['user']) {
+                    GMAIL = value['user']
+                }
+
+                try {
+                    await axios.delete(BASE_URL+'render/'+key+'.json')
+                } catch (error) {}
             }
 
-            try {
-                await axios.delete(BASE_URL+'render/'+key+'.json')
-            } catch (error) {}
+            GITHUB_NAME = await getGitName()
+
+            console.log('---START---')
+
+            await startBrowser()
+        } else {
+            console.log('---GMAIL-NULL---')
+            await delay(60000)
+            process.exit(0)
         }
-
-        GITHUB_NAME = await getGitName()
-
-        await startBrowser()
     } catch (error) {
         console.log('---EXIT---')
+        process.exit(0)
     }
 }
 
@@ -113,8 +123,6 @@ async function startBrowser() {
             let mNext = await checkPaymentFree()
 
             if (!mNext) {
-                GMAIL = await GR.getGmail()
-
                 console.log('---CHANGE---')
 
                 await changeRenderGmail()
@@ -385,7 +393,7 @@ async function disconnectGithub() {
     let mError = true
 
     try {
-        let response = await postAxios('https://api.render.com/graphql', {
+        let response = await axios.post('https://api.render.com/graphql', {
             'operationName': 'removeUserGithub',
             'variables': {},
             'query': 'mutation removeUserGithub {\n  removeUserGithub {\n    id\n    githubId\n    __typename\n  }\n}\n'
@@ -659,35 +667,38 @@ async function waitForAuth() {
 }
 
 async function checkPaymentFree() {
-    let response = await postAxios('https://api.render.com/graphql', { 
-        'operationName': 'ownerBilling',
-        'variables': {
-            'ownerId': mUserID
-        },
-        'query': 'query ownerBilling($ownerId: String!) {\n  owner(ownerId: $ownerId) {\n    ...ownerFields\n    ...ownerBillingFields\n    __typename\n  }\n}\n\nfragment ownerBillingFields on Owner {\n  cardBrand\n  cardLast4\n  __typename\n}\n\nfragment ownerFields on Owner {\n  id\n  billingStatus\n  email\n  featureFlags\n  notEligibleFeatureFlags\n  projectsEnabled\n  tier\n  logEndpoint {\n    endpoint\n    token\n    updatedAt\n    __typename\n  }\n  userPermissions {\n    addTeamMember\n    deleteTeam\n    readBilling\n    removeTeamMember\n    updateBilling\n    updateFeatureFlag\n    updateTeam2FA\n    updateTeamEmail\n    updateTeamMemberRole\n    updateTeamName\n    __typename\n  }\n  permissions {\n    addTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    deleteTeam {\n      ...permissionResultFields\n      __typename\n    }\n    readBilling {\n      ...permissionResultFields\n      __typename\n    }\n    removeTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    updateBilling {\n      ...permissionResultFields\n      __typename\n    }\n    updateFeatureFlag {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeam2FA {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamEmail {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamMemberRole {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamName {\n      ...permissionResultFields\n      __typename\n    }\n    __typename\n  }\n  userRole\n  __typename\n}\n\nfragment permissionResultFields on PermissionResult {\n  permissionLevel\n  message\n  __typename\n}\n'
-    }, { headers: mHeader })
-
     try {
+        let response = await axios.post('https://api.render.com/graphql', { 
+            'operationName': 'ownerBilling',
+            'variables': {
+                'ownerId': mUserID
+            },
+            'query': 'query ownerBilling($ownerId: String!) {\n  owner(ownerId: $ownerId) {\n    ...ownerFields\n    ...ownerBillingFields\n    __typename\n  }\n}\n\nfragment ownerBillingFields on Owner {\n  cardBrand\n  cardLast4\n  __typename\n}\n\nfragment ownerFields on Owner {\n  id\n  billingStatus\n  email\n  featureFlags\n  notEligibleFeatureFlags\n  projectsEnabled\n  tier\n  logEndpoint {\n    endpoint\n    token\n    updatedAt\n    __typename\n  }\n  userPermissions {\n    addTeamMember\n    deleteTeam\n    readBilling\n    removeTeamMember\n    updateBilling\n    updateFeatureFlag\n    updateTeam2FA\n    updateTeamEmail\n    updateTeamMemberRole\n    updateTeamName\n    __typename\n  }\n  permissions {\n    addTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    deleteTeam {\n      ...permissionResultFields\n      __typename\n    }\n    readBilling {\n      ...permissionResultFields\n      __typename\n    }\n    removeTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    updateBilling {\n      ...permissionResultFields\n      __typename\n    }\n    updateFeatureFlag {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeam2FA {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamEmail {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamMemberRole {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamName {\n      ...permissionResultFields\n      __typename\n    }\n    __typename\n  }\n  userRole\n  __typename\n}\n\nfragment permissionResultFields on PermissionResult {\n  permissionLevel\n  message\n  __typename\n}\n'
+        }, { headers: mHeader })
+
         let data = response.data['data']['owner']
         if (data['billingStatus'] == 'PAYMENT_METHOD_REQUIRED') {
             return false
         }
-    } catch (error) {}
+    } catch (error) {
+        return false
+    }
 
     return true
 }
 
 async function changeRenderGmail() {
-    let response = await axios.post('https://api.render.com/graphql',{
-          'operationName': 'requestEmailReset',
-          'variables': {
-            'newEmail': GMAIL
-          },
-          'query': 'mutation requestEmailReset($newEmail: String!) {\n  requestEmailReset(newEmail: $newEmail)\n}\n'
-    }, { headers: mHeader })
-
     let mError = true
+    
     try {
+        let response = await axios.post('https://api.render.com/graphql',{
+            'operationName': 'requestEmailReset',
+            'variables': {
+                'newEmail': GMAIL
+            },
+            'query': 'mutation requestEmailReset($newEmail: String!) {\n  requestEmailReset(newEmail: $newEmail)\n}\n'
+        }, { headers: mHeader })
+
         if(response.data['errors']) {
             GMAIL = await GR.getGmail()
 
@@ -797,27 +808,6 @@ async function getAxios(url) {
             responce = await axios.get(url, {
                 timeout: 10000
             })
-            break
-        } catch (error) {
-            loop++
-
-            if (loop >= 5) {
-                break
-            } else {
-                await delay(3000)
-            }
-        }
-    }
-    return responce
-}
-
-async function postAxios(url, body, data) {
-    let loop = 0
-    let responce = null
-    while (true) {
-        try {
-            data.timeout = 10000
-            responce = await axios.post(url, body, data)
             break
         } catch (error) {
             loop++
