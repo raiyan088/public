@@ -4,20 +4,26 @@ const axios = require('axios')
 let mData = workerData
 let mJob = mData['job']
 
-let mError = 0
-let mSuccess = false
-let mTimeout = 25000
-let mUrl = mData['url']
+let mError = []
+let mSuccess = []
+let mUrl = mData['list']
 
-if (mUrl.endsWith('vercel.app')) {
-    mTimeout = 9000
+for (let i = 0; i < mUrl.length; i++) {
+    mError[i] = 0
+    mSuccess[i] = false
+
+    let timeout = 25000
+
+    if (mUrl[i].endsWith('vercel_app') || mUrl[i].endsWith('vercel.app')) {
+        timeout = 9000
+    }
+
+    startWorker(i, 'https://'+mUrl[i].replace(/__/g, '-').replace(/_/g, '.'), timeout)
 }
 
-startWorker()
-
-async function startWorker() {
+async function startWorker(id, url, timeout) {
     try {
-        let response = await axios.post(mUrl+'/job', { data:encrypt(JSON.stringify(mJob)), timeout:mTimeout }, {
+        let response = await axios.post(url+'/job', { data:encrypt(JSON.stringify(mJob)), timeout:timeout }, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
@@ -26,8 +32,8 @@ async function startWorker() {
         try {
             let data = response.data
             if (Object.keys(data).length > 0) {
-                mError = 0
-                mSuccess = true
+                mError[id] = 0
+                mSuccess[id] = true
                 if (data['status'] == 'SOLVED') {
                     let json = JSON.parse(decrypt(data['msg']))
                     let hash = json['hash'][0]
@@ -51,7 +57,7 @@ async function startWorker() {
         try {
             let data = error.cause.toString()
             if(data.includes('getaddrinfo') && data.includes('ENOTFOUND')) {
-                mError++
+                mError[id] = mError[id]+1
                 vercel = false
                 await delay(3000)
             }
@@ -62,7 +68,7 @@ async function startWorker() {
                 let data = error.response.data
                 try {
                     if (data.error.message == 'Payment required') {
-                        mError += 10
+                        mError[id] = mError[id]+10
                         vercel = false
                         await delay(3000)
                     }
@@ -70,7 +76,7 @@ async function startWorker() {
 
                 if (vercel) {
                     if (data.includes('Not Found')) {
-                        mError += 10
+                        mError[id] = mError[id]+10
                         await delay(3000)
                     }
                 }
@@ -78,10 +84,20 @@ async function startWorker() {
         } catch (error) {}
     }
 
-    if (mSuccess == false && mError > 3) {
-        parentPort.postMessage({ status:'CLOSE', id:mData['id'] })
+    if (mSuccess[id] == false && mError[id] > 3) {
+        if (mUrl.length > 1) {
+            if (mUrl[id]) {
+                parentPort.postMessage({ status:'CLOSE', id:null, key:mUrl[id] })
+                mUrl.shift()
+            }
+        } else if (mUrl.length == 1) {
+            if (mUrl[id]) {
+                parentPort.postMessage({ status:'CLOSE', id:mData['id'], key:mUrl[id] })
+                mUrl.shift()
+            }
+        }
     } else {
-        await startWorker()
+        await startWorker(id, url, timeout)
     }
 }
 
