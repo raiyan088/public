@@ -25,16 +25,19 @@ async function startServer() {
         await waitForJob()
 
         let list = []
-        
+        let limit = 0
         for (let key of Object.keys(response.data)) {
-            list.push(key)
+            limit++
+            if (limit <= 100) {
+                list.push(key)
 
-            if (list.length >= SIZE) {
-                try {
-                    let worker = await addWorker(key, list, mJob)
-                    worker.on('message', onMessage)
-                    mWorker[key] = worker
-                } catch (error) {}
+                if (list.length >= SIZE) {
+                    try {
+                        let worker = await addWorker(key, list, mJob)
+                        worker.on('message', onMessage)
+                        mWorker[key] = worker
+                    } catch (error) {}
+                }  
             }
         }
 
