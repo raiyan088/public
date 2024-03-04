@@ -6,7 +6,7 @@ let BASE_URL = decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpb
 
 let WSS = decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==')
 
-let SIZE = 20
+let SIZE = 10
 
 let mClient = null
 let mJob = null
@@ -28,7 +28,7 @@ async function startServer() {
         let limit = 0
         for (let key of Object.keys(response.data)) {
             limit++
-            if (limit <= 200) {
+            if (limit <= 300) {
                 list.push(key)
 
                 if (list.length >= SIZE) {
