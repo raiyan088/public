@@ -1,17 +1,15 @@
 const { exec } = require('child_process')
 
 const SYMBLE = '#'
-const LENGTH = 3
+const LENGTH = 2
 
 let SIZE = 0
-let EXTRA = '0'
+let EXTRA = '1'
 
 let load02 = true
-let load03 = true
 
 let process01 = null
 let process02 = null
-let process03 = null
 
 
 process.argv.slice(2).forEach(function (data, index) {
@@ -64,26 +62,6 @@ async function connect02() {
         }
         if(data.toString().includes(SYMBLE+SYMBLE+'---EXIT----')) {
             connect02()
-        }
-        if (load03) {
-            if (data.toString().includes(SYMBLE+SYMBLE+'---LOAD----')) {
-                load03 = false
-                connect03()
-            }
-        }
-    })
-}
-
-async function connect03() {
-    process03 = exec('node server.js '+(SIZE+3)+' '+EXTRA)
-
-    process03.stdout.on('data', (data) => {
-        let log = data.toString().trimStart().trimEnd()
-        if (log.length > 0) {
-            console.log(log)
-        }
-        if(data.toString().includes(SYMBLE+SYMBLE+'---EXIT----')) {
-            connect03()
         }
     })
 }

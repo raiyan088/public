@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const SYMBLE = '#'
 const NAME = 'server'
-const SIZE = 2
+const SIZE = 3
 
 let RELOAD = true
 
@@ -89,7 +89,6 @@ async function startBrowser(data) {
         let page = (await browser.pages())[0]
     
         console.log(SYMBLE+SYMBLE+'---START---'+getID(mData))
-        await updateServer(null)
 
         let details = await getPageDetails(page)
         await setUserAgent(page, details)
@@ -111,7 +110,6 @@ async function startBrowser(data) {
         await page.goto('https://colab.research.google.com/drive/'+COLAB[0], { waitUntil: 'load', timeout: 0 })
         await waitForSelector(page, 'colab-connect-button')
         await setUserId(page)
-        await updateServer(null)
         let ID = ((mData-1)*SIZE)+1
         console.log(SYMBLE+SYMBLE+'---PAGE----'+getID(ID))
         
@@ -618,15 +616,8 @@ async function updateServer(page) {
 
     if (now > mUpdate) {
         mUpdate = now+300000
-        await putAxios(BASE_URL+'status/'+NAME+'/'+SERVER+'.json', JSON.stringify({ online:(parseInt(now/1000)+600) }), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
 
-        if (page) {
-            await saveCookies(page)
-        }
+        await saveCookies(page)
     }
 }
 
