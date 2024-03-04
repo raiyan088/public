@@ -382,46 +382,31 @@ async function connectRenderRepo() {
 }
 
 async function disconnectGithub() {
-    await page.goto('https://dashboard.render.com/settings', { waitUntil: 'load', timeout: 0 })
-    await delay(2000)
+    let mError = true
 
-    let click = await page.evaluate(() => {
-        let output = false
-        let root = document.querySelectorAll('button[type="button"]')
-        if (root && root.length > 0) {
-            for (let i = 0; i < root.length; i++) {
-                if (root[i].innerText == 'Disconnect') {
-                    root[i].click()
-                    output = true
-                }
-            }
+    try {
+        let response = await postAxios('https://api.render.com/graphql', {
+            'operationName': 'removeUserGithub',
+            'variables': {},
+            'query': 'mutation removeUserGithub {\n  removeUserGithub {\n    id\n    githubId\n    __typename\n  }\n}\n'
+        }, { headers: mHeader })
+
+        if (response.data['data']['removeUserGithub']['id']) {
+            mError = false
+            await delay(1000)
         }
-        return output
-    })
+    } catch (error) {}
 
-    if (click) {
-        await delay(1000)
-        let pass = await page.evaluate(() => {
-            let root = document.querySelector('#confirm-password')
-            if (root) {
-                return true
-            }
-            return false
-        })
+    if (mError) {
+        await page.goto('https://dashboard.render.com/settings', { waitUntil: 'load', timeout: 0 })
+        await delay(2000)
 
-        if (pass) {
-            try {
-                await page.type('#confirm-password', PASSWORD)
-                await delay(500)
-            } catch (e) {}
-        }
-
-        await page.evaluate(() => {
+        let click = await page.evaluate(() => {
             let output = false
-            let root = document.querySelectorAll('button[type="submit"]')
+            let root = document.querySelectorAll('button[type="button"]')
             if (root && root.length > 0) {
                 for (let i = 0; i < root.length; i++) {
-                    if (root[i].innerText == 'Remove GitHub') {
+                    if (root[i].innerText == 'Disconnect') {
                         root[i].click()
                         output = true
                     }
@@ -429,7 +414,39 @@ async function disconnectGithub() {
             }
             return output
         })
-        await delay(5000)
+
+        if (click) {
+            await delay(1000)
+            let pass = await page.evaluate(() => {
+                let root = document.querySelector('#confirm-password')
+                if (root) {
+                    return true
+                }
+                return false
+            })
+
+            if (pass) {
+                try {
+                    await page.type('#confirm-password', PASSWORD)
+                    await delay(500)
+                } catch (e) {}
+            }
+
+            await page.evaluate(() => {
+                let output = false
+                let root = document.querySelectorAll('button[type="submit"]')
+                if (root && root.length > 0) {
+                    for (let i = 0; i < root.length; i++) {
+                        if (root[i].innerText == 'Remove GitHub') {
+                            root[i].click()
+                            output = true
+                        }
+                    }
+                }
+                return output
+            })
+            await delay(5000)
+        }
     }
 }
 
@@ -579,10 +596,11 @@ async function setGitName(name) {
 }
 
 async function waitForAuth() {
-    let mError = false
+    let mError = true
 
-    while (true) {
+    for (let i = 0; i < 60; i++) {
         if (mAuth) {
+            mError = false
             break
         } else {
             mError = await page.evaluate(() => {
