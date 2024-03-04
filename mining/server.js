@@ -28,7 +28,7 @@ async function startServer() {
         let limit = 0
         for (let key of Object.keys(response.data)) {
             limit++
-            if (limit <= 100) {
+            if (limit <= 200) {
                 list.push(key)
 
                 if (list.length >= SIZE) {
