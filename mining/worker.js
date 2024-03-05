@@ -9,6 +9,7 @@ let mSuccess = []
 let mUrl = mData['list']
 let mLoad = {}
 let mOneTime = true
+let mPrev = 0
 let mStart = new Date().getTime()
 
 for (let i = 0; i < mUrl.length; i++) {
@@ -62,9 +63,16 @@ async function startWorker(id, url, timeout) {
 
     mLoad[url] = 'x'
 
-    if (mOneTime && Object.values(mLoad).length == mUrl.length) {
+    let length = Object.values(mLoad).length
+
+    if (mOneTime && length == mUrl.length) {
         mOneTime = false
         console.log(new Date().getTime()-mStart)
+    }
+
+    if (mOneTime && length > mPrev) {
+        mPrev = length
+        console.log(length)
     }
 
     await startWorker(id, url, timeout)
