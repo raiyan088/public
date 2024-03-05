@@ -53,52 +53,10 @@ async function startWorker(id, url, timeout) {
             }
         } catch (error) {}
     } catch (error) {
-        let vercel = true
-        try {
-            let data = error.cause.toString()
-            if(data.includes('getaddrinfo') && data.includes('ENOTFOUND')) {
-                mError[id] = mError[id]+1
-                vercel = false
-                await delay(3000)
-            }
-        } catch (error) {}
-
-        try {
-            if (vercel) {
-                let data = error.response.data
-                try {
-                    if (data.error.message == 'Payment required') {
-                        mError[id] = mError[id]+10
-                        vercel = false
-                        await delay(3000)
-                    }
-                } catch (error) {}
-
-                if (vercel) {
-                    if (data.includes('Not Found')) {
-                        mError[id] = mError[id]+10
-                        await delay(3000)
-                    }
-                }
-            }
-        } catch (error) {}
+        await delay(10000)
     }
 
-    if (mSuccess[id] == false && mError[id] > 3) {
-        if (mUrl.length > 1) {
-            if (mUrl[id]) {
-                parentPort.postMessage({ status:'CLOSE', id:null, key:mUrl[id] })
-                mUrl.shift()
-            }
-        } else if (mUrl.length == 1) {
-            if (mUrl[id]) {
-                parentPort.postMessage({ status:'CLOSE', id:mData['id'], key:mUrl[id] })
-                mUrl.shift()
-            }
-        }
-    } else {
-        await startWorker(id, url, timeout)
-    }
+    await startWorker(id, url, timeout)
 }
 
 function encrypt(text) {

