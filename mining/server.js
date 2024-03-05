@@ -49,7 +49,7 @@ async function startServer() {
             }
         }
 
-        console.log('Worker Size: ', Object.keys(response.data).length)
+        console.log('Id:', parseInt(mId), ' Worker Size: ', Object.keys(response.data).length)
     } catch (error) {
         console.log('Start Server Error')
 
