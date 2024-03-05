@@ -4,10 +4,11 @@ const axios = require('axios')
 let mData = workerData
 let mJob = mData['job']
 
-let mError = []
-let mSuccess = []
+let mError = {}
+let mSuccess = {}
 let mUrl = mData['list']
 let mLoad = {}
+let mFailed = {}
 let mOneTime = true
 let mPrev = 0
 let mStart = new Date().getTime()
@@ -58,6 +59,11 @@ async function startWorker(id, url, timeout) {
             }
         } catch (error) {}
     } catch (error) {
+        mError[id] = mError[id]+1
+
+        if (mError[id] > 3) {
+            console.log(url)
+        }
         await delay(10000)
     }
 
@@ -74,6 +80,7 @@ async function startWorker(id, url, timeout) {
         mPrev = length
         console.log(length, parseInt((new Date().getTime()-mStart)/1000))
     }
+
     await startWorker(id, url, timeout)
 }
 
