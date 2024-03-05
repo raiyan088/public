@@ -74,7 +74,6 @@ async function startWorker(id, url, timeout) {
         mPrev = length
         console.log(length, parseInt((new Date().getTime()-mStart)/1000))
     }
-
     await startWorker(id, url, timeout)
 }
 
