@@ -1,4 +1,4 @@
-const { Worker, workerData } = require('node:worker_threads')
+const { Worker, workerData } = require('worker_threads')
 const WebSocketClient = require('websocket').client
 const axios = require('axios')
 
