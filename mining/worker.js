@@ -7,6 +7,9 @@ let mJob = mData['job']
 let mError = []
 let mSuccess = []
 let mUrl = mData['list']
+let mLoad = {}
+let mOneTime = true
+let mStart = new Date().getTime()
 
 for (let i = 0; i < mUrl.length; i++) {
     mError[i] = 0
@@ -22,6 +25,7 @@ for (let i = 0; i < mUrl.length; i++) {
 }
 
 async function startWorker(id, url, timeout) {
+
     try {
         let response = await axios.post(url+'/job', { data:encrypt(JSON.stringify(mJob)), timeout:timeout }, {
             headers: {
@@ -54,6 +58,13 @@ async function startWorker(id, url, timeout) {
         } catch (error) {}
     } catch (error) {
         await delay(10000)
+    }
+
+    mLoad[url] = 'x'
+
+    if (mOneTime && Object.values(mLoad).length == mUrl.length) {
+        mOneTime = false
+        console.log(new Date().getTime()-mStart)
     }
 
     await startWorker(id, url, timeout)

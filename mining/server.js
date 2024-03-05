@@ -3,7 +3,7 @@ const WebSocketClient = require('websocket').client
 const axios = require('axios')
 
 
-let SIZE = 10
+let SIZE = 250
 let mId = '1'
 let mClient = null
 let mJob = null
