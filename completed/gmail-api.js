@@ -9,52 +9,49 @@ let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJh
 module.exports = class {
 
     async getGmail () {
-        let cookies = await this.getCookies(true)
+        try {
+            let cookies = await this.getCookies(true)
+            let gmail = null
 
-        if (cookies) {
-            try {
-                let gmail = null
+            for (let i = 0; i < 30; i++) {
+                try {
+                    if (cookies) {
+                        let response = await axios.post('https://www.emailnator.com/generate-email', { 'email': [ 'plusGmail' ]}, {
+                            headers: {
+                                'cookie': 'XSRF-TOKEN='+encodeURIComponent(cookies['token'])+'; gmailnator_session='+encodeURIComponent(cookies['session']),
+                                'x-requested-with': 'XMLHttpRequest',
+                                'x-xsrf-token': cookies['token']
+                            },
+                            maxRedirects: 0,
+                            validateStatus: null
+                        })
 
-                while (true) {
-                    try {
-                        if (cookies) {
-                            let response = await axios.post('https://www.emailnator.com/generate-email', { 'email': [ 'plusGmail' ]}, {
-                                headers: {
-                                    'cookie': 'XSRF-TOKEN='+encodeURIComponent(cookies['token'])+'; gmailnator_session='+encodeURIComponent(cookies['session']),
-                                    'x-requested-with': 'XMLHttpRequest',
-                                    'x-xsrf-token': cookies['token']
-                                },
-                                maxRedirects: 0,
-                                validateStatus: null
-                            })
-
-                            let data = response.data
-                            try {
-                                if (data['email'].length > 0) {
-                                    gmail = data['email'][0]
-                                    break
-                                }
-                            } catch (error) {
-                                mCookes = null
-                                cookies = await this.getCookies(false)
+                        let data = response.data
+                        try {
+                            if (data['email'].length > 0) {
+                                gmail = data['email'][0]
+                                break
                             }
-                        } else {
+                        } catch (error) {
                             mCookes = null
-                            await this.delay(2000)
                             cookies = await this.getCookies(false)
                         }
-                    } catch (error) {}
-
-                    if (gmail) {
-                        break
+                    } else {
+                        mCookes = null
+                        await this.delay(2000)
+                        cookies = await this.getCookies(false)
                     }
+                } catch (error) {}
 
-                    await this.delay(3000)
+                if (gmail) {
+                    break
                 }
 
-                return gmail
-            } catch (error) {}
-        }
+                await this.delay(3000)
+            }
+
+            return gmail
+        } catch (error) {}
 
         return null
     }
@@ -174,7 +171,11 @@ module.exports = class {
                 validateStatus: null
             })
 
+            console.log(response.data)
+
             let cookie = response.headers['set-cookie']
+
+            console.log(cookie)
 
             let TOKEN = null
             let SESSION = null

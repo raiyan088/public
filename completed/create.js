@@ -20,6 +20,7 @@ let mRender = null
 let USER = null
 let RENDER = null
 let PASSWORD = null
+let mHasUser = false
 
 
 const GR = new gmailApi()
@@ -47,6 +48,7 @@ async function startPrecess() {
 
                 if (value['user']) {
                     GMAIL = value['user']
+                    mHasUser = true
                 }
 
                 try {
@@ -461,7 +463,7 @@ async function disconnectGithub() {
 async function waitForLogin() {
     let user = RENDER+'@vjuum.com'
 
-    if (GMAIL) {
+    if (mHasUser && GMAIL) {
         user = GMAIL
     }
 
