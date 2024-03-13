@@ -401,6 +401,18 @@ async function getGithubRepo() {
                 try {
                     await axios.delete(BASE_URL+'github/'+GITHUB_NAME+'/'+GIT_REPO+'.json')
                 } catch (error) {}
+
+                let name = 'repo'
+
+                if (GITHUB_NAME == 'repo') {
+                    name = 'render'
+                }
+
+                await patchAxios(BASE_URL+'github/'+name+'/'+key+'.json', JSON.stringify(value), {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
             }
         } else {
             if (GITHUB_NAME == 'render') {
