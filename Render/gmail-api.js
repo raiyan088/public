@@ -3,20 +3,19 @@ const axios = require('axios')
 const PROXY = false
 let mCookes = null
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
+let BASE_URL = Buffer.from('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
 
 module.exports = class {
 
     async getGmail () {
-        let cookies = await this.getCookies(true)
+        try {
+            let cookies = await this.getCookies(true)
+            let gmail = null
 
-        if (cookies) {
-            try {
-                let gmail = null
-
-                for (let i = 0; i < 2; i++) {
-                    try {
+            for (let i = 0; i < 30; i++) {
+                try {
+                    if (cookies) {
                         let response = await axios.post('https://www.emailnator.com/generate-email', { 'email': [ 'plusGmail' ]}, {
                             headers: {
                                 'cookie': 'XSRF-TOKEN='+encodeURIComponent(cookies['token'])+'; gmailnator_session='+encodeURIComponent(cookies['session']),
@@ -34,16 +33,25 @@ module.exports = class {
                                 break
                             }
                         } catch (error) {
-                            i = 0
                             mCookes = null
                             cookies = await this.getCookies(false)
                         }
-                    } catch (error) {}
+                    } else {
+                        mCookes = null
+                        await this.delay(2000)
+                        cookies = await this.getCookies(false)
+                    }
+                } catch (error) {}
+
+                if (gmail) {
+                    break
                 }
 
-                return gmail
-            } catch (error) {}
-        }
+                await this.delay(3000)
+            }
+
+            return gmail
+        } catch (error) {}
 
         return null
     }
@@ -144,8 +152,6 @@ module.exports = class {
                     }
                 } catch (error) {}
             }
-            
-            console.log('Token Genarate')
             
             if (PROXY) {
                 proxy = {

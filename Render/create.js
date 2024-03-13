@@ -1,14 +1,25 @@
 const { exec } = require('child_process')
+const gmailApi = require('./gmail-api.js')
 const axios = require('axios')
 const fs = require('fs')
 
 let mSuccess = 0
 
-let USER = getRandomUser()
-let PASSWORD = getRandomPassword()
+let USER = null
+let GMAIL = null
+let DEPLOY = null
+let GIT_ID = null
+let GIT_REPO = null
+let PASSWORD = null
+let TEMP_USER = null
+let USER_TOKEN = null
+let ACCESS_TOKEN = null
+let GITHUB_NAME = 'repo'
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
+let BASE_URL = Buffer.from('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
+
+const GR = new gmailApi()
 
 process.argv.slice(2).forEach(function (data, index) {
     try {
@@ -50,6 +61,8 @@ async function startProcess(install) {
         let config = null
         let country = null
         let ip_key = null
+
+        GITHUB_NAME = await getGitName()
 
         try {
             let response = await getAxios(BASE_URL+'ovpn/ip.json?orderBy=%22active%22&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&limitToFirst=1&print=pretty')
@@ -112,7 +125,9 @@ async function startProcess(install) {
                 console.log('VPN Connected')
                 await delay(1000)
 
-                await createProcess()
+                for (let i = 0; i < 5; i++) {
+                    await createProcess()
+                }
 
                 console.log('---NEXT---')
             } else {
@@ -141,7 +156,7 @@ async function createProcess() {
         let mCreate = await createAccount()
         if (mCreate) {
             console.log('---RENDER---')
-            let mLink = await getRenderLink(USER)
+            let mLink = await getRenderLink(TEMP_USER)
             if (mLink) {
                 await verification(mLink)
             } else {
@@ -158,7 +173,7 @@ async function createProcess() {
 async function verification(mLink) {
     try {
         let response = await axios.get(mLink, {
-            headers: getHeader(),
+            headers: getCreateHeader(),
             maxRedirects: 0,
             validateStatus: null
         })
@@ -168,7 +183,7 @@ async function verification(mLink) {
         if (confirm && confirm.startsWith('https://dashboard.render.com/email-confirm')) {
             try {
                 await axios.get(confirm, {
-                    headers: getHeader(),
+                    headers: getCreateHeader(),
                     maxRedirects: 0,
                     validateStatus: null
                 })
@@ -192,40 +207,331 @@ async function verification(mLink) {
                 headers: getConfirmHeader(token)
             })
 
-            await putAxios(BASE_URL+'render/'+USER+'.json', JSON.stringify({ pass:PASSWORD }), {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            })
+            let verifyEmail = response.data['data']['verifyEmail']
 
-            console.log('---SUCCESS---')
+            USER_TOKEN = verifyEmail['user']['id']
+            ACCESS_TOKEN = verifyEmail['idToken']
 
-            mSuccess++
+            console.log('---CREATED---')
+
+            await delay(5000)
+
+            await renderCreate()
 
             await delay(10000)
-
-            if (mSuccess > 0 && 10 > mSuccess) {
-                return await createProcess()
-            }
         } else {
             console.log('---FAILED----')
         }
     } catch (error) {
-        console.log('---EXIT----')
+        console.log('---ERROR----')
     }
+}
+
+async function renderCreate() {
+    let mNext = await checkPaymentFree()
+
+    if (mNext == false) {
+        console.log('---CHANGE-GMAIL---')
+
+        while (true) {
+            await changeGmail()
+
+            await delay(2000)
+    
+            let link = await GR.getVerificationLink(GMAIL)
+    
+            if (link) {
+                await delay(2000)
+                let status = await verifyGmail(link)
+                if (status) {
+                    break
+                } else {
+                    console.log('---CHANGE-FAILED---')
+                }
+            } else {
+                console.log('---LINK-FAILED---')
+            }
+    
+            await delay(3000)
+        }
+
+        await delay(3000)
+
+        mNext = await checkPaymentFree()
+    }
+
+    GITHUB_NAME = await getGitName()
+    
+    if (mNext) {
+        console.log('---CREATE-SERVER---')
+
+        await getGithubRepo()
+
+        await delay(5000)
+
+        await createServer()
+
+        if (DEPLOY) {
+            await saveData()
+
+            console.log('---SUCCESS---')
+        } else {
+            console.log('---CREATE-FAILED---')
+        }
+    } else {
+        console.log('---PAYMENT-REQUIRE---')
+    }
+}
+
+async function saveData() {
+    let send = {
+        user: GMAIL,
+        pass: PASSWORD,
+        user_token: USER_TOKEN,
+        access_token: ACCESS_TOKEN,
+        git_repo: GIT_REPO,
+        server: DEPLOY
+    }
+
+    await putAxios(BASE_URL+'render/'+USER+'.json', JSON.stringify(send), {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+}
+
+async function createServer() {
+    USER = getRandomUser()
+
+    while (true) {
+        let check = await checkAvailale()
+
+        if (check) {
+            break
+        }
+
+        USER = getRandomUser()
+        await delay(1000)
+    }
+
+    try {
+        const response = await axios.post( 'https://api.render.com/graphql', {
+            'operationName': 'createServer',
+            'variables': {
+                'server': {
+                    'autoDeploy': true,
+                    'baseDir': '',
+                    'branch': 'main',
+                    'buildCommand': 'npm install',
+                    'name': USER,
+                    'dockerfilePath': '',
+                    'dockerCommand': '',
+                    'envId': 'node',
+                    'envVars': [],
+                    'healthCheckPath': '',
+                    'ownerId': USER_TOKEN,
+                    'plan': 'Free',
+                    'repo': {
+                        'name': GIT_REPO,
+                        'ownerName': GIT_REPO,
+                        'webURL': 'https://github.com/'+GIT_REPO+'/'+GIT_REPO,
+                        'isFork': false,
+                        'isPrivate': false,
+                        'provider': 'GITHUB',
+                        'providerId': GIT_ID,
+                        'defaultBranchName': 'main'
+                    },
+                    'isWorker': false,
+                    'isPrivate': false,
+                    'region': 'oregon',
+                    'startCommand': 'node server.js',
+                    'staticPublishPath': '.',
+                    'rootDir': '',
+                    'buildFilter': {
+                        'paths': [],
+                        'ignoredPaths': []
+                    },
+                    'preDeployCommand': null,
+                    'environmentId': null,
+                    'registryCredentialId': null
+                }
+            },
+            'query': 'mutation createServer($server: ServerInput!) {\n  createServer(server: $server) {\n    ...serverFields\n    __typename\n  }\n}\n\nfragment serverFields on Server {\n  ...serviceFields\n  autoscalingConfig {\n    enabled\n    min\n    max\n    cpuPercentage\n    cpuEnabled\n    memoryPercentage\n    memoryEnabled\n    __typename\n  }\n  deletedAt\n  deploy {\n    ...deployFields\n    __typename\n  }\n  deployKey\n  externalImage {\n    ...externalImageFields\n    __typename\n  }\n  extraInstances\n  healthCheckHost\n  healthCheckPath\n  isPrivate\n  isWorker\n  openPorts\n  maintenanceScheduledAt\n  parentServer {\n    ...serviceFields\n    __typename\n  }\n  pendingMaintenanceBy\n  permissions {\n    deleteServer {\n      ...permissionResultFields\n      __typename\n    }\n    deleteServerDisk {\n      ...permissionResultFields\n      __typename\n    }\n    suspendServer {\n      ...permissionResultFields\n      __typename\n    }\n    __typename\n  }\n  plan {\n    name\n    cpu\n    mem\n    price\n    __typename\n  }\n  prPreviewsEnabled\n  preDeployCommand\n  pullRequestId\n  rootDir\n  startCommand\n  staticPublishPath\n  suspenders\n  url\n  disk {\n    ...diskFields\n    __typename\n  }\n  maintenance {\n    id\n    type\n    scheduledAt\n    pendingMaintenanceBy\n    state\n    __typename\n  }\n  __typename\n}\n\nfragment serviceFields on Service {\n  id\n  type\n  env {\n    ...envFields\n    __typename\n  }\n  repo {\n    ...repoFields\n    __typename\n  }\n  user {\n    id\n    email\n    __typename\n  }\n  owner {\n    id\n    email\n    billingStatus\n    featureFlags\n    __typename\n  }\n  name\n  slug\n  sourceBranch\n  buildCommand\n  buildFilter {\n    paths\n    ignoredPaths\n    __typename\n  }\n  buildPlan {\n    name\n    cpu\n    mem\n    __typename\n  }\n  externalImage {\n    ...externalImageFields\n    __typename\n  }\n  autoDeploy\n  userFacingType\n  userFacingTypeSlug\n  baseDir\n  dockerCommand\n  dockerfilePath\n  createdAt\n  updatedAt\n  outboundIPs\n  region {\n    id\n    description\n    __typename\n  }\n  registryCredential {\n    id\n    name\n    __typename\n  }\n  rootDir\n  shellURL\n  state\n  suspenders\n  sshAddress\n  sshServiceAvailable\n  lastDeployedAt\n  maintenanceScheduledAt\n  pendingMaintenanceBy\n  environment {\n    ...environmentFields\n    __typename\n  }\n  __typename\n}\n\nfragment envFields on Env {\n  id\n  name\n  language\n  isStatic\n  sampleBuildCommand\n  sampleStartCommand\n  __typename\n}\n\nfragment environmentFields on Environment {\n  id\n  name\n  protected\n  project {\n    id\n    name\n    owner {\n      id\n      __typename\n    }\n    __typename\n  }\n  __typename\n}\n\nfragment repoFields on Repo {\n  id\n  provider\n  providerId\n  name\n  ownerName\n  webURL\n  isPrivate\n  __typename\n}\n\nfragment externalImageFields on ExternalImage {\n  imageHost\n  imageName\n  imageRef\n  imageRepository\n  imageURL\n  ownerId\n  registryCredentialId\n  __typename\n}\n\nfragment deployFields on Deploy {\n  id\n  status\n  buildId\n  commitId\n  commitShortId\n  commitMessage\n  commitURL\n  commitCreatedAt\n  finishedAt\n  finishedAtUnixNano\n  initialDeployHookFinishedAtUnixNano\n  createdAt\n  updatedAt\n  server {\n    id\n    userFacingTypeSlug\n    __typename\n  }\n  rollbackSupportStatus\n  reason {\n    ...failureReasonFields\n    __typename\n  }\n  imageSHA\n  externalImage {\n    imageRef\n    __typename\n  }\n  __typename\n}\n\nfragment failureReasonFields on FailureReason {\n  badStartCommand\n  evicted\n  evictionReason\n  nonZeroExit\n  oomKilled {\n    memoryLimit\n    __typename\n  }\n  rootDirMissing\n  timedOutSeconds\n  unhealthy\n  step\n  __typename\n}\n\nfragment diskFields on Disk {\n  id\n  name\n  mountPath\n  sizeGB\n  __typename\n}\n\nfragment permissionResultFields on PermissionResult {\n  permissionLevel\n  message\n  __typename\n}\n'
+        }, { headers: getHeader() })
+
+        let createServer = response.data['data']['createServer']
+        if (createServer['url']) {
+            let id = createServer['id']
+            if (id && id.length > 10) {
+                DEPLOY = id
+            }
+        }
+    } catch (error) {}
+}
+
+async function checkAvailale() {
+    try {
+        const response = await axios.post( 'https://api.render.com/graphql', {
+            'operationName': 'isServiceNameAvailable',
+            'variables': {
+                'name': USER,
+                'ownerId': USER_TOKEN,
+                'typeSlug': 'web'
+            },
+            'query': 'query isServiceNameAvailable($name: String!, $ownerId: String!, $typeSlug: String!, $serviceId: String) {\n  isServiceNameAvailable(\n    name: $name\n    ownerId: $ownerId\n    typeSlug: $typeSlug\n    serviceId: $serviceId\n  )\n}\n'
+        }, { headers: getHeader() })
+
+        if(response.data['data']['isServiceNameAvailable']) {
+            return true
+        }
+    } catch (error) {}
 
     return false
 }
 
+async function getGithubRepo() {
+    try {
+        let response = await getAxios(BASE_URL+'github/'+GITHUB_NAME+'.json?orderBy="$key"&limitToFirst=1')
+        
+        if (response && response.data != null && response.data != 'null') {
+            for(let [key, value] of Object.entries(response.data)) {
+                GIT_REPO = key
+                GIT_ID = value['id']
+
+                try {
+                    await axios.delete(BASE_URL+'github/'+GITHUB_NAME+'/'+GIT_REPO+'.json')
+                } catch (error) {}
+            }
+        } else {
+            if (GITHUB_NAME == 'render') {
+                GITHUB_NAME = 'repo'
+                await setGitName(GITHUB_NAME)
+            } else if (GITHUB_NAME == 'repo') {
+                GITHUB_NAME = 'render'
+                await setGitName(GITHUB_NAME)
+            }
+            await getGithubRepo()
+        }
+    } catch (error) {}
+}
+
+async function getGitName() {
+    try {
+        let response = await getAxios(BASE_URL+'github/name.json')
+        return response.data['active']
+    } catch (error) {
+        return 'repo'
+    }
+}
+
+async function setGitName(name) {
+    await putAxios(BASE_URL+'github/name.json', JSON.stringify({ active:name }), {
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+    })
+}
+
+async function checkPaymentFree() {
+    try {
+        let response = await axios.post('https://api.render.com/graphql', { 
+            'operationName': 'ownerBilling',
+            'variables': {
+                'ownerId': USER_TOKEN
+            },
+            'query': 'query ownerBilling($ownerId: String!) {\n  owner(ownerId: $ownerId) {\n    ...ownerFields\n    ...ownerBillingFields\n    __typename\n  }\n}\n\nfragment ownerBillingFields on Owner {\n  cardBrand\n  cardLast4\n  __typename\n}\n\nfragment ownerFields on Owner {\n  id\n  billingStatus\n  email\n  featureFlags\n  notEligibleFeatureFlags\n  projectsEnabled\n  tier\n  logEndpoint {\n    endpoint\n    token\n    updatedAt\n    __typename\n  }\n  userPermissions {\n    addTeamMember\n    deleteTeam\n    readBilling\n    removeTeamMember\n    updateBilling\n    updateFeatureFlag\n    updateTeam2FA\n    updateTeamEmail\n    updateTeamMemberRole\n    updateTeamName\n    __typename\n  }\n  permissions {\n    addTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    deleteTeam {\n      ...permissionResultFields\n      __typename\n    }\n    readBilling {\n      ...permissionResultFields\n      __typename\n    }\n    removeTeamMember {\n      ...permissionResultFields\n      __typename\n    }\n    updateBilling {\n      ...permissionResultFields\n      __typename\n    }\n    updateFeatureFlag {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeam2FA {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamEmail {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamMemberRole {\n      ...permissionResultFields\n      __typename\n    }\n    updateTeamName {\n      ...permissionResultFields\n      __typename\n    }\n    __typename\n  }\n  userRole\n  __typename\n}\n\nfragment permissionResultFields on PermissionResult {\n  permissionLevel\n  message\n  __typename\n}\n'
+        }, { headers: getHeader() })
+
+        let data = response.data['data']['owner']
+
+        if (data['billingStatus'] != 'PAYMENT_METHOD_REQUIRED') {
+            return true
+        }
+    } catch (error) {}
+
+    return false
+}
+
+async function verifyGmail(link) {
+    try {
+        let response = await axios.get(link, {
+            headers: getCreateHeader(),
+            maxRedirects: 0,
+            validateStatus: null
+        })
+
+        let confirm = response.headers['location']
+
+        if (confirm && confirm.startsWith('https://dashboard.render.com/email-reset/confirm')) {
+            try {
+                await axios.get(confirm, {
+                    headers: getCreateHeader(),
+                    maxRedirects: 0,
+                    validateStatus: null
+                })
+            } catch (error) {}
+
+            await delay(1000)
+
+            let token = confirm.substring(confirm.indexOf('token=')+6, confirm.length)
+
+            if (token.indexOf('&') > 0) {
+                token = token.substring(0, token.indexOf('&'))
+            }
+            
+            response = await axios.post('https://api.render.com/graphql', {
+                'operationName': 'resetEmail',
+                'variables': {
+                    'token': token
+                },
+                'query': 'mutation resetEmail($token: String!) {\n  resetEmail(token: $token) {\n    ...userFields\n    __typename\n  }\n}\n\nfragment userFields on User {\n  id\n  active\n  bitbucketId\n  createdAt\n  email\n  featureFlags\n  githubId\n  gitlabId\n  googleId\n  name\n  notifyOnPrUpdate\n  otpEnabled\n  passwordExists\n  tosAcceptedAt\n  intercomEmailHMAC\n  __typename\n}\n'
+            }, { headers: getHeader() })
+
+            if(response.data['data']['resetEmail']['id']) {
+                return true
+            }
+        } else {
+            console.log('---FAILED----')
+        }
+    } catch (error) {}
+
+    return false
+}
+
+async function changeGmail() {
+    GMAIL = await GR.getGmail()
+
+    try {
+        const response = await axios.post('https://api.render.com/graphql', {
+            'operationName': 'requestEmailReset',
+            'variables': {
+                'newEmail': GMAIL
+            },
+            'query': 'mutation requestEmailReset($newEmail: String!) {\n  requestEmailReset(newEmail: $newEmail)\n}\n'
+        }, { headers: getHeader() })
+
+        if (response.data['data']['requestEmailReset']) {
+            return true
+        }
+    } catch (error) {}
+
+    await delay(3000)
+
+    return await changeGmail()
+}
+
 async function createAccount() {
     let TOKEN = await getHtoken()
+    
+    TEMP_USER = getRandomUser()
+    PASSWORD = getRandomPassword()
     
     const response = await postAxios('https://api.render.com/graphql',
         {
             'operationName': 'signUp',
             'variables': {
                 'signup': {
-                    'email': USER+'@vjuum.com',
+                    'email': TEMP_USER+'@txcct.com',
                     'githubId': '',
                     'name': '',
                     'githubToken': '',
@@ -268,7 +574,7 @@ async function createAccount() {
         let error = JSON.stringify(response.data)
         
         if (error.includes('email') && error.includes('exists')) {
-            USER = getRandomUser()
+            TEMP_USER = getRandomUser()
             return await createAccount()
         } else if (error.includes('hcaptcha_token') && error.includes('invalid')) {
             return await createAccount()
@@ -317,7 +623,7 @@ async function getRenderLink(user) {
     
     for (let i = 0; i < 30; i++) {
         try {
-            let response = await getAxios('https://www.1secmail.com/api/v1/?action=getMessages&login='+user+'&domain=vjuum.com')
+            let response = await getAxios('https://www.1secmail.com/api/v1/?action=getMessages&login='+user+'&domain=txcct.com')
             let list = response.data
             for (let i = 0; i < list.length; i++) {
                 if (list[i]['from'].endsWith('bounces.render.com')) {
@@ -336,7 +642,7 @@ async function getRenderLink(user) {
     if (id) {
         for (let i = 0; i < 10; i++) {
             try {
-                let response = await getAxios('https://www.1secmail.com/api/v1/?action=readMessage&login='+user+'&domain=vjuum.com&id='+id)
+                let response = await getAxios('https://www.1secmail.com/api/v1/?action=readMessage&login='+user+'&domain=txcct.com&id='+id)
     
                 response.data['textBody'].split(/\r?\n/).forEach(function(line){
                     if (line.includes('dashboard.render.com')) {
@@ -407,7 +713,7 @@ async function getCurlIP() {
 }
 
 async function saveOVPN(key, error) {
-    let timeout = parseInt(new Date().getTime()/1000)+21600
+    let timeout = parseInt(new Date().getTime()/1000)+7200
 
     if (error) {
         timeout = parseInt(new Date().getTime()/1000)+72000000
@@ -572,7 +878,7 @@ async function patchAxios(url, body, data) {
     return responce
 }
 
-async function getHeader() {
+function getCreateHeader() {
     return {
         'authority': 'click.pstmrk.it',
         'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -590,7 +896,7 @@ async function getHeader() {
     }
 }
 
-async function getConfirmHeader(token) {
+function getConfirmHeader(token) {
     return {
         'authority': 'api.render.com',
         'accept': '*/*',
@@ -607,6 +913,14 @@ async function getConfirmHeader(token) {
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-site',
         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
+    }
+}
+
+function getHeader() {
+    return {
+        'authority': 'api.render.com',
+        'authorization': 'Bearer '+ACCESS_TOKEN,
+        'content-type': 'application/json',
     }
 }
 
