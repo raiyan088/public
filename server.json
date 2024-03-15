@@ -1,5 +1,5 @@
 {
   "status": false,
   "url": "",
-  "install": [ "axios", "fs" ]
+  "install": [ "axios" ]
 }
