@@ -1,6 +1,6 @@
 {
-    "status": false,
+    "status": true,
     "url": "https://raw.githubusercontent.com/raiyan088/public/main/server.js",
     "install": [ "request" ],
-    "update": 10002
+    "update": 10003
 }
