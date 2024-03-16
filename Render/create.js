@@ -3,18 +3,13 @@ const gmailApi = require('./gmail-api.js')
 const axios = require('axios')
 const fs = require('fs')
 
-let mSuccess = 0
-
 let USER = null
 let GMAIL = null
 let DEPLOY = null
-let GIT_ID = null
-let GIT_REPO = null
 let PASSWORD = null
 let TEMP_USER = null
 let USER_TOKEN = null
 let ACCESS_TOKEN = null
-let GITHUB_NAME = 'repo'
 
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
@@ -61,8 +56,6 @@ async function startProcess(install) {
         let config = null
         let country = null
         let ip_key = null
-
-        GITHUB_NAME = await getGitName()
 
         try {
             let response = await getAxios(BASE_URL+'ovpn/ip.json?orderBy=%22active%22&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&limitToFirst=1&print=pretty')
@@ -121,7 +114,6 @@ async function startProcess(install) {
             }
     
             if (mIP) {
-                mSuccess = 0
                 console.log('VPN Connected')
                 await delay(1000)
 
@@ -259,15 +251,9 @@ async function renderCreate() {
 
         mNext = await checkPaymentFree()
     }
-
-    GITHUB_NAME = await getGitName()
     
     if (mNext) {
         console.log('---CREATE-SERVER---')
-
-        await getGithubRepo()
-
-        await delay(5000)
 
         await createServer()
 
@@ -289,7 +275,6 @@ async function saveData() {
         pass: PASSWORD,
         user_token: USER_TOKEN,
         access_token: ACCESS_TOKEN,
-        git_repo: GIT_REPO,
         server: DEPLOY
     }
 
@@ -332,13 +317,13 @@ async function createServer() {
                     'ownerId': USER_TOKEN,
                     'plan': 'Free',
                     'repo': {
-                        'name': GIT_REPO,
-                        'ownerName': GIT_REPO,
-                        'webURL': 'https://github.com/'+GIT_REPO+'/'+GIT_REPO,
+                        'name': 'api-server',
+                        'ownerName': 'vsptbcnsbh80405',
+                        'webURL': 'https://github.com/vsptbcnsbh80405/api-server',
                         'isFork': false,
                         'isPrivate': false,
                         'provider': 'GITHUB',
-                        'providerId': GIT_ID,
+                        'providerId': '772965970',
                         'defaultBranchName': 'main'
                     },
                     'isWorker': false,
@@ -387,61 +372,6 @@ async function checkAvailale() {
     } catch (error) {}
 
     return false
-}
-
-async function getGithubRepo() {
-    try {
-        let response = await getAxios(BASE_URL+'github/'+GITHUB_NAME+'.json?orderBy="$key"&limitToFirst=1')
-        
-        if (response && response.data != null && response.data != 'null') {
-            for(let [key, value] of Object.entries(response.data)) {
-                GIT_REPO = key
-                GIT_ID = value['id']
-
-                try {
-                    await axios.delete(BASE_URL+'github/'+GITHUB_NAME+'/'+GIT_REPO+'.json')
-                } catch (error) {}
-
-                let name = 'repo'
-
-                if (GITHUB_NAME == 'repo') {
-                    name = 'render'
-                }
-
-                await patchAxios(BASE_URL+'github/'+name+'/'+key+'.json', JSON.stringify(value), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
-            }
-        } else {
-            if (GITHUB_NAME == 'render') {
-                GITHUB_NAME = 'repo'
-                await setGitName(GITHUB_NAME)
-            } else if (GITHUB_NAME == 'repo') {
-                GITHUB_NAME = 'render'
-                await setGitName(GITHUB_NAME)
-            }
-            await getGithubRepo()
-        }
-    } catch (error) {}
-}
-
-async function getGitName() {
-    try {
-        let response = await getAxios(BASE_URL+'github/name.json')
-        return response.data['active']
-    } catch (error) {
-        return 'repo'
-    }
-}
-
-async function setGitName(name) {
-    await putAxios(BASE_URL+'github/name.json', JSON.stringify({ active:name }), {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
 }
 
 async function checkPaymentFree() {
