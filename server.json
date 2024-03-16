@@ -1,5 +1,5 @@
 {
   "status": true,
   "url": "https://raw.githubusercontent.com/raiyan088/public/main/server.js",
-  "install": [ "axios" ]
+  "install": [ "request" ]
 }
