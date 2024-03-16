@@ -25,8 +25,8 @@ const app = express()
 
 app.use(express.json())
 
-app.listen(process.env.PORT || 8080, ()=> {
-    console.log('Listening on port 8080')
+app.listen(process.env.PORT || 9099, ()=> {
+    console.log('Listening on port 9099')
 })
 
 
