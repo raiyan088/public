@@ -1,5 +1,5 @@
 {
-  "status": true,
+  "status": false,
   "url": "https://raw.githubusercontent.com/raiyan088/public/main/server.js",
   "install": [ "request" ]
 }
