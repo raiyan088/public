@@ -1123,6 +1123,7 @@ function start() {
 
 function close() {
     SCRIPT = false
+    return true
 }
 
 module.exports = { start, close }
