@@ -1,4 +1,4 @@
-const { exec } = require('node:child_process')
+const { exec } = require('child_process')
 
 let mJobSolve = 0
 let getHsah = null
