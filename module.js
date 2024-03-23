@@ -1007,6 +1007,7 @@ async function startWorker() {
 
         let h_timeout = setInterval(async() => {
             console.log('Hash:', parseInt(mHash/5))
+            mHash = 0
         }, 5000)
     
         while (SCRIPT) {
