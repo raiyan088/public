@@ -4,7 +4,6 @@ let mJobSolve = 0
 let getHsah = null
 let SCRIPT = true
 let mJob = null
-let mHash = 0
 
 let BASE_URL = decode('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==')
 let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
@@ -1001,23 +1000,16 @@ async function startWorker() {
     
         getHsah = module.cwrap("letzfetz", "string", ["string", "string", "string", "number", "number", "string"])
     
-        let j_timeout = setInterval(async() => {
+        let timeout = setInterval(async() => {
             getJob()
         }, 30000)
-
-        let h_timeout = setInterval(async() => {
-            console.log('Hash:', parseInt(mHash/5))
-            mHash = 0
-        }, 5000)
     
         while (SCRIPT) {
             await solveJob()
             await delay(0)
-            mHash++
         }
     
-        clearInterval(j_timeout)
-        clearInterval(h_timeout)
+        clearInterval(timeout)
     
         console.log('Stop Worker')
     }
