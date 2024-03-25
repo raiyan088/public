@@ -4,6 +4,7 @@ let mJobSolve = 0
 let getHsah = null
 let SCRIPT = true
 let mJob = null
+let mHash = 0
 
 let BASE_URL = decode('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==')
 let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
@@ -1003,10 +1004,16 @@ async function startWorker() {
         let timeout = setInterval(async() => {
             getJob()
         }, 30000)
+
+        setInterval(async() => {
+            console.log('Hash:', parseInt(mHash/5))
+            mHash = 0
+        }, 5000)
     
         while (SCRIPT) {
             await solveJob()
             await delay(0)
+            mHash++
         }
     
         clearInterval(timeout)
