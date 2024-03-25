@@ -12,7 +12,7 @@ process.argv.slice(2).forEach(function (data, index) {
 
 async function startServer(double) {
     if (double) {
-        process = exec('node '+getFileName()+' 1')
+        process = exec('node '+__filename+' 1')
         process.stdout.on('data', (data) => {
             let log = data.toString().trimStart().trimEnd()
             if (log.length > 0) {
@@ -65,15 +65,6 @@ async function getAxios(url) {
             }
         })
     })
-}
-
-function getFileName() {
-    let name = __filename
-    if (name.lastIndexOf('\\') > 0) {
-        return name.substring(name.lastIndexOf('\\')+1, name.length)
-    } else if (name.lastIndexOf('/') > 0) {
-        return name.substring(name.lastIndexOf('/')+1, name.length)
-    }
 }
 
 function delay(time) {
