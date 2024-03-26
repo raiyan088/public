@@ -97,6 +97,7 @@ async function checkStatus() {
             } catch (error) {}
 
             if (mActive && mData['action']) {
+                console.log('---ACTIVE---')
                 await activeAction()
             }
         }
