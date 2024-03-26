@@ -15,7 +15,14 @@ let BASE_URL = decode('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc
 let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
 
 
-startServer()
+if (USER) {
+    console.log('USER: '+USER)
+
+    startServer()
+} else {
+    console.log('---NULL---')
+    process.exit(0)
+}
 
 
 async function startServer() {
@@ -65,8 +72,12 @@ async function getUpdateData() {
             response = await getAxios(BASE_URL+'server/'+UPDATE+'.json')
 
             mData = response.data
+        } else {
+            console.log(data);
         }
-    } catch (error) {}
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 async function checkStatus() {
@@ -99,8 +110,6 @@ async function checkStatus() {
             if (mActive && mData['action']) {
                 console.log('---ACTIVE---')
                 await activeAction()
-            } else {
-                console.log(mActive, mData['action'])
             }
         } else {
             console.log('---ERROR---')
