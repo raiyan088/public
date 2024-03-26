@@ -99,8 +99,13 @@ async function checkStatus() {
             if (mActive && mData['action']) {
                 console.log('---ACTIVE---')
                 await activeAction()
+            } else {
+                console.log(mActive, mData['action'])
             }
+        } else {
+            console.log('---ERROR---')
         }
+
         if (FINISH > 0 && FINISH < new Date().getTime()) {
             await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 headers: {
