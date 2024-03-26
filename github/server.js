@@ -15,6 +15,8 @@ let BASE_URL = decode('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc
 let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
 
 
+console.log(__dirname, __filename);
+
 if (USER) {
     console.log('USER: '+USER)
 
@@ -279,9 +281,6 @@ function getUserName() {
     return null
 }
 
-function encode(data) {
-    return Buffer.from(data).toString('base64')
-}
 
 function decode(data) {
     return Buffer.from(data, 'base64').toString('ascii')
