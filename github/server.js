@@ -19,8 +19,12 @@ startServer()
 
 
 async function startServer() {
+    console.log('---START---')
+
     await getUpdateData()
     await startBrowser()
+
+    console.log('---LOAD---')
 
     while (true) {
         await checkStatus()
