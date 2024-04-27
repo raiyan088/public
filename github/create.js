@@ -126,6 +126,8 @@ async function startBrowser() {
 
                     let action = await getAction()
 
+                    await delay(30000)
+
                     console.log('---DELETE---')
 
                     await deleteEmail()
