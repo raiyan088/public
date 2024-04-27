@@ -109,10 +109,6 @@ async function startBrowser() {
 
                 await createRepo()
 
-                console.log('---2-STEP---')
-
-                await addTwoStep()
-
                 mStatus = await checkStatus()
 
                 if (mStatus) {
@@ -120,13 +116,19 @@ async function startBrowser() {
 
                     await changeEmail()
 
-                    console.log('---UPLOAD---')
+                    console.log('---2-STEP---')
 
-                    await addRdpCode()
+                    await addTwoStep()
 
-                    let action = await getAction()
+                    console.log(TOKEN)
 
-                    await delay(30000)
+                    // console.log('---UPLOAD---')
+
+                    //await addRdpCode()
+
+                    //let action = await getAction()
+
+                    await delay(5000)
 
                     console.log('---DELETE---')
 
@@ -136,7 +138,7 @@ async function startBrowser() {
 
                     if (mStatus) {
                         console.log('---SUCCESS---')
-                        await saveData(action)
+                        await saveData()
                     }
                 } else {
                     console.log('---CHANGE---')
@@ -170,6 +172,7 @@ async function startBrowser() {
             process.exit(0)
         }
     } catch (error) {
+        console.log(error)
         console.log('---EXIT---')
         process.exit(0)
     }
@@ -639,7 +642,7 @@ async function typeGithubRepoName() {
     } catch (error) {}
 }
 
-async function saveData(action) {
+async function saveData() {
     try {
         let cookie = ''
         let cookies = await page.cookies()
@@ -653,7 +656,6 @@ async function saveData(action) {
         }
 
         let data = {
-            action: action,
             pass: PASS,
             gmail: GMAIL,
             cookies: cookie,
@@ -662,7 +664,7 @@ async function saveData(action) {
 
         console.log(data)
 
-        await putAxios(BASE_URL+'github/server/'+USER+'.json', JSON.stringify(data), {
+        await putAxios(BASE_URL+'github/repo/'+USER+'.json', JSON.stringify(data), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
