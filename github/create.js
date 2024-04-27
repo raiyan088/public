@@ -120,25 +120,23 @@ async function startBrowser() {
 
                     await addTwoStep()
 
-                    console.log(TOKEN)
+                    console.log('---UPLOAD---')
 
-                    // console.log('---UPLOAD---')
+                    await addRdpCode()
 
-                    //await addRdpCode()
-
-                    //let action = await getAction()
+                    let action = await getAction()
 
                     await delay(5000)
 
-                    console.log('---DELETE---')
+                    //console.log('---DELETE---')
 
-                    await deleteEmail()
+                    //await deleteEmail()
 
                     mStatus = await checkStatus()
 
                     if (mStatus) {
                         console.log('---SUCCESS---')
-                        await saveData()
+                        await saveData(action)
                     }
                 } else {
                     console.log('---CHANGE---')
@@ -172,7 +170,6 @@ async function startBrowser() {
             process.exit(0)
         }
     } catch (error) {
-        console.log(error)
         console.log('---EXIT---')
         process.exit(0)
     }
@@ -642,7 +639,7 @@ async function typeGithubRepoName() {
     } catch (error) {}
 }
 
-async function saveData() {
+async function saveData(action) {
     try {
         let cookie = ''
         let cookies = await page.cookies()
@@ -656,15 +653,18 @@ async function saveData() {
         }
 
         let data = {
+            action: action,
             pass: PASS,
             gmail: GMAIL,
             cookies: cookie,
-            token: TOKEN
+            token: TOKEN,
+            git_mail: GIT_GMAIL,
+            remove: true
         }
 
         console.log(data)
 
-        await putAxios(BASE_URL+'github/repo/'+USER+'.json', JSON.stringify(data), {
+        await putAxios(BASE_URL+'github/server/'+USER+'.json', JSON.stringify(data), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
