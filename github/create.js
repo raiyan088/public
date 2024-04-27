@@ -1,8 +1,8 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
-const proc = require('child_process').spawn('clip')
 const puppeteer = require('puppeteer-extra')
 const gmailApi = require('./gmail-api')
 const twofactor = require('node-2fa')
+const proc = require('copy-paste')
 const axios = require('axios')
 
 let browser = null
@@ -33,14 +33,13 @@ puppeteer.use(StealthPlugin())
 const GR = new gmailApi()
 
 
-readData()
+proc.copy(RDP, function () {
+    readData()
+})
 
 
 async function readData() {
     try {
-        proc.stdin.write(RDP)
-        proc.stdin.end()
-
         let response = await getAxios(BASE_URL+'github/gmail.json?orderBy="quota"&startAt=0&endAt='+parseInt(new Date().getTime()/1000)+'&limitToFirst=1&print=pretty')
         
         if (response.data != null && response.data != 'null') {
