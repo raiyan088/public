@@ -435,39 +435,39 @@ async function changeEmail() {
             if (link) {
                 await page.goto(link, { waitUntil: 'load', timeout: 0 })
                 await delay(1000)
-                await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
-                await delay(2000)
+                // await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
+                // await delay(2000)
 
-                let value = await page.evaluate((gmail) => {
-                    let value = null
+                // let value = await page.evaluate((gmail) => {
+                //     let value = null
 
-                    try {
-                        let root = document.querySelector('#primary_email_select').children
+                //     try {
+                //         let root = document.querySelector('#primary_email_select').children
 
-                        if(root.length > 0) {
-                            for(let i=0; i<root.length; i++) {
-                                try {
-                                    if(root[i].innerText == gmail+'@gmail.com') {
-                                        if(root[i].selected == false) {
-                                            value = root[i].value
-                                            break
-                                        }
-                                    }
-                                } catch (error) {}
-                            }
-                        }
-                    } catch (error) {}
+                //         if(root.length > 0) {
+                //             for(let i=0; i<root.length; i++) {
+                //                 try {
+                //                     if(root[i].innerText == gmail+'@gmail.com') {
+                //                         if(root[i].selected == false) {
+                //                             value = root[i].value
+                //                             break
+                //                         }
+                //                     }
+                //                 } catch (error) {}
+                //             }
+                //         }
+                //     } catch (error) {}
 
-                    return value
-                }, GMAIL)
+                //     return value
+                // }, GMAIL)
 
-                if (value) {
-                    await page.select('#primary_email_select', value)
-                }
+                // if (value) {
+                //     await page.select('#primary_email_select', value)
+                // }
 
-                await delay(500)
-                await page.click('form[aria-labelledby="primary_email_select_label"] > dl > dd > button')
-                await delay(3000)
+                // await delay(500)
+                // await page.click('form[aria-labelledby="primary_email_select_label"] > dl > dd > button')
+                // await delay(3000)
             } else {
                 GMAIL = await GR.getGmail()
                 await changeEmail()
