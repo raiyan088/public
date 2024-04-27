@@ -109,16 +109,16 @@ async function startBrowser() {
 
                 await createRepo()
 
+                console.log('---2-STEP---')
+
+                await addTwoStep()
+
                 mStatus = await checkStatus()
 
                 if (mStatus) {
                     console.log('---CHANGE---')
 
                     await changeEmail()
-
-                    console.log('---2-STEP---')
-
-                    await addTwoStep()
 
                     console.log('---UPLOAD---')
 
