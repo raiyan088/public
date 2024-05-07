@@ -23,6 +23,7 @@ async function startServer(user) {
         if (mCookies == null) {
             mCookies = await getCookies(user)
         }
+
         await aliveServer()
         await delay(300000)
     }
@@ -55,8 +56,9 @@ async function aliveServer() {
             let temp = data.substring(0, data.lastIndexOf('"'))
             let token = temp.substring(temp.lastIndexOf('"')+1)
 
-            await postAxios('https://shell.cloud.google.com/cloudshell/setupsession?token='+token+'&authuser=0', JSON.stringify([null,[],[2,'']]), getCloudCookies(mCookies))
+            let status = await postAxios('https://shell.cloud.google.com/cloudshell/setupsession?token='+token+'&authuser=0', JSON.stringify([null,[],[2,'']]), getCloudCookies(mCookies))
         
+            console.log(status)
         } catch (error) {}
     }
 }
@@ -120,14 +122,25 @@ async function getFetchData(url, data={}) {
 async function postAxios(url, body, data) {
     return new Promise((resolve) => {
         try {
+            // fetch(url, {
+            //     method: 'POST',
+            //     headers: data,
+            //     body: body
+            // }).then((response) => {
+            //     resolve('ok')
+            // }).catch((error) => {
+            //     resolve('ok')
+            // })
+
             fetch(url, {
                 method: 'POST',
                 headers: data,
                 body: body
-            }).then((response) => {
-                resolve('ok')
+            }).then((response) => response.text()).then((data) => {
+                resolve(data)
             }).catch((error) => {
-                resolve('ok')
+                console.log(error)
+                resolve(null)
             })
         } catch (error) {
             resolve('ok')
