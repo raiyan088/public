@@ -89,11 +89,8 @@ module.exports = class {
                             let text = Buffer.from(base64, 'base64').toString('ascii')
                             
                             text.split(/\r?\n/).forEach(function(line){
-                                if (line.includes('https://github.com/users/') && line.includes('confirm_verification')) {
+                                if (line.includes('account_verifications/confirm')) {
                                     link = line.trim()
-                                    if (link.includes('?')) {
-                                        link = link.substring(0, link.indexOf('?'))
-                                    }
                                 }
                             })
                         }

