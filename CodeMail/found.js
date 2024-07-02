@@ -80,13 +80,13 @@ async function startServer(upload) {
         if (TARGET > SIZE) {
             TIME = new Date().getTime()+30000
             if (upload) {
-                console.log('Start Again', SIZE) 
+                console.log('Start Again:', SIZE) 
             } else {
-                console.log('Start Server', SIZE)
+                console.log('Start Server:', SIZE)
             }
             await startFounding()
         } else {
-            console.log('Stop Server', SIZE)
+            console.log('Stop Server:', SIZE)
         }
     } catch (error) {
         console.log('Server Error')
@@ -153,7 +153,7 @@ async function startFounding() {
     if (TARGET > SIZE) {
         await startFounding()
     } else {
-        console.log('Stop Server')
+        console.log('Stop Server:', SIZE)
     }
 }
 
