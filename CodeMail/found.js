@@ -217,20 +217,22 @@ async function saveData() {
     let temp = mData
 
     for (let i = 0; i < temp.length; i++) {
-        let send = temp[i]['data']
-        if (send && Object.keys(send).length > 0) {
-            await patchAxios(BASE_URL+'found/number/'+COUNRTY+'/'+temp[i]['time']+'.json', JSON.stringify(send), {
-                headers: {
-                    'content-type': 'application/x-www-form-urlencoded'
-                }
-            })
-        }
+        try {
+            let send = temp[i]['data']
+            if (send && Object.keys(send).length > 0) {
+                await patchAxios(BASE_URL+'found/number/'+COUNRTY+'/'+temp[i]['time']+'.json', JSON.stringify(send), {
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    }
+                })
+            }
 
-        if (temp.length-1 > i) {
-            mData.shift()
-        } else {
-            mData[i]['data'] = {}
-        }
+            if (temp.length-1 > i) {
+                mData.shift()
+            } else {
+                mData[i]['data'] = {}
+            }
+        } catch (error) {}
     }
 }
 
