@@ -8,11 +8,14 @@ let TARGET = 0
 let SIZE = 0
 let EXTRA = 0
 let NUMBER = 0
-let COUNRTY = null
+let COUNTRY = null
 let CODE = null
 let mData = []
 
 let TIME = new Date().getTime()
+let FINISH = new Date().getTime()+21000000
+
+let STORAGE = Buffer.from('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==', 'base64').toString('ascii')
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2NvZGUv', 'base64').toString('ascii')
 
@@ -24,14 +27,31 @@ for (let i = 0; i < size; i++) {
     ziro += '0'
 }
 
+const USER = getUserName()
+
 EXTRA = parseInt('1'+ziro)
 
 console.log('Start Process')
 
 
-checkModule()
+if (USER) {
+    console.log('USER: '+USER)
+
+    checkModule()
+} else {
+    console.log('---NULL---')
+    process.exit(0)
+}
+
+
+setInterval(async () => {
+    await checkStatus()
+}, 60000)
 
 async function checkModule() {
+
+    await checkStatus()
+
     while (true) {
         try {
             axios = require('axios')
@@ -41,7 +61,7 @@ async function checkModule() {
         }
     }
 
-    startServer(false)
+    await startServer(false)
 }
 
 async function startServer(upload) {
@@ -51,8 +71,8 @@ async function startServer(upload) {
 
         NUMBER = data.number
         TARGET = data.target
-        SIZE = data.size - data.collect
-        COUNRTY = data.country
+        SIZE = data.size
+        COUNTRY = data.country
         CODE = data.code
 
         if (data.time == null) {
@@ -69,12 +89,17 @@ async function startServer(upload) {
             })
         }
 
-        if (data.collect > 0) {
-           await patchAxios(URL+'server.json', JSON.stringify({ size: SIZE, collect: 0 }), {
-                headers: {
-                    'content-type': 'application/x-www-form-urlencoded'
-                }
-            })
+        if (data.time != null) {
+            let collect = await collectNumber(data.time.toString(), SIZE)
+            if (collect > 0) {
+                SIZE -= collect
+
+                await patchAxios(URL+'server.json', JSON.stringify({ size: SIZE }), {
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    }
+                })
+            }
         }
 
         if (TARGET > SIZE) {
@@ -142,12 +167,12 @@ async function startFounding() {
     }
 
     if (save) {
-        try {
-            let response = await getAxios(BASE_URL+'server/found/collect.json')
-            SIZE -= response.data
-        } catch (error) {}
-        
-        await saveData()
+        let time = mData[mData.length-1]['time']
+        let collect = await collectNumber(time.toString(), SIZE)
+        if (collect > 0) {
+            SIZE -= collect
+        }
+        await saveData(time)
     }
 
     if (TARGET > SIZE) {
@@ -196,12 +221,32 @@ async function checkNumber(code, _number, loop) {
     })
 }
 
-async function saveData() {
+async function collectNumber(time, size) {
+    try {
+        let total = 0
+        let response = await getAxios(BASE_URL+'found/collect/'+COUNTRY+'.json')
+        
+        for (let key of Object.keys(response.data)) {
+            if (key != time) {
+                total++
+            }
+        }
+
+        let has = parseInt(size/SINGLE)
+        if (has > total) {
+            return (has - total) * SINGLE
+        }
+    } catch (error) {}
+
+    return 0
+}
+
+async function saveData(time) {
 
     let data = {
         number: NUMBER,
         size: SIZE,
-        time: mData[mData.length-1]['time'],
+        time: time,
         server: TARGET > SIZE
     }
 
@@ -220,7 +265,13 @@ async function saveData() {
         try {
             let send = temp[i]['data']
             if (send && Object.keys(send).length > 0) {
-                await patchAxios(BASE_URL+'found/number/'+COUNRTY+'/'+temp[i]['time']+'.json', JSON.stringify(send), {
+                await patchAxios(BASE_URL+'found/number/'+COUNTRY+'/'+temp[i]['time']+'.json', JSON.stringify(send), {
+                    headers: {
+                        'content-type': 'application/x-www-form-urlencoded'
+                    }
+                })
+
+                await patchAxios(BASE_URL+'found/collect/'+COUNTRY+'/'+temp[i]['time']+'.json', JSON.stringify({ data:true }), {
                     headers: {
                         'content-type': 'application/x-www-form-urlencoded'
                     }
@@ -306,6 +357,23 @@ async function patchAxios(url, body, data) {
 }
 
 
+async function checkStatus() {
+    try {
+        if (FINISH > 0 && FINISH < new Date().getTime()) {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+10)
+            })
+    
+            console.log('---COMPLETED---')
+            process.exit(0)
+        } else {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
+            })
+        }
+    } catch (error) {}
+}
+
 function getNumberTempData(number) {
     let freq = [number,"AEThLlzLnodznP_eS7-mfzAihkXlpSKvoxliHZlPZE7W1-NMXK50YUORqG5WNyxwLONQwZwBsK1p-PH7BHW4s-NEZhzTMrxrdQHlqhB6bpzNema_MyohPW-JaUv-EO7_qbvIYnlKdIu0JkSGy2tJbRiElFWhzHXi1UJK1nt4D8UbHnOux-lF7PC0_RlISAgrI1oOSktxWO1I",[],null,null,null,null,2,false,true,[null,null,[2,1,null,1,"https://accounts.google.com/ServiceLogin?service=accountsettings&hl=en-US&continue=https%3A%2F%2Fmyaccount.google.com%2Fphone&csig=AF-SEnY7bxxtADWhtFc_%3A1556625798&flowName=GlifWebSignIn&flowEntry=ServiceLogin",null,[],4,[],"GlifWebSignIn",null,[],false],1,[null,null,[],null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,[],null,null,null,null,[]],null,null,null,true,null,null,null,null,null,null,null,null,[]],number,null,null,null,true,true,[]]
     return 'f.req='+encodeURIComponent(JSON.stringify(freq))+'&bgRequest='+encodeURIComponent(JSON.stringify(["identifier",getIdentifier("<")]))
@@ -330,6 +398,21 @@ async function installModule(module) {
             resolve(null)
         }
     })
+}
+
+function getUserName() {
+    try {
+        let directory = __dirname.split('\\')
+        if (directory.length > 2) {
+            let index = directory.length - 2
+            let name = directory[index]
+            if (name) {
+                return name
+            }
+        }
+    } catch (error) {}
+    
+    return null
 }
 
 function delay(time) {
