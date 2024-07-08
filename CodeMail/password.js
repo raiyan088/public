@@ -639,6 +639,7 @@ async function checkStatus() {
             console.log('---COMPLETED---')
             process.exit(0)
         } else {
+            console.log('Update: server/'+USER+'.json')
             await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
             })
