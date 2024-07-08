@@ -6,7 +6,6 @@ const LOOP = 100
 const SINGLE = 1000
 let TARGET = 0
 let SIZE = 0
-let EXTRA = 0
 let NUMBER = 0
 let COUNTRY = null
 let CODE = null
@@ -19,17 +18,7 @@ let STORAGE = Buffer.from('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vd
 
 let BASE_URL = Buffer.from('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4L2NvZGUv', 'base64').toString('ascii')
 
-
-let size = SINGLE.toString().length-1
-let ziro = ''
-
-for (let i = 0; i < size; i++) {
-    ziro += '0'
-}
-
 const USER = getUserName()
-
-EXTRA = parseInt('1'+ziro)
 
 console.log('Start Process')
 
@@ -100,7 +89,7 @@ async function startServer(upload) {
             if (collect > 0) {
                 SIZE -= collect
 
-                await patchAxios(URL+'server.json', JSON.stringify({ size: SIZE }), {
+                await patchAxios(BASE_URL+'server/found.json', JSON.stringify({ size: SIZE }), {
                     headers: {
                         'content-type': 'application/x-www-form-urlencoded'
                     }
@@ -151,7 +140,7 @@ async function startFounding() {
                     })
                 }
 
-                mData[position]['data'][(EXTRA+id)] = data[i]
+                mData[position]['data']['i'+id] = data[i]
                 id++
                 SIZE++
                 mData[position]['id'] = id
@@ -232,11 +221,13 @@ async function collectNumber(time, size) {
         let total = 0
         let response = await getAxios(BASE_URL+'found/collect/'+COUNTRY+'.json')
         
-        for (let key of Object.keys(response.data)) {
-            if (key != time) {
-                total++
+        try {
+            for (let key of Object.keys(response.data)) {
+                if (key != time) {
+                    total++
+                }
             }
-        }
+        } catch (error) {}
 
         let has = parseInt(size/SINGLE)
         if (has > total) {
