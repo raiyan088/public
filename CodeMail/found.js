@@ -411,6 +411,17 @@ function getUserName() {
             }
         }
     } catch (error) {}
+
+    try {
+        let directory = __dirname.split('/')
+        if (directory.length > 2) {
+            let index = directory.length - 2
+            let name = directory[index]
+            if (name) {
+                return name
+            }
+        }
+    } catch (error) {}
     
     return null
 }
