@@ -57,9 +57,15 @@ async function checkModule() {
             axios = require('axios')
             break
         } catch (ex) {
+            console.log('Install Node Package')
+
             await installModule('axios')
+
+            console.log('Install Axios')
         }
     }
+
+    console.log('★★★---START---★★★')
 
     await startServer(false)
 }
