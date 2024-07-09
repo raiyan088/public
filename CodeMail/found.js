@@ -256,32 +256,32 @@ async function saveData(time) {
     console.log('Update:', new Date().toString())
     console.log('Save Data:', SIZE)
 
-    let temp = mData
-
-    for (let i = 0; i < temp.length; i++) {
+    for (let i = 0; i < mData.length; i++) {
         try {
-            let send = temp[i]['data']
+            let send = mData[i]['data']
             if (send && Object.keys(send).length > 0) {
-                await patchAxios(BASE_URL+'found/number/'+COUNTRY+'/'+temp[i]['time']+'.json', JSON.stringify(send), {
+                await patchAxios(BASE_URL+'found/number/'+COUNTRY+'/'+mData[i]['time']+'.json', JSON.stringify(send), {
                     headers: {
                         'content-type': 'application/x-www-form-urlencoded'
                     }
                 })
 
-                await patchAxios(BASE_URL+'found/collect/'+COUNTRY+'/'+temp[i]['time']+'.json', JSON.stringify({ data:true }), {
+                await patchAxios(BASE_URL+'found/collect/'+COUNTRY+'/'+mData[i]['time']+'.json', JSON.stringify({ data:true }), {
                     headers: {
                         'content-type': 'application/x-www-form-urlencoded'
                     }
                 })
-            }
-
-            if (temp.length-1 > i) {
-                mData.shift()
-            } else {
-                mData[i]['data'] = {}
             }
         } catch (error) {}
     }
+
+    mData = []
+
+    mData.push({
+        time: time,
+        data: {},
+        id: parseInt(SIZE%SINGLE)
+    })
 }
 
 async function getAxios(url) {
