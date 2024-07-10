@@ -95,7 +95,7 @@ async function startServer() {
         await startBrowser()
 
     } catch (error) {
-        console.log('---ERROR---')
+        console.log('----EXIT----')
         process.exit(0)
     }
 }
@@ -157,6 +157,8 @@ async function startBrowser() {
             }
         })
 
+        console.log('----LOAD----')
+
         while (true) {
             try {
                 if (SIZE >= mList.length) {
@@ -170,7 +172,7 @@ async function startBrowser() {
         }
     } catch (error) {
         console.log(error)
-        console.log('---ERROR---')
+        console.log('----EXIT----')
         process.exit(0)
     }
 }
@@ -345,7 +347,7 @@ async function getLogInRequest(request) {
         try {
             let temp = data.substring(index, data.length)
             temp = temp.substring(temp.indexOf('[['), temp.indexOf(']]')+2)
-            let json = JSON.parse(temp.replaceAll(/\\/gi, ''))
+            let json = JSON.parse(temp.replace(/\\/gi, ''))
             let cid = 0
             let tl = ''
 
