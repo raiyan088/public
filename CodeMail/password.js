@@ -14,8 +14,8 @@ let FINISH = new Date().getTime()+21000000
 
 let STORAGE = Buffer.from('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==', 'base64').toString('ascii')
 
-// const USER = getUserName()
-const USER = 'raiyan088'
+const USER = getUserName()
+// const USER = 'raiyan088'
 
 if (USER) {
     console.log('USER: '+USER)
