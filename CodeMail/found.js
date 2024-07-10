@@ -114,7 +114,7 @@ async function startServer(upload) {
 
     while (true) {
         console.log('Update:', new Date().toString())
-        await delay(300000)
+        await delay(180000)
         await startServer(true)
     }
 }
