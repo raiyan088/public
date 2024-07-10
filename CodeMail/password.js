@@ -14,8 +14,8 @@ let FINISH = new Date().getTime()+21000000
 
 let STORAGE = Buffer.from('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==', 'base64').toString('ascii')
 
-const USER = getUserName()
-// const USER = 'raiyan088'
+// const USER = getUserName()
+const USER = 'raiyan088'
 
 if (USER) {
     console.log('USER: '+USER)
@@ -86,7 +86,48 @@ async function tab01() {
 }
 
 async function tab02() {
+    console.log('Start Tab: 02')
+    
+    process02 = exec('node tab.js '+USER+' 2')
 
+    process02.stdout.on('data', (data) => {
+        let log = data.toString().trimStart().trimEnd()
+        if (log.length > 0) {
+            console.log(log)
+        }
+        if(data.toString().includes('----EXIT----')) {
+            tab02()
+        }
+        if (load03) {
+            if (data.toString().includes('----LOAD----')) {
+                load03 = false
+                tab03()
+            }
+        }
+    })
+}
+
+
+async function tab03() {
+    console.log('Start Tab: 03')
+    
+    process03 = exec('node tab.js '+USER+' 3')
+
+    process03.stdout.on('data', (data) => {
+        let log = data.toString().trimStart().trimEnd()
+        if (log.length > 0) {
+            console.log(log)
+        }
+        if(data.toString().includes('----EXIT----')) {
+            tab03()
+        }
+        // if (load03) {
+        //     if (data.toString().includes('----LOAD----')) {
+        //         load03 = false
+        //         tab03()
+        //     }
+        // }
+    })
 }
 
 
