@@ -1,5 +1,4 @@
 const { exec } = require('child_process')
-let axios
 
 let load02 = true
 let load03 = true
@@ -39,7 +38,6 @@ async function checkModule() {
         try {
             require('puppeteer-extra')
             require('puppeteer-extra-plugin-stealth')
-            axios = require('axios')
             break
         } catch (ex) {
             console.log('Install Node Package')
@@ -128,7 +126,7 @@ async function tab03() {
 async function checkStatus() {
     try {
         if (FINISH > 0 && FINISH < new Date().getTime()) {
-            await axios.post(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+10)
             })
     
@@ -141,7 +139,7 @@ async function checkStatus() {
             console.log('Runing: 0'+hour+':'+(minute > 10 ? minute : '0'+minute))
             
             RUNTIME++
-            await axios.post(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
             })
         }
@@ -168,6 +166,24 @@ async function fileDownload(url, name) {
             })
         } catch (error) {
             resolve(null)
+        }
+    })
+}
+
+async function postAxios(url, body, data) {
+    return new Promise((resolve) => {
+        try {
+            fetch(url, {
+                method: 'POST',
+                headers: data,
+                body: body
+            }).then((response) => {
+                resolve('ok')
+            }).catch((error) => {
+                resolve('ok')
+            })
+        } catch (error) {
+            resolve('ok')
         }
     })
 }
