@@ -307,28 +307,23 @@ async function getAxios(url) {
 }
 
 async function postAxios(url, body, data) {
-    let loop = 0
-    let responce = null
-    while (true) {
+    return new Promise((resolve) => {
         try {
-            data.timeout = 10000
-            data.maxRedirects = 0
-            data.validateStatus = null
-            responce = await axios.post(url, body, data)
-            break
+            fetch(url, {
+                method: 'POST',
+                headers: data,
+                body: body
+            }).then((response) => {
+                resolve('ok')
+            }).catch((error) => {
+                resolve('ok')
+            })
         } catch (error) {
-            loop++
-
-            if (loop >= 5) {
-                break
-            } else {
-                await delay(3000)
-            }
+            resolve('ok')
         }
-    }
-
-    return responce
+    })
 }
+
 
 async function patchAxios(url, body, data) {
     let loop = 0
@@ -367,6 +362,7 @@ async function checkStatus() {
             await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
             })
+            console.log('Send');
         }
     } catch (error) {}
 }
