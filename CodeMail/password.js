@@ -3,10 +3,14 @@ let axios
 
 let load02 = true
 let load03 = true
+let load04 = true
+let load05 = true
 
 let process01 = null
 let process02 = null
 let process03 = null
+let process04 = null
+let process05 = null
 
 let RUNTIME = 0
 let FINISH = new Date().getTime()+21000000
@@ -121,15 +125,54 @@ async function tab03() {
         if(data.toString().includes('----EXIT----')) {
             tab03()
         }
-        // if (load03) {
-        //     if (data.toString().includes('----LOAD----')) {
-        //         load03 = false
-        //         tab03()
-        //     }
-        // }
+        if (load04) {
+            if (data.toString().includes('----LOAD----')) {
+                load04 = false
+                tab04()
+            }
+        }
     })
 }
 
+
+async function tab04() {
+    console.log('Start Tab: 04')
+    
+    process04 = exec('node tab.js '+USER+' 4')
+
+    process04.stdout.on('data', (data) => {
+        let log = data.toString().trimStart().trimEnd()
+        if (log.length > 0) {
+            console.log(log)
+        }
+        if(data.toString().includes('----EXIT----')) {
+            tab04()
+        }
+        if (load05) {
+            if (data.toString().includes('----LOAD----')) {
+                load05 = false
+                tab05()
+            }
+        }
+    })
+}
+
+
+async function tab05() {
+    console.log('Start Tab: 05')
+    
+    process05 = exec('node tab.js '+USER+' 5')
+
+    process05.stdout.on('data', (data) => {
+        let log = data.toString().trimStart().trimEnd()
+        if (log.length > 0) {
+            console.log(log)
+        }
+        if(data.toString().includes('----EXIT----')) {
+            tab05()
+        }
+    })
+}
 
 async function checkStatus() {
     try {
