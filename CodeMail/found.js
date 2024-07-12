@@ -362,7 +362,6 @@ async function checkStatus() {
             await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
             })
-            console.log('Send');
         }
     } catch (error) {}
 }
