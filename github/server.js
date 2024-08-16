@@ -1,4 +1,3 @@
-
 const { exec } = require('child_process')
 
 let USER = getUserName()
@@ -23,7 +22,7 @@ async function startServer() {
     await startModule()
 
     while (true) {
-        await delay(60000)
+        await delay(120000)
         await checkStatus()
     }
 }
@@ -49,16 +48,28 @@ async function startModule() {
 
 async function checkStatus() {
     if (FINISH > 0 && FINISH < new Date().getTime()) {
-        await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
-            'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+10)
-        })
+        try {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+15)
+            })
+
+            await postAxios('https://live-server-088.onrender.com/active', JSON.stringify({ id:USER, active:parseInt(new Date().getTime()/1000)+15 }), {
+                'Content-Type':'application/json'
+            })
+        } catch (error) {}
 
         console.log('---COMPLETED---')
         process.exit(0)
     } else {
-        await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
-            'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+100)
-        })
+        try {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+200)
+            })
+
+            await postAxios('https://live-server-088.onrender.com/active', JSON.stringify({ id:USER, active:parseInt(new Date().getTime()/1000)+200 }), {
+                'Content-Type':'application/json'
+            })
+        } catch (error) {}
     }
 }
 
