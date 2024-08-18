@@ -52,10 +52,6 @@ async function checkStatus() {
             await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+15)
             })
-
-            await postAxios('https://live-server-088.onrender.com/active', JSON.stringify({ id:USER, active:parseInt(new Date().getTime()/1000)+15 }), {
-                'Content-Type':'application/json'
-            })
         } catch (error) {}
 
         console.log('---COMPLETED---')
@@ -64,10 +60,6 @@ async function checkStatus() {
         try {
             await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+200)
-            })
-
-            await postAxios('https://live-server-088.onrender.com/active', JSON.stringify({ id:USER, active:parseInt(new Date().getTime()/1000)+200 }), {
-                'Content-Type':'application/json'
             })
         } catch (error) {}
     }
