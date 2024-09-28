@@ -1,0 +1,18 @@
+{
+  "name": "Facebook",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.7.7",
+    "node-2fa": "^2.0.3",
+    "puppeteer": "^19.10.0",
+    "fs": "^0.0.1-security"
+  }
+}
