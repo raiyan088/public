@@ -106,6 +106,7 @@ async function browserStart() {
         if (user) {
             await delay(3000)
         } else {
+            console.log('User Not Found')
             await delay(30000)
         }
     }
