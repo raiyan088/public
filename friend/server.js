@@ -161,7 +161,7 @@ async function startServer() {
     console.log('---SUCCESS---')
 
     while (true) {
-        await delay(600000)
+        await delay(300000)
 
         try {
             let response = await axios.get(BASE_URL+'facebook/server/'+USER+'.json')
