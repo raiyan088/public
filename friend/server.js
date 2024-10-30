@@ -271,14 +271,6 @@ async function startBrowser(mId, mKey, mData) {
 
         mPages[mId] = page
 
-        page._client().on('Network.webSocketFrameReceived', async ({ timestamp, response: { payloadData } }) => {
-            if (payloadData.endsWith('ABNmcmllbmRzLmpld2VsLmNvdW50BwAZPHNwYW4gY2xhc3M9J2Y2Jz42PC9zcGFuPg==')) {
-                console.log('Receive Friend Request: '+mId)
-            } else {
-                console.log(mId, payloadData.length)
-            }
-        })
-
         await mobilePhone(page)
 
         if (user) await page.setCookie(...mCookies)
@@ -369,7 +361,7 @@ async function startAcceptRequest(browser, page, mId, mKey, mData) {
                                                 console.log('Browser: '+mId+' --- Confirm: '+(ONLY_ME ? userId : reqId))
                                                 try {
                                                     await mConfirm[i].click()
-                                                    await delay(500)
+                                                    await delay(1500)
     
                                                     if (ONLY_ME) {
                                                         await axios.delete(BASE_URL+'facebook/request/'+mKey+'/'+reqId+'.json')
