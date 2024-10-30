@@ -290,7 +290,7 @@ async function startAcceptRequest(browser, page, mId, mKey, mData) {
 
             while (true) {
                 for (let i = 0; i < 180; i++) {
-                    for (let j = 0; j < 5; j++) {
+                    for (let j = 0; j < 10; j++) {
                         try {
                             let mConfirm = await page.$$('div[aria-label*="Confirm"]')
         
