@@ -145,7 +145,7 @@ async function startServer() {
     } catch (error) {}
 
     if (data && keys) {
-        for (let i = 0; i < keys.length; i++) {
+        for (let i = 0; i < 1; i++) {
             try {
                 mRuning[(i+1)] = false
                 let value = data[keys[i]]
@@ -176,7 +176,7 @@ async function startServer() {
         let runing = 0
     
         if (data && keys) {
-            for (let i = 0; i < keys.length; i++) {
+            for (let i = 0; i < 1; i++) {
                 try {
                     if (mRuning[(i+1)] == true) {
                         runing++
@@ -274,8 +274,8 @@ async function startBrowser(mId, mKey, mData) {
         page._client().on('Network.webSocketFrameReceived', async ({ timestamp, response: { payloadData } }) => {
             if (payloadData.endsWith('ABNmcmllbmRzLmpld2VsLmNvdW50BwAZPHNwYW4gY2xhc3M9J2Y2Jz42PC9zcGFuPg==')) {
                 console.log('Receive Friend Request: '+mId)
-            } else if (payloadData.length == 88) {
-                console.log(mId, payloadData)
+            } else {
+                console.log(mId, payloadData.length)
             }
         })
 
