@@ -1,7 +1,11 @@
 const puppeteer = require('puppeteer')
+const FormData = require('form-data')
 const axios = require('axios')
+const fs = require('fs')
+
 
 let mRuning = {}
+let mPages = {}
 
 let USER = getUserName()
 let FINISH = new Date().getTime()+21000000
@@ -127,7 +131,7 @@ async function startServer() {
 
     for (let i = 0; i < 10; i++) {
         mRuning[(i+1)] = false
-    }
+    }    
     
     try {
         let response = await axios.get(BASE_URL+'facebook/server/'+USER+'.json')
@@ -146,7 +150,8 @@ async function startServer() {
                 let value = data[keys[i]]
                 if (value['active'] == true) {
                     await startBrowser(i+1, keys[i], value)
-                    console.log('---LOADED:'+(i+1)+'---') 
+                    console.log('---LOADED:'+(i+1)+'---')
+                    await browserUpdate(mPages[(i+1)], i+1)
                 }
             } catch (error) {}
         }
@@ -174,6 +179,7 @@ async function startServer() {
                 try {
                     if (mRuning[(i+1)] == true) {
                         runing++
+                        await browserUpdate(mPages[(i+1)], i+1)
                     } else {
                         let value = data[keys[i]]
                         if (value['active'] == true) {
@@ -186,6 +192,24 @@ async function startServer() {
 
         console.log('---RUNING:'+runing+'---')
     }
+}
+
+
+async function browserUpdate(page, id) {
+    try {
+        await page.screenshot({
+            path: 'tab'+id+'.jpeg'
+        })
+
+        let file = new FormData()
+        file.append('file', fs.createReadStream('tab'+id+'.jpeg'))
+
+        await axios.post('https://firebasestorage.clients6.google.com/v0/b/job-server-088.appspot.com/o?name=photo%2Fbrowser%2Ftab'+id+'.jpeg', file, {
+            headers: {
+                'Content-Type': 'image/jpeg'
+            }
+        })
+    } catch (error) {}
 }
 
 
@@ -243,6 +267,8 @@ async function startBrowser(mId, mKey, mData) {
         let page = (await browser.pages())[0]
 
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
+
+        mPages[mId] = page
 
         await mobilePhone(page)
 
