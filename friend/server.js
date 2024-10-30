@@ -145,7 +145,7 @@ async function startServer() {
     } catch (error) {}
 
     if (data && keys) {
-        for (let i = 0; i < 1; i++) {
+        for (let i = 0; i < keys.length; i++) {
             try {
                 mRuning[(i+1)] = false
                 let value = data[keys[i]]
@@ -176,7 +176,7 @@ async function startServer() {
         let runing = 0
     
         if (data && keys) {
-            for (let i = 0; i < 1; i++) {
+            for (let i = 0; i < keys.length; i++) {
                 try {
                     if (mRuning[(i+1)] == true) {
                         runing++
