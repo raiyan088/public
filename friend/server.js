@@ -318,78 +318,70 @@ async function startAcceptRequest(browser, page, mId, mKey, mData) {
             let mPrev = -1
 
             while (true) {
-                for (let i = 0; i < 180; i++) {
-                    for (let j = 0; j < 10; j++) {
-                        try {
-                            let mConfirm = await page.$$('div[aria-label*="Confirm"]')
-        
-                            let fRequest = false
-        
-                            if (mConfirm.length != mPrev) {
-                                fRequest = true
-                                mPrev = mConfirm.length
-                            } else {
-                                let confirm = await page.evaluate(() => {
-                                    let root = document.querySelectorAll('div[aria-label*="Confirm"]')
-        
-                                    if (root) {
-                                        return root.length
-                                    }
-                                    return -1
-                                })
-        
-                                if (confirm >= 0 && confirm != mPrev) {
-                                    fRequest = true
-                                    mPrev = confirm
-                                }
-                            }
-        
-                            if (fRequest) {
-                                let mFbReq = {}
-
-                                if (ONLY_ME) {
-                                    mFbReq = await checkServerRequest(mKey)
-                                }
-        
-                                if (Object.keys(mFbReq).length > 0 || !ONLY_ME) {
-                                    let accept = false
-        
-                                    for (let i = 0; i < mConfirm.length; i++) {
-                                        try {
-                                            let reqId = await getFriendReqId(mConfirm[i])
-                                            if (reqId) {
-                                                let userId = mFbReq[reqId]
-                                                if (userId || !ONLY_ME) {
-                                                    accept = true
-                                                    console.log('Browser: '+mId+' --- Confirm: '+(ONLY_ME ? userId : reqId))
-                                                    try {
-                                                        await mConfirm[i].click()
-                                                        await delay(500)
-        
-                                                        if (ONLY_ME) {
-                                                            await axios.delete(BASE_URL+'facebook/request/'+mKey+'/'+reqId+'.json')
-                                                        }
-                                                    } catch (error) {}
-                                                }
-                                            }
-                                        } catch (error) {}
-                                    }
-            
-                                    if (accept) {
-                                        mPrev = -1
-                                    }
-                                }
-                            }
-                        } catch (error) {}
-        
-                        await delay(3000)
-                    }
-
+                for (let i = 0; i < 100; i++) {
                     try {
-                        if (!await getCookies(page)) {
-                            await loadFacebookPage(browser, page, mId, mKey, mData)
+                        let mConfirm = await page.$$('div[aria-label*="Confirm"]')
+    
+                        let fRequest = false
+    
+                        if (mConfirm.length != mPrev) {
+                            fRequest = true
+                            mPrev = mConfirm.length
+                        } else {
+                            let confirm = await page.evaluate(() => {
+                                let root = document.querySelectorAll('div[aria-label*="Confirm"]')
+    
+                                if (root) {
+                                    return root.length
+                                }
+                                return -1
+                            })
+    
+                            if (confirm >= 0 && confirm != mPrev) {
+                                fRequest = true
+                                mPrev = confirm
+                            }
+                        }
+    
+                        if (fRequest) {
+                            let mFbReq = {}
+
+                            if (ONLY_ME) {
+                                mFbReq = await checkServerRequest(mKey)
+                            }
+    
+                            if (Object.keys(mFbReq).length > 0 || !ONLY_ME) {
+                                let accept = false
+    
+                                for (let i = 0; i < mConfirm.length; i++) {
+                                    try {
+                                        let reqId = await getFriendReqId(mConfirm[i])
+                                        if (reqId) {
+                                            let userId = mFbReq[reqId]
+                                            if (userId || !ONLY_ME) {
+                                                accept = true
+                                                console.log('Browser: '+mId+' --- Confirm: '+(ONLY_ME ? userId : reqId))
+                                                try {
+                                                    await mConfirm[i].click()
+                                                    await delay(500)
+    
+                                                    if (ONLY_ME) {
+                                                        await axios.delete(BASE_URL+'facebook/request/'+mKey+'/'+reqId+'.json')
+                                                    }
+                                                } catch (error) {}
+                                            }
+                                        }
+                                    } catch (error) {}
+                                }
+        
+                                if (accept) {
+                                    mPrev = -1
+                                }
+                            }
                         }
                     } catch (error) {}
+
+                    await delay(3000)
                 }
 
                 try {
