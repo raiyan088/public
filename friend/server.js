@@ -124,6 +124,10 @@ async function startServer() {
 
     let data = null
     let keys = null
+
+    for (let i = 0; i < 10; i++) {
+        mRuning[(i+1)] = false
+    }
     
     try {
         let response = await axios.get(BASE_URL+'facebook/server/'+USER+'.json')
