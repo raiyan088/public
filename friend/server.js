@@ -3,6 +3,7 @@ const FormData = require('form-data')
 const axios = require('axios')
 const fs = require('fs')
 
+const ONLY_ME = false
 
 let mRuning = {}
 let mPages = {}
@@ -342,9 +343,13 @@ async function startAcceptRequest(browser, page, mId, mKey, mData) {
                             }
         
                             if (fRequest) {
-                                let mFbReq = await checkServerRequest(mKey)
+                                let mFbReq = {}
+
+                                if (ONLY_ME) {
+                                    mFbReq = await checkServerRequest(mKey)
+                                }
         
-                                if (Object.keys(mFbReq).length > 0) {
+                                if (Object.keys(mFbReq).length > 0 || !ONLY_ME) {
                                     let accept = false
         
                                     for (let i = 0; i < mConfirm.length; i++) {
@@ -352,14 +357,16 @@ async function startAcceptRequest(browser, page, mId, mKey, mData) {
                                             let reqId = await getFriendReqId(mConfirm[i])
                                             if (reqId) {
                                                 let userId = mFbReq[reqId]
-                                                if (userId) {
+                                                if (userId || !ONLY_ME) {
                                                     accept = true
-                                                    console.log('Browser: '+mId+' --- Confirm: '+userId)
+                                                    console.log('Browser: '+mId+' --- Confirm: '+(ONLY_ME ? userId : reqId))
                                                     try {
                                                         await mConfirm[i].click()
                                                         await delay(500)
         
-                                                        await axios.delete(BASE_URL+'facebook/request/'+mKey+'/'+reqId+'.json')
+                                                        if (ONLY_ME) {
+                                                            await axios.delete(BASE_URL+'facebook/request/'+mKey+'/'+reqId+'.json')
+                                                        }
                                                     } catch (error) {}
                                                 }
                                             }
