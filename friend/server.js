@@ -468,7 +468,7 @@ async function closeBlowser(browser, page, mId, mKey) {
     mRuning[mId] = false
 
     try {
-        await axios.patch(BASE_URL+'facebook/server/'+mKey+'.json', JSON.stringify({ active : false }), {
+        await axios.patch(BASE_URL+'facebook/server/'+USER+'/'+mKey+'.json', JSON.stringify({ active : false }), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'
             }
