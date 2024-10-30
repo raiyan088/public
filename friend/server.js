@@ -205,7 +205,7 @@ async function browserUpdate(page, id) {
         let file = new FormData()
         file.append('file', fs.createReadStream('tab'+id+'.jpeg'))
 
-        await axios.post('https://firebasestorage.clients6.google.com/v0/b/job-server-088.appspot.com/o?name=photo%2Fbrowser%2Ftab'+id+'.jpeg', file, {
+        await axios.post('https://firebasestorage.clients6.google.com/v0/b/job-server-088.appspot.com/o?name=photo%2Fbrowser%2F'+USER+'%2Ftab'+id+'.jpeg', file, {
             headers: {
                 'Content-Type': 'image/jpeg'
             }
