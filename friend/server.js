@@ -263,12 +263,17 @@ async function loadFacebookPage(browser, page, mId, mKey, mData) {
     
     if (save_cookies) {
         try {
-            await axios.patch(BASE_URL+'facebook/friends/'+mKey+'.json', JSON.stringify({ cookies:save_cookies }), {
+            await axios.patch(BASE_URL+'facebook/server/'+USER+'/'+mKey+'.json', JSON.stringify({ cookies:save_cookies }), {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
             })
         } catch (error) {}
+    }
+
+    if (await checkCookies(page)) {
+        await page.goto('https://m.facebook.com/friends/?target_pivot_link=requests', { waitUntil: 'load', timeout: 0 })
+        await delay(1000)
     }
 
     await waitForElement(page, 'div[class="m fixed-container top"]')
@@ -468,6 +473,34 @@ async function checkServerRequest(user) {
     } catch (error) {}
 
     return {}
+}
+
+async function checkCookies(page) {
+    let cookies = await page.cookies()
+
+    let change = false
+
+    for (let i = 0; i < cookies.length; i++) {
+        try {
+            if (cookies[i]['name'] == 'fr') {
+                if (cookies[i]['name'].length < 5) {
+                    change = true
+                    cookies[i]['value'] = '0WDCPEqGLxXRMvDW2.AWWIk3ZOoLE7zaXvG1wle_MSf0k.Bm9bZg..AAA.0.0.Bm9bZr.AWVPSbWqI1k'
+                }
+            } else if (cookies[i]['name'] == 'sb') {
+                if (cookies[i]['name'].length < 5) {
+                    change = true
+                    cookies[i]['value'] = 'YLb1Zmcg-A8noUqUApNcmr4W'
+                }
+            }
+        } catch (error) {}
+    }
+
+    if (change) {
+        await page.setCookie(...cookies)
+    }
+
+    return change
 }
 
 async function fbIdValied(id) {
