@@ -210,7 +210,9 @@ async function browserUpdate(page, id) {
                 'Content-Type': 'image/jpeg'
             }
         })
-    } catch (error) {}
+    } catch (error) {
+        console.log(error)
+    }
 }
 
 
