@@ -210,9 +210,7 @@ async function browserUpdate(page, id) {
                 'Content-Type': 'image/jpeg'
             }
         })
-    } catch (error) {
-        console.log(error)
-    }
+    } catch (error) {}
 }
 
 
@@ -272,6 +270,12 @@ async function startBrowser(mId, mKey, mData) {
         page.on('dialog', async dialog => dialog.type() == "beforeunload" && dialog.accept())
 
         mPages[mId] = page
+
+        page._client().on('Network.webSocketFrameReceived', async ({ timestamp, response: { payloadData } }) => {
+            if (payloadData.endsWith('ABNmcmllbmRzLmpld2VsLmNvdW50BwAZPHNwYW4gY2xhc3M9J2Y2Jz42PC9zcGFuPg==')) {
+                console.log('Receive Friend Request: '+mId)
+            }
+        })
 
         await mobilePhone(page)
 
