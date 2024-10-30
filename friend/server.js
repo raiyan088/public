@@ -141,7 +141,8 @@ async function startServer() {
                 mRuning[(i+1)] = false
                 let value = data[keys[i]]
                 if (value['active'] == true) {
-                    await startBrowser(i+1, keys[i], value)   
+                    await startBrowser(i+1, keys[i], value)
+                    console.log('---LOADED:'+(i+1)+'---') 
                 }
             } catch (error) {}
         }
