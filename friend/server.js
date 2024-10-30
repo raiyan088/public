@@ -274,6 +274,8 @@ async function startBrowser(mId, mKey, mData) {
         page._client().on('Network.webSocketFrameReceived', async ({ timestamp, response: { payloadData } }) => {
             if (payloadData.endsWith('ABNmcmllbmRzLmpld2VsLmNvdW50BwAZPHNwYW4gY2xhc3M9J2Y2Jz42PC9zcGFuPg==')) {
                 console.log('Receive Friend Request: '+mId)
+            } else if (payloadData.length == 88) {
+                console.log(mId, payloadData)
             }
         })
 
