@@ -308,6 +308,12 @@ async function loadFacebookPage(browser, page, mId, mKey, mData) {
     }
 
     await waitForElement(page, 'div[class="m fixed-container top"]')
+
+    let url = await page.url()
+
+    if (!url.startsWith('https://m.facebook.com/friends')) {
+        console.log('Browser: '+mId+' --- Problam Url: '+url)
+    }
 }
 
 async function startAcceptRequest(browser, page, mId, mKey, mData) {
