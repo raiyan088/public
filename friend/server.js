@@ -278,12 +278,12 @@ async function startBrowser(mId, mKey, mData) {
 
         mRuning[mId] = true
 
-        await loadFacebookPage(browser, page, mId, mKey, mData)
+        let status = await loadFacebookPage(browser, page, mId, mKey, mData)
 
-        await startAcceptRequest(browser, page, mId, mKey, mData)
-    } catch (error) {
-        console.log(error)
-    }
+        if (status) {
+            await startAcceptRequest(browser, page, mId, mKey, mData)   
+        }
+    } catch (error) {}
 }
 
 async function loadFacebookPage(browser, page, mId, mKey, mData) {
@@ -294,6 +294,10 @@ async function loadFacebookPage(browser, page, mId, mKey, mData) {
     let save_cookies = await checkLoginFacebook(browser, page, mId, mKey, mData, 'https://m.facebook.com/friends/?target_pivot_link=requests')
     
     if (save_cookies) {
+        if (save_cookies != 'CLOSE') {
+            return false
+        }
+
         try {
             await axios.patch(BASE_URL+'facebook/server/'+USER+'/'+mKey+'.json', JSON.stringify({ cookies:save_cookies }), {
                 headers: {
@@ -315,6 +319,8 @@ async function loadFacebookPage(browser, page, mId, mKey, mData) {
     if (!url.startsWith('https://m.facebook.com/friends')) {
         console.log('Browser: '+mId+' --- Problam Url: '+url)
     }
+
+    return true
 }
 
 async function startAcceptRequest(browser, page, mId, mKey, mData) {
@@ -390,7 +396,17 @@ async function startAcceptRequest(browser, page, mId, mKey, mData) {
                 }
 
                 try {
-                    await loadFacebookPage(browser, page, mId, mKey, mData)
+                    let status = await loadFacebookPage(browser, page, mId, mKey, mData)
+
+                    if (!status) {
+                        break
+                    }
+                } catch (error) {}
+
+                try {
+                    if (mRuning[mId] == false) {
+                        break
+                    }
                 } catch (error) {}
             }
         } catch (error) {}
@@ -468,7 +484,7 @@ async function checkLoginFacebook(browser, page, mId, mKey, mData, mUrl) {
     
     await closeBlowser(browser, page, mId, mKey)
 
-    return null
+    return 'CLOSE'
 }
 
 async function closeBlowser(browser, page, mId, mKey) {
