@@ -644,10 +644,28 @@ async function mobilePhone(page) {
     })
 }
 
+async function postAxios(url, body, data) {
+    return new Promise((resolve) => {
+        try {
+            fetch(url, {
+                method: 'POST',
+                headers: data,
+                body: body
+            }).then((response) => {
+                resolve('ok')
+            }).catch((error) => {
+                resolve('ok')
+            })
+        } catch (error) {
+            resolve('ok')
+        }
+    })
+}
+
 async function checkStatus() {
     if (FINISH > 0 && FINISH < new Date().getTime()) {
         try {
-            await axios.post(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+15)
             })
         } catch (error) {}
@@ -656,7 +674,7 @@ async function checkStatus() {
         process.exit(0)
     } else {
         try {
-            await axios.post(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+200)
             })
         } catch (error) {}
