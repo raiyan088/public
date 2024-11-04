@@ -1,15 +1,13 @@
 const { exec } = require('node:child_process')
-const fs = require('fs')
 
 startServer()
 
 async function startServer() {
     console.log('Node: Server Start')
 
-    // await waitForInstallEmulator()
+    await waitForInstallEmulator()
     
     console.log('Node: Emulator Install Success')
-    
     
     // await startEmulator()
 }
