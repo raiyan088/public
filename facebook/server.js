@@ -1,8 +1,10 @@
 const { exec } = require('node:child_process')
 const fs = require('fs')
 
+// const ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
 const ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
 const NAME = 'Rvc64'
+// const NAME = 'Rvc64_1'
 
 
 startServer()
@@ -12,11 +14,9 @@ async function startServer() {
 
     await waitForInstallEmulator()
     
-    console.log('Node: Emulator Install Success')
-
-    process.exit(0)
+    console.log('Node: Emulator Starting...')
     
-    // await startEmulator(NAME)
+    await startEmulator(NAME)
 }
 
 async function startEmulator(name) {
@@ -192,6 +192,14 @@ async function waitForInstallEmulator() {
     await cmdExecute('python install.py')
     
     console.log('Node: BlueStacks Installing')
+
+    await waitForDeskTopShorcut()
+
+    console.log('Node: BlueStacks Install Success')
+
+    await delay(1000)
+    await cmdExecute('taskkill /IM "BlueStacksInstaller.exe" /T /F')
+    await delay(2000)
 }
 
 async function waitForStartEmulator(name) {
@@ -283,6 +291,29 @@ async function adbShell(d_id, cmd) {
     } catch (error) {}
 
     return null
+}
+
+async function waitForDeskTopShorcut() {
+    for (let i = 0; i < 120; i++) {
+        try {
+            let list = fs.readdirSync('C:\\Users\\Public\\Desktop')
+            let isInstall = false
+
+            for (let i = 0; i < list.length; i++) {
+                if (list[i] == 'BlueStacks 5.lnk') {
+                    isInstall = true
+                    break
+                }
+            }
+            
+            if (isInstall) {
+                return true
+            }
+        } catch (error) {}
+        await delay(2000)
+    }
+
+    return false
 }
 
 async function randomAdId(bluestacks) {
