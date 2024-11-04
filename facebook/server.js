@@ -31,7 +31,7 @@ async function startEmulator(name) {
     if (connected) {
         console.log('Node: Device Connected')
 
-        await delay(60000)
+        await delay(90000)
 
         process.exit(0)
 
