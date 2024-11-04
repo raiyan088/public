@@ -34,9 +34,6 @@ async function startEmulator(name) {
     if (connected) {
         console.log('Node: Device Connected')
 
-        await delay(10000)
-        process.exit(0)
-
         let toolsInstall = 0
 
         try {
@@ -56,48 +53,36 @@ async function startEmulator(name) {
         }
 
         try {
-            for (let i = 0; i < 10; i++) {
-                let install = await adbAppInstall(mId, 'Facebook.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Facbook Install Success')
-                    break
-                } else {
-                    console.log('Node: Facbook Install Failed')
-                }
-                await delay(5000)
+            let install = await adbFilePush(mId, 'Facebook.apk', '/sdcard/facebook.apk')
+            if (install) {
+                toolsInstall++
+                console.log('Node: Facbook Push Success')
+            } else {
+                console.log('Node: Facbook Push Failed')
             }
         } catch (error) {
-            console.log('Node: Facbook Install Failed')
+            console.log('Node: Facbook Push Failed')
         }
 
         try {
-            for (let i = 0; i < 10; i++) {
-                let install = await adbAppInstall(mId, 'Lite.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Fb-Lite Install Success')
-                    break
-                } else {
-                    console.log('Node: Fb-Lite Install Failed')
-                }
-                await delay(5000)
+            let install = await adbFilePush(mId, 'Lite.apk', '/sdcard/lite.apk')
+            if (install) {
+                toolsInstall++
+                console.log('Node: Facbook Push Success')
+            } else {
+                console.log('Node: Facbook Push Failed')
             }
         } catch (error) {
-            console.log('Node: Fb-Lite Install Failed')
+            console.log('Node: Fb-Lite Push Failed')
         }
 
         try {
-            for (let i = 0; i < 10; i++) {
-                let install = await adbAppInstall(mId, 'Fb_Creator.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Fb-Creator Install Success')
-                    break
-                } else {
-                    console.log('Node: Fb-Creator Install Failed')
-                }
-                await delay(5000)
+            let install = await adbAppInstall(mId, 'Fb_Creator.apk')
+            if (install) {
+                toolsInstall++
+                console.log('Node: Fb-Creator Install Success')
+            } else {
+                console.log('Node: Fb-Creator Install Failed')
             }
         } catch (error) {
             console.log('Node: Fb-Creator Install Failed')
@@ -109,6 +94,7 @@ async function startEmulator(name) {
                 await adbShell(mId, 'pm grant com.carlos.multiapp android.permission.WRITE_EXTERNAL_STORAGE')
                 await adbShell(mId, 'settings put secure enabled_accessibility_services com.carlos.multiapp/com.rr.fb.creator.Accessibility')
                 await adbShell(mId, 'am start -n com.carlos.multiapp/com.rr.fb.creator.MainActivity')
+                await adbShell(mId, 'rm -f /sdcard/status.txt')
             } catch (error) {}
     
             try {
@@ -151,7 +137,6 @@ async function startEmulator(name) {
                     } else if (timeout > 120) {
                         console.log('Node: Emulator did not Response')
                         await delay(1000)
-                        process.exit(0)
                         break
                     }
 
@@ -267,6 +252,18 @@ async function adbAppInstall(d_id, file) {
     try {
         let result = await cmdExecute('adb.exe -s '+d_id+' install '+file)
         if (result && result.includes('Install') && result.includes('Success')) {
+            return true
+        }
+    } catch (error) {}
+
+    return false
+}
+
+async function adbFilePush(d_id, file, target) {
+    try {
+        let result = await cmdExecute('adb.exe -s '+d_id+' push '+file+' '+target)
+
+        if (result && result.includes('file pushed')) {
             return true
         }
     } catch (error) {}
