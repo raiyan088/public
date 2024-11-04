@@ -35,6 +35,7 @@ async function startEmulator(name) {
         console.log('Node: Device Connected')
 
         await delay(10000)
+        process.exit(0)
 
         let toolsInstall = 0
 
