@@ -29,7 +29,30 @@ async function startEmulator(name) {
     if (connected) {
         console.log('Node: Device Connected')
 
+        await delay(10000)
+
         let toolsInstall = 0
+
+        try {
+            if (!await adbIsInstalled(mId, 'com.carlos.multiapp.ext')) {
+                for (let i = 0; i < 10; i++) {
+                    let install = await adbAppInstall(mId, 'CarlosPlus.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Fb-Creator 32-bit Install Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Creator 32-bit Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } else {
+                toolsInstall++
+                console.log('Node: Fb-Creator 32-bit Already Installed')
+            }
+        } catch (error) {
+            console.log('Node: Fb-Creator 32-bit Install Failed')
+        }
 
         try {
             if (!await adbIsInstalled(mId, 'com.facebook.katana')) {
@@ -42,7 +65,7 @@ async function startEmulator(name) {
                     } else {
                         console.log('Node: Facbook Install Failed')
                     }
-                    await delay(3000)
+                    await delay(5000)
                 }
             } else {
                 toolsInstall++
@@ -63,7 +86,7 @@ async function startEmulator(name) {
                     } else {
                         console.log('Node: Fb-Lite Install Failed')
                     }
-                    await delay(3000)
+                    await delay(5000)
                 }
             } else {
                 toolsInstall++
@@ -84,7 +107,7 @@ async function startEmulator(name) {
                     } else {
                         console.log('Node: Fb-Creator Install Failed')
                     }
-                    await delay(3000)
+                    await delay(5000)
                 }
             } else {
                 toolsInstall++
@@ -92,27 +115,6 @@ async function startEmulator(name) {
             }
         } catch (error) {
             console.log('Node: Fb-Creator Install Failed')
-        }
-
-        try {
-            if (!await adbIsInstalled(mId, 'com.carlos.multiapp.ext')) {
-                for (let i = 0; i < 10; i++) {
-                    let install = await adbAppInstall(mId, 'CarlosPlus.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Creator 32-bit Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Creator 32-bit Install Failed')
-                    }
-                    await delay(3000)
-                }
-            } else {
-                toolsInstall++
-                console.log('Node: Fb-Creator 32-bit Already Installed')
-            }
-        } catch (error) {
-            console.log('Node: Fb-Creator 32-bit Install Failed')
         }
 
         if (toolsInstall >=  4) {
@@ -146,6 +148,9 @@ async function startEmulator(name) {
                                 } catch (error) {}
     
                                 if (time != prevTime) {
+                                    if (split[2].includes('Fb: Create Timeout')) {
+                                        process.exit(0)
+                                    }
                                     console.log('Node: [ Account: '+accountCreate+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
                                     timeout = 0
                                     prevTime = time
