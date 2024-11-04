@@ -1,16 +1,19 @@
 const { exec } = require('node:child_process')
 const fs = require('fs')
 
-//const ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
-const ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
-const NAME = 'Rvc64'
-//const NAME = 'Rvc64_1'
+let ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
+let NAME = 'Rvc64'
 
 
 startServer()
 
 async function startServer() {
     console.log('Node: Server Start')
+
+    if (fs.existsSync('localserver')) {
+        ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
+        NAME = 'Rvc64_1'
+    }
 
     if (!await isInstallEmulator()) {
         await waitForInstallEmulator()
@@ -126,13 +129,10 @@ async function startEmulator(name) {
                                 } catch (error) {}
     
                                 try {
-                                    srtTime = parseInt(time) * 1000
+                                    srtTime = parseInt(time)
                                 } catch (error) {}
     
                                 if (time != prevTime) {
-                                    if (split[2].includes('Fb: Create Timeout')) {
-                                        process.exit(0)
-                                    }
                                     console.log('Node: [ Account: '+accountCreate+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
                                     timeout = 0
                                     prevTime = time
@@ -150,6 +150,7 @@ async function startEmulator(name) {
                     } else if (timeout > 120) {
                         console.log('Node: Emulator did not Response')
                         await delay(1000)
+                        process.exit(0)
                         break
                     }
 
@@ -207,7 +208,7 @@ async function waitForStartEmulator(name) {
     } catch (error) {}
 
     await delay(2000)
-    cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name+' --cmd launchApp --package "com.facebook.lite"')
+    cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name+' --cmd launchApp --package "com.carlos.multiapp.ext"')
     
     for (let i = 0; i < 60; i++) {
         try {
