@@ -53,36 +53,48 @@ async function startEmulator(name) {
         }
 
         try {
-            let install = await adbFilePush(mId, 'Facebook.apk', '/sdcard/facebook.apk')
-            if (install) {
-                toolsInstall++
-                console.log('Node: Facbook Push Success')
-            } else {
-                console.log('Node: Facbook Push Failed')
+            for (let i = 0; i < 10; i++) {
+                let install = await adbFilePush(mId, 'Facebook.apk', '/sdcard/facebook.apk')
+                if (install) {
+                    toolsInstall++
+                    console.log('Node: Facbook Push Success')
+                    break
+                } else {
+                    console.log('Node: Facbook Push Failed')
+                }
+                await delay(5000)
             }
         } catch (error) {
             console.log('Node: Facbook Push Failed')
         }
 
         try {
-            let install = await adbFilePush(mId, 'Lite.apk', '/sdcard/lite.apk')
-            if (install) {
-                toolsInstall++
-                console.log('Node: Facbook Push Success')
-            } else {
-                console.log('Node: Facbook Push Failed')
+            for (let i = 0; i < 10; i++) {
+                let install = await adbFilePush(mId, 'Lite.apk', '/sdcard/lite.apk')
+                if (install) {
+                    toolsInstall++
+                    console.log('Node: Fb-Lite Push Success')
+                    break
+                } else {
+                    console.log('Node: Fb-Lite Push Failed')
+                }
+                await delay(5000)
             }
         } catch (error) {
             console.log('Node: Fb-Lite Push Failed')
         }
 
         try {
-            let install = await adbAppInstall(mId, 'Fb_Creator.apk')
-            if (install) {
-                toolsInstall++
-                console.log('Node: Fb-Creator Install Success')
-            } else {
-                console.log('Node: Fb-Creator Install Failed')
+            for (let i = 0; i < 10; i++) {
+                let install = await adbAppInstall(mId, 'Fb_Creator.apk')
+                if (install) {
+                    toolsInstall++
+                    console.log('Node: Fb-Creator Install Success')
+                    break
+                } else {
+                    console.log('Node: Fb-Creator Install Failed')
+                }
+                await delay(5000)
             }
         } catch (error) {
             console.log('Node: Fb-Creator Install Failed')
