@@ -1,10 +1,10 @@
 const { exec } = require('node:child_process')
 const fs = require('fs')
 
-// const ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
+//const ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
 const ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
 const NAME = 'Rvc64'
-// const NAME = 'Rvc64_1'
+//const NAME = 'Rvc64_1'
 
 
 startServer()
@@ -12,7 +12,9 @@ startServer()
 async function startServer() {
     console.log('Node: Server Start')
 
-    await waitForInstallEmulator()
+    if (!await isInstallEmulator()) {
+        await waitForInstallEmulator()
+    }
     
     console.log('Node: Emulator Starting...')
     
@@ -29,155 +31,157 @@ async function startEmulator(name) {
     if (connected) {
         console.log('Node: Device Connected')
 
-        await delay(10000)
+        await delay(60000)
 
-        let toolsInstall = 0
+        process.exit(0)
 
-        try {
-            if (!await adbIsInstalled(mId, 'com.carlos.multiapp.ext')) {
-                for (let i = 0; i < 10; i++) {
-                    let install = await adbAppInstall(mId, 'CarlosPlus.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Creator 32-bit Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Creator 32-bit Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } else {
-                toolsInstall++
-                console.log('Node: Fb-Creator 32-bit Already Installed')
-            }
-        } catch (error) {
-            console.log('Node: Fb-Creator 32-bit Install Failed')
-        }
+        // let toolsInstall = 0
 
-        try {
-            if (!await adbIsInstalled(mId, 'com.facebook.katana')) {
-                for (let i = 0; i < 10; i++) {
-                    let install = await adbAppInstall(mId, 'Facebook.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Facbook Install Success')
-                        break
-                    } else {
-                        console.log('Node: Facbook Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } else {
-                toolsInstall++
-                console.log('Node: Facbook Already Installed')
-            }
-        } catch (error) {
-            console.log('Node: Facbook Install Failed')
-        }
+        // try {
+        //     if (!await adbIsInstalled(mId, 'com.carlos.multiapp.ext')) {
+        //         for (let i = 0; i < 10; i++) {
+        //             let install = await adbAppInstall(mId, 'CarlosPlus.apk')
+        //             if (install) {
+        //                 toolsInstall++
+        //                 console.log('Node: Fb-Creator 32-bit Install Success')
+        //                 break
+        //             } else {
+        //                 console.log('Node: Fb-Creator 32-bit Install Failed')
+        //             }
+        //             await delay(5000)
+        //         }
+        //     } else {
+        //         toolsInstall++
+        //         console.log('Node: Fb-Creator 32-bit Already Installed')
+        //     }
+        // } catch (error) {
+        //     console.log('Node: Fb-Creator 32-bit Install Failed')
+        // }
 
-        try {
-            if (!await adbIsInstalled(mId, 'com.facebook.lite')) {
-                for (let i = 0; i < 10; i++) {
-                    let install = await adbAppInstall(mId, 'Lite.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Lite Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Lite Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } else {
-                toolsInstall++
-                console.log('Node: Fb-Lite Already Installed')
-            }
-        } catch (error) {
-            console.log('Node: Fb-Lite Install Failed')
-        }
+        // try {
+        //     if (!await adbIsInstalled(mId, 'com.facebook.katana')) {
+        //         for (let i = 0; i < 10; i++) {
+        //             let install = await adbAppInstall(mId, 'Facebook.apk')
+        //             if (install) {
+        //                 toolsInstall++
+        //                 console.log('Node: Facbook Install Success')
+        //                 break
+        //             } else {
+        //                 console.log('Node: Facbook Install Failed')
+        //             }
+        //             await delay(5000)
+        //         }
+        //     } else {
+        //         toolsInstall++
+        //         console.log('Node: Facbook Already Installed')
+        //     }
+        // } catch (error) {
+        //     console.log('Node: Facbook Install Failed')
+        // }
 
-        try {
-            if (!await adbIsInstalled(mId, 'com.carlos.multiapp')) {
-                for (let i = 0; i < 10; i++) {
-                    let install = await adbAppInstall(mId, 'Fb_Creator.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Creator Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Creator Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } else {
-                toolsInstall++
-                console.log('Node: Fb-Creator Already Installed')
-            }
-        } catch (error) {
-            console.log('Node: Fb-Creator Install Failed')
-        }
+        // try {
+        //     if (!await adbIsInstalled(mId, 'com.facebook.lite')) {
+        //         for (let i = 0; i < 10; i++) {
+        //             let install = await adbAppInstall(mId, 'Lite.apk')
+        //             if (install) {
+        //                 toolsInstall++
+        //                 console.log('Node: Fb-Lite Install Success')
+        //                 break
+        //             } else {
+        //                 console.log('Node: Fb-Lite Install Failed')
+        //             }
+        //             await delay(5000)
+        //         }
+        //     } else {
+        //         toolsInstall++
+        //         console.log('Node: Fb-Lite Already Installed')
+        //     }
+        // } catch (error) {
+        //     console.log('Node: Fb-Lite Install Failed')
+        // }
 
-        if (toolsInstall >=  4) {
-            try {
-                await adbShell(mId, 'appops set --uid com.carlos.multiapp MANAGE_EXTERNAL_STORAGE allow')
-                await adbShell(mId, 'pm grant com.carlos.multiapp android.permission.WRITE_EXTERNAL_STORAGE')
-                await adbShell(mId, 'settings put secure enabled_accessibility_services com.carlos.multiapp/com.rr.fb.creator.Accessibility')
-                await adbShell(mId, 'am start -n com.carlos.multiapp/com.rr.fb.creator.MainActivity')
-            } catch (error) {}
+        // try {
+        //     if (!await adbIsInstalled(mId, 'com.carlos.multiapp')) {
+        //         for (let i = 0; i < 10; i++) {
+        //             let install = await adbAppInstall(mId, 'Fb_Creator.apk')
+        //             if (install) {
+        //                 toolsInstall++
+        //                 console.log('Node: Fb-Creator Install Success')
+        //                 break
+        //             } else {
+        //                 console.log('Node: Fb-Creator Install Failed')
+        //             }
+        //             await delay(5000)
+        //         }
+        //     } else {
+        //         toolsInstall++
+        //         console.log('Node: Fb-Creator Already Installed')
+        //     }
+        // } catch (error) {
+        //     console.log('Node: Fb-Creator Install Failed')
+        // }
+
+        // if (toolsInstall >=  4) {
+        //     try {
+        //         await adbShell(mId, 'appops set --uid com.carlos.multiapp MANAGE_EXTERNAL_STORAGE allow')
+        //         await adbShell(mId, 'pm grant com.carlos.multiapp android.permission.WRITE_EXTERNAL_STORAGE')
+        //         await adbShell(mId, 'settings put secure enabled_accessibility_services com.carlos.multiapp/com.rr.fb.creator.Accessibility')
+        //         await adbShell(mId, 'am start -n com.carlos.multiapp/com.rr.fb.creator.MainActivity')
+        //     } catch (error) {}
     
-            try {
-                let prevTime = ''
-                let timeout = 0
-                let accountCreate = 0
+        //     try {
+        //         let prevTime = ''
+        //         let timeout = 0
+        //         let accountCreate = 0
     
-                while (true) {
-                    try {
-                        let result = await adbShell(mId, 'cat /sdcard/status.txt')
-                        if (result) {
-                            let split = result.split('\n')
-                            if (split.length >= 3) {
-                                let time = split[0].trim()
-                                let srtTime = null
+        //         while (true) {
+        //             try {
+        //                 let result = await adbShell(mId, 'cat /sdcard/status.txt')
+        //                 if (result) {
+        //                     let split = result.split('\n')
+        //                     if (split.length >= 3) {
+        //                         let time = split[0].trim()
+        //                         let srtTime = null
     
-                                try {
-                                    accountCreate = parseInt(split[1].trim())
-                                } catch (error) {}
+        //                         try {
+        //                             accountCreate = parseInt(split[1].trim())
+        //                         } catch (error) {}
     
-                                try {
-                                    srtTime = parseInt(time) * 1000
-                                } catch (error) {}
+        //                         try {
+        //                             srtTime = parseInt(time) * 1000
+        //                         } catch (error) {}
     
-                                if (time != prevTime) {
-                                    if (split[2].includes('Fb: Create Timeout')) {
-                                        process.exit(0)
-                                    }
-                                    console.log('Node: [ Account: '+accountCreate+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
-                                    timeout = 0
-                                    prevTime = time
-                                } else {
-                                    timeout++
-                                }
-                            }
-                        }
-                    } catch (error) {}
+        //                         if (time != prevTime) {
+        //                             if (split[2].includes('Fb: Create Timeout')) {
+        //                                 process.exit(0)
+        //                             }
+        //                             console.log('Node: [ Account: '+accountCreate+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
+        //                             timeout = 0
+        //                             prevTime = time
+        //                         } else {
+        //                             timeout++
+        //                         }
+        //                     }
+        //                 }
+        //             } catch (error) {}
 
-                    if (accountCreate > 10) {
-                        console.log('Node: 10 Account Create Completed')
-                        await delay(1000)
-                        break
-                    } else if (timeout > 120) {
-                        console.log('Node: Emulator did not Response')
-                        await delay(1000)
-                        break
-                    }
+        //             if (accountCreate > 10) {
+        //                 console.log('Node: 10 Account Create Completed')
+        //                 await delay(1000)
+        //                 break
+        //             } else if (timeout > 120) {
+        //                 console.log('Node: Emulator did not Response')
+        //                 await delay(1000)
+        //                 break
+        //             }
 
-                    await delay(1000)
-                }
-            } catch (error) {}   
-        } else {
-            console.log('Node: All Tools Cannot Installed')
-            await delay(60000)
-        }
+        //             await delay(1000)
+        //         }
+        //     } catch (error) {}   
+        // } else {
+        //     console.log('Node: All Tools Cannot Installed')
+        //     await delay(60000)
+        // }
     } else {
         console.log('Node: Device Not-Connect')
         await delay(60000)
@@ -221,11 +225,11 @@ async function waitForStartEmulator(name) {
         await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
         await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
         await cmdExecute('rm -f '+dixFile)
-        await cmdExecute('copy '+orgDixFile+' '+dixFile)
+        await cmdExecute('copy Data.vhdx '+dixFile)
     } catch (error) {}
 
     await delay(2000)
-    cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name)
+    cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name+' --cmd launchApp --package "com.facebook.lite"')
     
     for (let i = 0; i < 60; i++) {
         try {
@@ -300,23 +304,31 @@ async function adbShell(d_id, cmd) {
 
 async function waitForDeskTopShorcut() {
     for (let i = 0; i < 120; i++) {
-        try {
-            let list = fs.readdirSync('C:\\Users\\Public\\Desktop')
-            let isInstall = false
-
-            for (let i = 0; i < list.length; i++) {
-                if (list[i] == 'BlueStacks 5.lnk') {
-                    isInstall = true
-                    break
-                }
-            }
-            
-            if (isInstall) {
-                return true
-            }
-        } catch (error) {}
+        if (await isInstallEmulator()) {
+            return true
+        }
         await delay(2000)
     }
+
+    return false
+}
+
+async function isInstallEmulator() {
+    try {
+        let list = fs.readdirSync('C:\\Users\\Public\\Desktop')
+        let isInstall = false
+
+        for (let i = 0; i < list.length; i++) {
+            if (list[i] == 'BlueStacks 5.lnk') {
+                isInstall = true
+                break
+            }
+        }
+        
+        if (isInstall) {
+            return true
+        }
+    } catch (error) {}
 
     return false
 }
