@@ -4,8 +4,15 @@ const fs = require('fs')
 let ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
 let NAME = 'Rvc64'
 
+let USER = getUserName()
+let FINISH = new Date().getTime()+21000000
+
 
 startServer()
+
+setInterval(async () => {
+    await checkStatus()
+}, 120000)
 
 async function startServer() {
     console.log('Node: Server Start')
@@ -14,6 +21,8 @@ async function startServer() {
         ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
         NAME = 'Rvc64_1'
     }
+
+    await checkStatus()
 
     if (!await isInstallEmulator()) {
         await waitForInstallEmulator()
@@ -360,6 +369,67 @@ async function cmdExecute(cmd) {
     })
 }
 
+async function postAxios(url, body, data) {
+    return new Promise((resolve) => {
+        try {
+            fetch(url, {
+                method: 'POST',
+                headers: data,
+                body: body
+            }).then((response) => {
+                resolve('ok')
+            }).catch((error) => {
+                resolve('ok')
+            })
+        } catch (error) {
+            resolve('ok')
+        }
+    })
+}
+
+async function checkStatus() {
+    if (FINISH > 0 && FINISH < new Date().getTime()) {
+        try {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+15)
+            })
+        } catch (error) {}
+
+        console.log('---COMPLETED---')
+        process.exit(0)
+    } else {
+        try {
+            await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+200)
+            })
+        } catch (error) {}
+    }
+}
+
+function getUserName() {
+    try {
+        let directory = __dirname.split('\\')
+        if (directory.length > 1) {
+            let name = directory[directory.length-1]
+            if (name) {
+                return name
+            }
+        }
+    } catch (error) {}
+
+    try {
+        let directory = __dirname.split('/')
+        if (directory.length > 1) {
+            let name = directory[directory.length-1]
+            if (name) {
+                return name
+            }
+        }
+    } catch (error) {}
+
+    return null
+}
+
 function randomHex(size) {
     let C = ['0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f']
     
@@ -378,6 +448,7 @@ function getTimeString(time) {
     }
     return new Date().toLocaleTimeString('en-us', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
 }
+
 
 function delay(time) {
     return new Promise(function(resolve) {
