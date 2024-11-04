@@ -1,0 +1,14 @@
+{
+  "name": "Fb-Creator",
+  "version": "1.0.0",
+  "main": "server.js",
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "fs": "^0.0.1-security"
+  }
+}
