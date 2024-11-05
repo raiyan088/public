@@ -43,6 +43,8 @@ async function startEmulator(name) {
     if (connected) {
         console.log('Node: Device Connected')
 
+        process.exit(0)
+
         let toolsInstall = 0
 
         try {
