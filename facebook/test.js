@@ -21,7 +21,7 @@ async function startServer() {
         let connected = await waitForDeviceOnline(mId)
 
         if (connected) {
-            console.log('Node: Device Connected')
+            console.log('Node: Connected Device: '+connected)
 
             while (true) {
                 try {
@@ -81,14 +81,25 @@ async function waitForDeviceOnline(d_id) {
             })
 
             if (deviceOnline) {
-                return true
+                break
             }
         } catch (error) {}
 
         await delay(1000)
     }
 
-    return false
+    for (let i = 0; i < 60; i++) {
+        try {
+            let result = await adbShell(d_id, 'getprop ro.product.cpu.abi')
+            if (result) {
+                return result
+            }
+        } catch (error) {}
+
+        await delay(1000)
+    }
+
+    return null
 }
 
 async function waitForStartEmulator(host, port) {
