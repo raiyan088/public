@@ -12,41 +12,46 @@ startServer()
 async function startServer() {
     let mId = await waitForStartEmulator('127.0.0.1', 5555)
 
-    console.log('Device: '+mId)
+    if (mId) {
+        console.log('Device: '+mId)
     
-    let connected = await waitForDeviceOnline(mId)
-
-    if (connected) {
-        console.log('Device Online: '+mId)
-
-        while (true) {
-            try {
-                let name = await captureScreen(await client.screencap(mId))
-                if (name) {
-                    try {
-                        let file = new FormData()
-                        file.append('file', fs.createReadStream(name))
-
-                        await axios.post('https://firebasestorage.clients6.google.com/v0/b/job-server-088.appspot.com/o?name=photo%2Femulator%2F'+(new Date().getTime())+'.jpg', file, {
-                            headers: {
-                                'Content-Type': 'image/jpeg'
-                            }
-                        })
-
-                        console.log('Capture Success')
-                    } catch (error) {
-                        console.log('Upload Failed')
+        let connected = await waitForDeviceOnline(mId)
+    
+        if (connected) {
+            console.log('Device Online: '+mId)
+    
+            while (true) {
+                try {
+                    let name = await captureScreen(await client.screencap(mId))
+                    if (name) {
+                        try {
+                            let file = new FormData()
+                            file.append('file', fs.createReadStream(name))
+    
+                            await axios.post('https://firebasestorage.clients6.google.com/v0/b/job-server-088.appspot.com/o?name=photo%2Femulator%2F'+(new Date().getTime())+'.jpg', file, {
+                                headers: {
+                                    'Content-Type': 'image/jpeg'
+                                }
+                            })
+    
+                            console.log('Capture Success')
+                        } catch (error) {
+                            console.log('Upload Failed')
+                        }
+                    } else {
+                        console.log('Capture Null')
                     }
-                } else {
-                    console.log('Capture Null')
+                } catch (error) {
+                    console.log('Capture Error')
                 }
-            } catch (error) {
-                console.log('Capture Error')
+                await delay(30000)
             }
-            await delay(30000)
-        }
+        } else {
+            console.log('Device Offline: '+mId)
+            await delay(10000000)
+        }   
     } else {
-        console.log('Device Offline: '+mId)
+        console.log('Device: Null')
         await delay(10000000)
     }
 }
