@@ -10,6 +10,12 @@ const client = adb.createClient()
 startServer()
 
 async function startServer() {
+    let list = await client.listDevices()
+
+    console.log(list)
+
+    process.exit(0)
+    
     let mId = await waitForStartEmulator('127.0.0.1', 5555)
 
     if (mId) {
