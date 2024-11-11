@@ -38,6 +38,8 @@ async function startServer() {
                 console.log('Node: Fb-Lite Install Failed')
             }
 
+            await adbShell(mId, 'am start -n com.facebook.lite/com.facebook.lite.MainActivity')
+        
             while (true) {
                 try {
                     await adbShell(mId, 'screencap -p /sdcard/capture.jpg')
@@ -65,6 +67,8 @@ async function startServer() {
                     console.log('Capture Error')
                 }
                 await delay(30000)
+
+                await adbShell(mId, 'am start -n com.facebook.lite/com.facebook.lite.MainActivity')
             }
         } else {
             console.log("Node: Device Can't Connected")
