@@ -70,7 +70,7 @@ async function startServer() {
                 }
                 await delay(10000)
 
-                await adbShell(mId, 'am start -n com.facebook.lite/com.facebook.lite.MainActivity')
+                await adbShell(mId, 'am start -n com.facebook.katana/com.facebook.katana.LoginActivity')
 
                 await delay(20000)
             }
