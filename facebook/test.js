@@ -25,7 +25,7 @@ async function startServer() {
 
             try {
                 for (let i = 0; i < 30; i++) {
-                    let install = await adbAppInstall(mId, 'Lite.apk')
+                    let install = await adbAppInstall(mId, 'Facebook.apk')
                     if (install) {
                         console.log('Node: Facebook Install Success')
                         break
