@@ -40,6 +40,8 @@ async function startServer() {
 
             await adbShell(mId, 'am start -n com.facebook.lite/com.facebook.lite.MainActivity')
         
+            await delay(10000)
+            
             while (true) {
                 try {
                     await adbShell(mId, 'screencap -p /sdcard/capture.jpg')
@@ -66,9 +68,11 @@ async function startServer() {
                 } catch (error) {
                     console.log('Capture Error')
                 }
-                await delay(30000)
+                await delay(20000)
 
                 await adbShell(mId, 'am start -n com.facebook.lite/com.facebook.lite.MainActivity')
+
+                await delay(10000)
             }
         } else {
             console.log("Node: Device Can't Connected")
