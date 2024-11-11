@@ -23,6 +23,21 @@ async function startServer() {
         if (connected) {
             console.log('Node: Connected Device: '+connected)
 
+            try {
+                for (let i = 0; i < 30; i++) {
+                    let install = await adbAppInstall(mId, 'Lite.apk')
+                    if (install) {
+                        console.log('Node: Fb-Lite Install Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Lite Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Lite Install Failed')
+            }
+
             while (true) {
                 try {
                     await adbShell(mId, 'screencap -p /sdcard/capture.jpg')
@@ -141,6 +156,17 @@ async function adbShell(d_id, cmd) {
     } catch (error) {}
 
     return null
+}
+
+async function adbAppInstall(d_id, file) {
+    try {
+        let result = await cmdExecute(ADB+'-s '+d_id+' install '+file)
+        if (result && result.includes('Install') && result.includes('Success')) {
+            return true
+        }
+    } catch (error) {}
+
+    return false
 }
 
 async function adbPull(d_id, path) {
