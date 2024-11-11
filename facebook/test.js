@@ -27,18 +27,18 @@ async function startServer() {
                 for (let i = 0; i < 30; i++) {
                     let install = await adbAppInstall(mId, 'Lite.apk')
                     if (install) {
-                        console.log('Node: Fb-Lite Install Success')
+                        console.log('Node: Facebook Install Success')
                         break
                     } else {
-                        console.log('Node: Fb-Lite Install Failed')
+                        console.log('Node: Facebook Install Failed')
                     }
                     await delay(5000)
                 }
             } catch (error) {
-                console.log('Node: Fb-Lite Install Failed')
+                console.log('Node: Facebook Install Failed')
             }
 
-            await adbShell(mId, 'am start -n com.facebook.lite/com.facebook.lite.MainActivity')
+            await adbShell(mId, 'am start -n com.facebook.katana/com.facebook.katana.LoginActivity')
         
             await delay(20000)
 
