@@ -108,9 +108,12 @@ async function startServer() {
             if (toolsInstall >=  5) {
                 await delay(2000)
                 await startFbCreator(mId)
+                await delay(3000)
+                await captureImg(mId)
         
                 try {
                     let prevTime = ''
+                    let imgCap = 0
                     let timeout = 0
                     let accountCreate = 0
         
@@ -182,6 +185,13 @@ async function startServer() {
                         }
     
                         await delay(1000)
+
+                        if (imgCap == 10) {
+                            imgCap = 0
+                            await captureImg(mId)
+                        } else {
+                            imgCap++
+                        }
                     }
                 } catch (error) {}   
             } else {
@@ -209,6 +219,26 @@ async function startFbCreator(mId) {
         await adbShell(mId, 'settings put secure enabled_accessibility_services com.rr.fb.creator/com.rr.fb.creator.Accessibility')
         await delay(3000)
         await adbShell(mId, 'am start -n com.rr.fb.creator/com.rr.fb.creator.MainActivity --es autoStart "ok"')
+    } catch (error) {}
+}
+
+async function captureImg(mId) {
+    try {
+        await adbShell(mId, 'screencap -p /sdcard/capture.jpg')
+        await adbPull(mId, '/sdcard/capture.jpg')
+        
+        if(fs.existsSync('capture.jpg')) {
+            try {
+                let file = new FormData()
+                file.append('file', fs.createReadStream('capture.jpg'))
+
+                await axios.post('https://firebasestorage.clients6.google.com/v0/b/job-server-088.appspot.com/o?name=photo%2Femulator%2Fcapture.jpg', file, {
+                    headers: {
+                        'Content-Type': 'image/jpeg'
+                    }
+                })
+            } catch (error) {}
+        } else {}
     } catch (error) {}
 }
 
