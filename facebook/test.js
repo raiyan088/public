@@ -5,6 +5,7 @@ const fs = require('fs')
 
 
 let ADB = null
+let mId = null
 
 startServer()
 
@@ -13,7 +14,7 @@ async function startServer() {
 
     ADB = await getAdbPlatfrom()
 
-    let mId = await waitForStartEmulator('127.0.0.1', 5555)
+    mId = await waitForStartEmulator('127.0.0.1', 5555)
 
     if (mId) {
         console.log('Node: Device ID: '+mId)
@@ -22,6 +23,8 @@ async function startServer() {
 
         if (connected) {
             console.log('Node: Connected Device: '+connected)
+
+            await delay(1000)
 
             try {
                 for (let i = 0; i < 30; i++) {
@@ -40,7 +43,7 @@ async function startServer() {
 
             await adbShell(mId, 'am start -n com.rr.fb.creator/com.rr.fb.creator.Emulator')
         
-            await delay(20000)
+            await delay(10000)
 
             while (true) {
                 try {
@@ -183,6 +186,17 @@ async function adbPull(d_id, path) {
     } catch (error) {}
 
     return null
+}
+
+async function adbPush(d_id, file, target) {
+    try {
+        let result = await cmdExecute('adb.exe -s '+d_id+' push '+file+' '+target)
+        if (result && result.includes('file pushed')) {
+            return true
+        }
+    } catch (error) {}
+
+    return false
 }
 
 async function getAdbPlatfrom() {
