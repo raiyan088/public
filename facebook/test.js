@@ -216,6 +216,8 @@ async function startFbCreator(mId) {
         await adbShell(mId, 'rm -f /sdcard/status.txt')
         await adbShell(mId, 'appops set --uid com.rr.fb.creator MANAGE_EXTERNAL_STORAGE allow')
         await adbShell(mId, 'pm grant com.rr.fb.creator android.permission.WRITE_EXTERNAL_STORAGE')
+        await adbShell(mId, 'pm grant com.carlos.multiapp android.permission.READ_CONTACTS')
+        await adbShell(mId, 'pm grant com.carlos.multiapp.ext android.permission.READ_CONTACTS')
         await adbShell(mId, 'settings put secure enabled_accessibility_services com.rr.fb.creator/com.rr.fb.creator.Accessibility')
         await delay(3000)
         await adbShell(mId, 'am start -n com.rr.fb.creator/com.rr.fb.creator.MainActivity --es autoStart "ok"')
