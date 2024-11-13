@@ -162,7 +162,7 @@ async function startServer() {
                 await adbPush(mId, 'url.txt', '/sdcard/url.txt')
                 await accountPermissionDisable()
                 await startFbCreator(mId)
-                // await captureImg(mId)
+                await captureImg(mId)
 
                 try {
                     let prevTime = ''
@@ -243,7 +243,7 @@ async function startServer() {
 
                         if (imgCap == 10) {
                             imgCap = 0
-                            // await captureImg(mId)
+                            await captureImg(mId)
                         } else {
                             imgCap++
                         }
