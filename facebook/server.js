@@ -263,6 +263,8 @@ async function startServer() {
     }
 
     console.log('Node: ---COMPLETED---')
+
+    process.exit(0)
 }
 
 async function startFbCreator(mId) {
