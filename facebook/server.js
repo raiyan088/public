@@ -45,19 +45,9 @@ app.get('/adb', async (req, res) => {
                     await adbShell(mId, 'am start com.facebook.lite/com.facebook.lite.MainActivity')
                 } else if(cmd == 'cookiesSetting') {
                     if (mDocker) {
-                        let openCookies = await cmdExecute('docker exec -i emulator am start -n com.facebook.katana/com.facebook.katana.immersiveactivity.ImmersiveActivity --es mobile_page "https://m.facebook.com/privacy/policies/cookies/"')
-                        if (openCookies) {
-                            console.log('Node: Open Facebook Cookies Settinge')
-                        } else {
-                            console.log('Node: Cookies Settinge Open Failed')
-                        }
+                        await cmdExecute('docker exec -i emulator am start -n com.facebook.katana/com.facebook.katana.immersiveactivity.ImmersiveActivity --es mobile_page "https://m.facebook.com/privacy/policies/cookies/"')
                     } else {
-                        let openCookies = await adbShell(mId, '"su -c am start -n com.facebook.katana/com.facebook.katana.immersiveactivity.ImmersiveActivity --es mobile_page \"https://m.facebook.com/privacy/policies/cookies/\""')
-                        if (openCookies) {
-                            console.log('Node: Open Facebook Cookies Settinge')
-                        } else {
-                            console.log('Node: Cookies Settinge Open Failed')
-                        }
+                        await adbShell(mId, '"su -c am start -n com.facebook.katana/com.facebook.katana.immersiveactivity.ImmersiveActivity --es mobile_page \"https://m.facebook.com/privacy/policies/cookies/\""')
                     }
                 } else if(cmd == 'getFbId') {
                     if (mDocker) {
@@ -172,7 +162,7 @@ async function startServer() {
                 await adbPush(mId, 'url.txt', '/sdcard/url.txt')
                 await accountPermissionDisable()
                 await startFbCreator(mId)
-                await captureImg(mId)
+                // await captureImg(mId)
 
                 try {
                     let prevTime = ''
@@ -239,8 +229,8 @@ async function startServer() {
                             console.log('Error: '+error)
                         }
     
-                        if (accountCreate > 5) {
-                            console.log('Node: 5 Account Create Completed')
+                        if (accountCreate > 3) {
+                            console.log('Node: 3 Account Create Completed')
                             await delay(1000)
                             break
                         } else if (timeout > 120) {
@@ -253,7 +243,7 @@ async function startServer() {
 
                         if (imgCap == 10) {
                             imgCap = 0
-                            await captureImg(mId)
+                            // await captureImg(mId)
                         } else {
                             imgCap++
                         }
