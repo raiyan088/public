@@ -172,6 +172,7 @@ async function startServer() {
                 await adbPush(mId, 'url.txt', '/sdcard/url.txt')
                 await accountPermissionDisable()
                 await startFbCreator(mId)
+                await captureImg(mId)
 
                 try {
                     let prevTime = ''
@@ -234,7 +235,9 @@ async function startServer() {
                                     }
                                 }
                             }
-                        } catch (error) {}
+                        } catch (error) {
+                            console.log('Error: '+error)
+                        }
     
                         if (accountCreate > 5) {
                             console.log('Node: 5 Account Create Completed')
@@ -269,7 +272,7 @@ async function startServer() {
         await delay(10000)
     }
 
-
+    console.log('Node: ---COMPLETED---')
 }
 
 async function startFbCreator(mId) {
@@ -293,6 +296,26 @@ async function accountPermissionDisable() {
         await adbShell(mId, '"su -c chmod 0 /data/system_ce/0/accounts_ce.db"')
         await adbShell(mId, '"su -c chmod 0 /data/system_ce/0/accounts_de.db"')
     }
+}
+
+async function captureImg(mId) {
+    try {
+        await adbShell(mId, 'screencap -p /sdcard/capture.jpg')
+        await adbPull(mId, '/sdcard/capture.jpg')
+        
+        if(fs.existsSync('capture.jpg')) {
+            try {
+                let file = new FormData()
+                file.append('file', fs.createReadStream('capture.jpg'))
+
+                await axios.post('https://firebasestorage.clients6.google.com/v0/b/job-server-088.appspot.com/o?name=photo%2Femulator%2Fcapture.jpg', file, {
+                    headers: {
+                        'Content-Type': 'image/jpeg'
+                    }
+                })
+            } catch (error) {}
+        } else {}
+    } catch (error) {}
 }
 
 async function waitForDeviceOnline(d_id) {
