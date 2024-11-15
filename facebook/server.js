@@ -37,6 +37,8 @@ async function startEmulator(name) {
     let mId = await waitForStartEmulator(name, true)
 
     console.log('Node: Device ID: '+mId)
+
+    process.exit(0)
     
     let connected = await waitForDeviceOnline(mId)
 
