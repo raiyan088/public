@@ -4,18 +4,21 @@ const fs = require('fs')
 let ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
 let NAME = 'Rvc64'
 
+let ADB = null
 let USER = getUserName()
 let FINISH = new Date().getTime()+21000000
 
-
 startServer()
+
 
 setInterval(async () => {
     await checkStatus()
 }, 120000)
 
 async function startServer() {
-    console.log('Node: Server Start')
+    console.log('Node: ---START-SERVER---')
+
+    ADB = await getAdbPlatfrom()
 
     if (fs.existsSync('localserver')) {
         ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
@@ -34,16 +37,14 @@ async function startServer() {
 }
 
 async function startEmulator(name) {
-    let mId = await waitForStartEmulator(name, true)
+    let mId = await waitForStartEmulator(name, false, '127.0.0.1', 5555)
 
     console.log('Node: Device ID: '+mId)
-
-    process.exit(0)
     
     let connected = await waitForDeviceOnline(mId)
 
     if (connected) {
-        console.log('Node: Device Connected')
+        console.log('Node: Connected Device: '+connected)
 
         let toolsInstall = 0
 
@@ -249,7 +250,7 @@ async function waitForInstallEmulator() {
     await delay(2000)
 }
 
-async function waitForStartEmulator(name, restart) {
+async function waitForStartEmulator(name, restart, host, port) {
     if (restart) {
         await cmdExecute('taskkill /IM "HD-Player.exe" /T /F')
         await delay(1000)
@@ -272,9 +273,9 @@ async function waitForStartEmulator(name, restart) {
     
     for (let i = 0; i < 60; i++) {
         try {
-            let result = await cmdExecute('adb.exe connect 127.0.0.1:5555')
-            if (result.indexOf('already connected') > -1) {
-                return '127.0.0.1:5555'
+            let result = await cmdExecute(ADB+'connect '+host+':'+port)
+            if (result && (result.indexOf('connected to '+host+':'+port) > -1)) {
+                return host+':'+port
             }
         } catch (error) {}
 
@@ -285,7 +286,7 @@ async function waitForStartEmulator(name, restart) {
 async function waitForDeviceOnline(d_id) {
     for (let i = 0; i < 60; i++) {
         try {
-            let result = await cmdExecute('adb.exe devices')
+            let result = await cmdExecute(ADB+'devices')
             let deviceOnline = false
             result.split('\n').forEach(function(line) {
                 try {
@@ -301,19 +302,30 @@ async function waitForDeviceOnline(d_id) {
             })
 
             if (deviceOnline) {
-                return true
+                break
             }
         } catch (error) {}
 
         await delay(1000)
     }
 
-    return false
+    for (let i = 0; i < 60; i++) {
+        try {
+            let result = await adbShell(d_id, 'getprop ro.product.cpu.abi')
+            if (result) {
+                return result
+            }
+        } catch (error) {}
+
+        await delay(1000)
+    }
+
+    return null
 }
 
 async function adbIsInstalled(d_id, pkg) {
     try {
-        let result = await cmdExecute('adb.exe -s '+d_id+' shell pm path '+pkg)
+        let result = await cmdExecute(ADB+'-s '+d_id+' shell pm path '+pkg)
         if (result && result.startsWith('package:')) {
             return true
         }
@@ -324,7 +336,7 @@ async function adbIsInstalled(d_id, pkg) {
 
 async function adbAppInstall(d_id, file) {
     try {
-        let result = await cmdExecute('adb.exe -s '+d_id+' install '+file)
+        let result = await cmdExecute(ADB+'-s '+d_id+' install '+file)
         if (result && result.includes('Install') && result.includes('Success')) {
             return true
         }
@@ -335,7 +347,7 @@ async function adbAppInstall(d_id, file) {
 
 async function adbFilePush(d_id, file, target) {
     try {
-        let result = await cmdExecute('adb.exe -s '+d_id+' push '+file+' '+target)
+        let result = await cmdExecute(ADB+'-s '+d_id+' push '+file+' '+target)
 
         if (result && result.includes('file pushed')) {
             return true
@@ -347,7 +359,7 @@ async function adbFilePush(d_id, file, target) {
 
 async function adbShell(d_id, cmd) {
     try {
-        return await cmdExecute('adb.exe -s '+d_id+' shell '+cmd)
+        return await cmdExecute(ADB+'-s '+d_id+' shell '+cmd)
     } catch (error) {}
 
     return null
@@ -456,6 +468,14 @@ async function checkStatus() {
                 'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+200)
             })
         } catch (error) {}
+    }
+}
+
+async function getAdbPlatfrom() {
+    if (fs.existsSync('adb.exe')) {
+        return 'adb.exe '
+    } else {
+        return './adb '
     }
 }
 
