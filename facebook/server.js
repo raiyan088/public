@@ -39,182 +39,183 @@ async function startServer() {
 async function startEmulator(name) {
     let mId = await waitForStartEmulator(name, false, '127.0.0.1', 5555)
 
-    console.log('Node: Device ID: '+mId)
-    
-    let connected = await waitForDeviceOnline(mId)
+    if (mId) {
+        console.log('Node: Device ID: '+mId)
+        
+        let connected = await waitForDeviceOnline(mId)
 
-    if (connected) {
-        console.log('Node: Connected Device: '+connected)
+        if (connected) {
+            console.log('Node: Connected Device: '+connected)
 
-        let toolsInstall = 0
+            let toolsInstall = 0
 
-        try {
-            for (let i = 0; i < 15; i++) {
-                let install = await adbAppInstall(mId, 'CarlosPlus.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Fb-Creator 32-bit Install Success')
-                    break
-                } else {
-                    console.log('Node: Fb-Creator 32-bit Install Failed')
-                }
-                await delay(5000)
-            }
-        } catch (error) {
-            console.log('Node: Fb-Creator 32-bit Install Failed')
-        }
-
-        try {
-            for (let i = 0; i < 10; i++) {
-                let install = await adbAppInstall(mId, 'Lite.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Fb-Lite Install Success')
-                    break
-                } else {
-                    console.log('Node: Fb-Lite Install Failed')
-                }
-                await delay(5000)
-            }
-        } catch (error) {
-            console.log('Node: Fb-Lite Install Failed')
-        }
-
-        try {
-            for (let i = 0; i < 10; i++) {
-                let install = await adbAppInstall(mId, 'FbVirtual.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Fb-Virtual Install Success')
-                    break
-                } else {
-                    console.log('Node: Fb-Virtual Install Failed')
-                }
-                await delay(5000)
-            }
-        } catch (error) {
-            console.log('Node: Fb-Virtual Install Failed')
-        }
-
-        try {
-            for (let i = 0; i < 10; i++) {
-                let install = await adbAppInstall(mId, 'Facebook.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Facebook Install Success')
-                    break
-                } else {
-                    console.log('Node: Facebook Install Failed')
-                }
-                await delay(5000)
-            }
-        } catch (error) {
-            console.log('Node: Fb-Lite Install Failed')
-        }
-
-        try {
-            for (let i = 0; i < 10; i++) {
-                let install = await adbAppInstall(mId, 'FbCreator.apk')
-                if (install) {
-                    toolsInstall++
-                    console.log('Node: Fb-Creator Install Success')
-                    break
-                } else {
-                    console.log('Node: Fb-Creator Install Failed')
-                }
-                await delay(5000)
-            }
-        } catch (error) {
-            console.log('Node: Fb-Creator Install Failed')
-        }
-
-        if (toolsInstall >=  5) {
-            await delay(2000)
-            await startFbCreator(mId)
-    
             try {
-                let prevTime = ''
-                let timeout = 0
-                let accountCreate = 0
-    
-                while (true) {
-                    try {
-                        let result = await adbShell(mId, 'cat /sdcard/status.txt')
-                        if (result) {
-                            let split = result.split('\n')
+                for (let i = 0; i < 15; i++) {
+                    let install = await adbAppInstall(mId, 'CarlosPlus.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Fb-Creator 32-bit Install Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Creator 32-bit Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Creator 32-bit Install Failed')
+            }
 
-                            if (split.length >= 3) {
-                                let time = split[0].trim()
-                                let srtTime = null
-                                let permission = false
-    
-                                try {
-                                    let status = split[1].trim().split(' ')
-                                    accountCreate = parseInt(status[1].trim())
+            try {
+                for (let i = 0; i < 10; i++) {
+                    let install = await adbAppInstall(mId, 'Lite.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Fb-Lite Install Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Lite Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Lite Install Failed')
+            }
 
-                                    if (status[0].trim() == 'true' || status[0].trim() == true) {
-                                        permission = true
-                                    }
-                                } catch (error) {}
-    
-                                try {
-                                    srtTime = parseInt(time)
-                                } catch (error) {}
-    
-                                if (time != prevTime) {
-                                    console.log('Node: [ Account: '+accountCreate+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
-                                    timeout = 0
-                                    prevTime = time
-                                } else {
-                                    timeout++
-                                }
+            try {
+                for (let i = 0; i < 10; i++) {
+                    let install = await adbAppInstall(mId, 'FbVirtual.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Fb-Virtual Install Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Virtual Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Virtual Install Failed')
+            }
 
-                                if (!permission) {
-                                    console.log('Node: [ Accessibility Permission Problem ]')
+            try {
+                for (let i = 0; i < 10; i++) {
+                    let install = await adbAppInstall(mId, 'Facebook.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Facebook Install Success')
+                        break
+                    } else {
+                        console.log('Node: Facebook Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Lite Install Failed')
+            }
+
+            try {
+                for (let i = 0; i < 10; i++) {
+                    let install = await adbAppInstall(mId, 'FbCreator.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Fb-Creator Install Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Creator Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Creator Install Failed')
+            }
+
+            if (toolsInstall >=  5) {
+                await delay(2000)
+                await startFbCreator(mId)
+        
+                try {
+                    let prevTime = ''
+                    let timeout = 0
+                    let accountCreate = 0
+        
+                    while (true) {
+                        try {
+                            let result = await adbShell(mId, 'cat /sdcard/status.txt')
+                            if (result) {
+                                let split = result.split('\n')
+
+                                if (split.length >= 3) {
+                                    let time = split[0].trim()
+                                    let srtTime = null
+                                    let permission = false
+        
                                     try {
-                                        for (let i = 0; i < 10; i++) {
-                                            let install = await adbAppInstall(mId, 'FbCreator.apk')
-                                            if (install) {
-                                                console.log('Node: [ Fb-Creator Install Success ]')
-                                                break
-                                            } else {
-                                                console.log('Node: [ Fb-Creator Install Failed ]')
-                                            }
-                                            await delay(5000)
+                                        let status = split[1].trim().split(' ')
+                                        accountCreate = parseInt(status[1].trim())
+
+                                        if (status[0].trim() == 'true' || status[0].trim() == true) {
+                                            permission = true
                                         }
-                                    } catch (error) {
-                                        console.log('Node: [ Fb-Creator Install Failed ]')
+                                    } catch (error) {}
+        
+                                    try {
+                                        srtTime = parseInt(time)
+                                    } catch (error) {}
+        
+                                    if (time != prevTime) {
+                                        console.log('Node: [ Account: '+accountCreate+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
+                                        timeout = 0
+                                        prevTime = time
+                                    } else {
+                                        timeout++
                                     }
 
-                                    await delay(2000)
-                                    await startFbCreator(mId)
+                                    if (!permission) {
+                                        console.log('Node: [ Accessibility Permission Problem ]')
+                                        try {
+                                            for (let i = 0; i < 10; i++) {
+                                                let install = await adbAppInstall(mId, 'FbCreator.apk')
+                                                if (install) {
+                                                    console.log('Node: [ Fb-Creator Install Success ]')
+                                                    break
+                                                } else {
+                                                    console.log('Node: [ Fb-Creator Install Failed ]')
+                                                }
+                                                await delay(5000)
+                                            }
+                                        } catch (error) {
+                                            console.log('Node: [ Fb-Creator Install Failed ]')
+                                        }
+
+                                        await delay(2000)
+                                        await startFbCreator(mId)
+                                    }
                                 }
                             }
+                        } catch (error) {}
+
+                        if (accountCreate >= 5) {
+                            console.log('Node: 5 Account Create Completed')
+                            await delay(1000)
+                            break
+                        } else if (timeout > 120) {
+                            console.log('Node: Emulator did not Response')
+                            await delay(1000)
+                            break
                         }
-                    } catch (error) {}
 
-                    if (accountCreate >= 5) {
-                        console.log('Node: 5 Account Create Completed')
                         await delay(1000)
-                        break
-                    } else if (timeout > 120) {
-                        console.log('Node: Emulator did not Response')
-                        await delay(1000)
-                        break
                     }
-
-                    await delay(1000)
-                }
-            } catch (error) {}   
+                } catch (error) {}   
+            } else {
+                console.log('Node: All Tools Cannot Installed')
+            }
         } else {
-            console.log('Node: All Tools Cannot Installed')
-            await delay(10000)
+            console.log('Node: Device Not-Connect')
         }
     } else {
-        console.log('Node: Device Not-Connect')
-        await delay(10000)
+        console.log('Node: Device ID: Null')
     }
-
     process.exit(0)
     console.log('Node: Emulator Start Again')
     
