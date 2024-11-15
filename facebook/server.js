@@ -49,7 +49,7 @@ async function startEmulator(name) {
         let toolsInstall = 0
 
         try {
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < 15; i++) {
                 let install = await adbAppInstall(mId, 'CarlosPlus.apk')
                 if (install) {
                     toolsInstall++
@@ -208,13 +208,14 @@ async function startEmulator(name) {
             } catch (error) {}   
         } else {
             console.log('Node: All Tools Cannot Installed')
-            await delay(60000)
+            await delay(10000)
         }
     } else {
         console.log('Node: Device Not-Connect')
-        await delay(60000)
+        await delay(10000)
     }
 
+    process.exit(0)
     console.log('Node: Emulator Start Again')
     
     await startEmulator(name)
