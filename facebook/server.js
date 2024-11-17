@@ -539,6 +539,9 @@ function getTimeString(time) {
     return new Date().toLocaleTimeString('en-us', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
 }
 
+function decode(data) {
+    return Buffer.from(data, 'base64').toString('ascii')
+}
 
 function delay(time) {
     return new Promise(function(resolve) {
