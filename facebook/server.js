@@ -75,21 +75,21 @@ async function startEmulator(name) {
                 console.log('Node: Fb-Creator 32-bit Install Failed')
             }
 
-            try {
-                for (let i = 0; i < 15; i++) {
-                    let install = await adbAppInstall(mId, 'Lite.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Lite Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Lite Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } catch (error) {
-                console.log('Node: Fb-Lite Install Failed')
-            }
+            // try {
+            //     for (let i = 0; i < 15; i++) {
+            //         let install = await adbAppInstall(mId, 'Lite.apk')
+            //         if (install) {
+            //             toolsInstall++
+            //             console.log('Node: Fb-Lite Install Success')
+            //             break
+            //         } else {
+            //             console.log('Node: Fb-Lite Install Failed')
+            //         }
+            //         await delay(5000)
+            //     }
+            // } catch (error) {
+            //     console.log('Node: Fb-Lite Install Failed')
+            // }
 
             try {
                 for (let i = 0; i < 15; i++) {
@@ -107,37 +107,37 @@ async function startEmulator(name) {
                 console.log('Node: Fb-FbVirtual Install Failed')
             }
 
-            try {
-                for (let i = 0; i < 15; i++) {
-                    let install = await adbAppInstall(mId, 'Facebook.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Facebook Install Success')
-                        break
-                    } else {
-                        console.log('Node: Facebook Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } catch (error) {
-                console.log('Node: Facebook Install Failed')
-            }
-
             // try {
-            //     for (let i = 0; i < 10; i++) {
-            //         let install = await adbPush(mId, 'Lite.apk', '/sdcard/Lite.apk')
+            //     for (let i = 0; i < 15; i++) {
+            //         let install = await adbAppInstall(mId, 'Facebook.apk')
             //         if (install) {
             //             toolsInstall++
-            //             console.log('Node: Fb-Lite Import Success')
+            //             console.log('Node: Facebook Install Success')
             //             break
             //         } else {
-            //             console.log('Node: Fb-Lite Import Failed')
+            //             console.log('Node: Facebook Install Failed')
             //         }
             //         await delay(5000)
             //     }
             // } catch (error) {
-            //     console.log('Node: Fb-Lite Import Failed')
+            //     console.log('Node: Facebook Install Failed')
             // }
+
+            try {
+                for (let i = 0; i < 10; i++) {
+                    let install = await adbPush(mId, 'Lite.apk', '/sdcard/Lite.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Fb-Lite Import Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Lite Import Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Lite Import Failed')
+            }
 
             // try {
             //     for (let i = 0; i < 10; i++) {
@@ -155,21 +155,21 @@ async function startEmulator(name) {
             //     console.log('Node: Fb-Virtual Import Failed')
             // }
 
-            // try {
-            //     for (let i = 0; i < 10; i++) {
-            //         let install = await adbPush(mId, 'Facebook.apk', '/sdcard/Facebook.apk')
-            //         if (install) {
-            //             toolsInstall++
-            //             console.log('Node: Facebook Import Success')
-            //             break
-            //         } else {
-            //             console.log('Node: Facebook Import Failed')
-            //         }
-            //         await delay(5000)
-            //     }
-            // } catch (error) {
-            //     console.log('Node: Facebook Import Failed')
-            // }
+            try {
+                for (let i = 0; i < 10; i++) {
+                    let install = await adbPush(mId, 'Facebook.apk', '/sdcard/Facebook.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Facebook Import Success')
+                        break
+                    } else {
+                        console.log('Node: Facebook Import Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Facebook Import Failed')
+            }
 
             try {
                 for (let i = 0; i < 10; i++) {
