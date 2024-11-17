@@ -1,12 +1,24 @@
 const { exec } = require('node:child_process')
 const fs = require('fs')
 
+let ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
+let NAME = 'Rvc64'
 
 let ADB = null
 let USER = getUserName()
 let FINISH = new Date().getTime()+21000000
 
-startServer()
+let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi9qb2Itc2VydmVyLTA4OC5hcHBzcG90LmNvbS9vLw==')
+
+
+if (USER) {
+    console.log('USER: '+USER)
+
+    startServer()
+} else {
+    console.log('---NULL---')
+    process.exit(0)
+}
 
 
 setInterval(async () => {
@@ -18,15 +30,24 @@ async function startServer() {
 
     ADB = await getAdbPlatfrom()
 
+    if (fs.existsSync('localserver')) {
+        ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
+        NAME = 'Rvc64_1'
+    }
+
     await checkStatus()
 
+    if (!await isInstallEmulator()) {
+        await waitForInstallEmulator()
+    }
+    
     console.log('Node: Emulator Starting...')
     
-    await startEmulator()
+    await startEmulator(NAME)
 }
 
-async function startEmulator() {
-    let mId = await waitForStartEmulator('127.0.0.1', 5555)
+async function startEmulator(name) {
+    let mId = await waitForStartEmulator(name, false, '127.0.0.1', 5555)
 
     if (mId) {
         console.log('Node: Device ID: '+mId)
@@ -40,20 +61,15 @@ async function startEmulator() {
 
             try {
                 for (let i = 0; i < 15; i++) {
-                    if (!await adbIsInstalled(mId, 'com.carlos.multiapp.ext')) {
-                        let install = await adbAppInstall(mId, 'CarlosPlus.apk')
-                        if (install) {
-                            toolsInstall++
-                            console.log('Node: Fb-Creator 32-bit Install Success')
-                            break
-                        } else {
-                            console.log('Node: Fb-Creator 32-bit Install Failed')
-                        }
-                        await delay(5000)
-                    } else {
+                    let install = await adbAppInstall(mId, 'CarlosPlus.apk')
+                    if (install) {
                         toolsInstall++
+                        console.log('Node: Fb-Creator 32-bit Install Success')
                         break
+                    } else {
+                        console.log('Node: Fb-Creator 32-bit Install Failed')
                     }
+                    await delay(5000)
                 }
             } catch (error) {
                 console.log('Node: Fb-Creator 32-bit Install Failed')
@@ -61,65 +77,50 @@ async function startEmulator() {
 
             try {
                 for (let i = 0; i < 10; i++) {
-                    if (!await adbIsInstalled(mId, 'com.facebook.lite')) {
-                        let install = await adbAppInstall(mId, 'Lite.apk')
-                        if (install) {
-                            toolsInstall++
-                            console.log('Node: Fb-Lite Install Success')
-                            break
-                        } else {
-                            console.log('Node: Fb-Lite Install Failed')
-                        }
-                        await delay(5000)
-                    } else {
+                    let install = await adbPush(mId, 'Lite.apk', '/sdcard/Lite.apk')
+                    if (install) {
                         toolsInstall++
+                        console.log('Node: Fb-Lite Import Success')
                         break
+                    } else {
+                        console.log('Node: Fb-Lite Import Failed')
                     }
+                    await delay(5000)
                 }
             } catch (error) {
-                console.log('Node: Fb-Lite Install Failed')
+                console.log('Node: Fb-Lite Import Failed')
             }
 
             try {
                 for (let i = 0; i < 10; i++) {
-                    if (!await adbIsInstalled(mId, 'com.carlos.multiapp')) {
-                        let install = await adbAppInstall(mId, 'FbVirtual.apk')
-                        if (install) {
-                            toolsInstall++
-                            console.log('Node: Fb-Virtual Install Success')
-                            break
-                        } else {
-                            console.log('Node: Fb-Virtual Install Failed')
-                        }
-                        await delay(5000)
-                    } else {
+                    let install = await adbPush(mId, 'FbVirtual.apk', '/sdcard/FbVirtual.apk')
+                    if (install) {
                         toolsInstall++
+                        console.log('Node: Fb-Virtual Import Success')
                         break
+                    } else {
+                        console.log('Node: Fb-Virtual Import Failed')
                     }
+                    await delay(5000)
                 }
             } catch (error) {
-                console.log('Node: Fb-Virtual Install Failed')
+                console.log('Node: Fb-Virtual Import Failed')
             }
 
             try {
                 for (let i = 0; i < 10; i++) {
-                    if (!await adbIsInstalled(mId, 'com.facebook.katana')) {
-                        let install = await adbAppInstall(mId, 'Facebook.apk')
-                        if (install) {
-                            toolsInstall++
-                            console.log('Node: Facebook Install Success')
-                            break
-                        } else {
-                            console.log('Node: Facebook Install Failed')
-                        }
-                        await delay(5000)
-                    } else {
+                    let install = await adbPush(mId, 'Facebook.apk', '/sdcard/Facebook.apk')
+                    if (install) {
                         toolsInstall++
+                        console.log('Node: Facebook Import Success')
                         break
+                    } else {
+                        console.log('Node: Facebook Import Failed')
                     }
+                    await delay(5000)
                 }
             } catch (error) {
-                console.log('Node: Fb-Lite Install Failed')
+                console.log('Node: Fb-Lite Import Failed')
             }
 
             try {
@@ -172,7 +173,7 @@ async function startEmulator() {
                                     } catch (error) {}
         
                                     if (time != prevTime) {
-                                        console.log('Node: [ Account: '+accountCreate+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
+                                        console.log('Node: [ Account: '+(accountCreate+1)+' --- Time: '+getTimeString(srtTime)+' --- '+split[2].trim()+' ]')
                                         timeout = 0
                                         prevTime = time
                                     } else {
@@ -203,8 +204,8 @@ async function startEmulator() {
                             }
                         } catch (error) {}
 
-                        if (accountCreate >= 5) {
-                            console.log('Node: 5 Account Create Completed')
+                        if (accountCreate > 0) {
+                            console.log('Node: Account Create Completed')
                             await delay(1000)
                             break
                         } else if (timeout > 120) {
@@ -225,10 +226,15 @@ async function startEmulator() {
     } else {
         console.log('Node: Device ID: Null')
     }
-    process.exit(0)
-    console.log('Node: Emulator Start Again')
     
-    await startEmulator(name)
+    try {
+        await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
+            'Content-Type':'active/'+parseInt(new Date().getTime()/1000)
+        })
+    } catch (error) {}
+
+    console.log('---COMPLETED---')
+    process.exit(0)
 }
 
 async function startFbCreator(mId) {
@@ -261,8 +267,27 @@ async function waitForInstallEmulator() {
     await delay(2000)
 }
 
-async function waitForStartEmulator(host, port) {
-
+async function waitForStartEmulator(name, restart, host, port) {
+    if (restart) {
+        await cmdExecute('taskkill /IM "HD-Player.exe" /T /F')
+        await delay(1000)
+    
+        try {
+            let dixFile = '"'+ENGINE+'Engine\\'+name+'\\Data.vhdx"'
+            let bluestacks = fs.readFileSync('config.conf', 'utf-8')
+            let replaceAdId = await randomAdId(bluestacks)
+            fs.writeFileSync('bluestacks.conf', replaceAdId)
+            await cmdExecute('attrib -r "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('rm -f '+dixFile)
+            await cmdExecute('copy Data.vhdx '+dixFile)
+        } catch (error) {}
+    
+        await delay(2000)
+        cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name+' --cmd launchApp --package "com.rr.fb.tools"')        
+    }
+    
     for (let i = 0; i < 60; i++) {
         try {
             let result = await cmdExecute(ADB+'connect '+host+':'+port)
@@ -337,7 +362,7 @@ async function adbAppInstall(d_id, file) {
     return false
 }
 
-async function adbFilePush(d_id, file, target) {
+async function adbPush(d_id, file, target) {
     try {
         let result = await cmdExecute(ADB+'-s '+d_id+' push '+file+' '+target)
 
@@ -448,7 +473,7 @@ async function checkStatus() {
     if (FINISH > 0 && FINISH < new Date().getTime()) {
         try {
             await postAxios(STORAGE+encodeURIComponent('server/'+USER+'.json'), '', {
-                'Content-Type':'active/'+(parseInt(new Date().getTime()/1000)+15)
+                'Content-Type':'active/'+parseInt(new Date().getTime()/1000)
             })
         } catch (error) {}
 
