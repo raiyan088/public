@@ -47,7 +47,7 @@ async function startServer() {
 }
 
 async function startEmulator(name) {
-    let mId = await waitForStartEmulator(name, false, '127.0.0.1', 5555)
+    let mId = await waitForStartEmulator(name, true, '127.0.0.1', 5555)
 
     if (mId) {
         console.log('Node: Device ID: '+mId)
