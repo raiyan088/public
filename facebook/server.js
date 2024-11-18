@@ -125,18 +125,18 @@ async function startEmulator(name) {
 
             try {
                 for (let i = 0; i < 10; i++) {
-                    let install = await adbPush(mId, 'Lite.apk', '/sdcard/Lite.apk')
+                    let install = await adbPush(mId, 'FbConfirm.apk', '/sdcard/FbConfirm.apk')
                     if (install) {
                         toolsInstall++
-                        console.log('Node: Fb-Lite Import Success')
+                        console.log('Node: Fb-Confirm Import Success')
                         break
                     } else {
-                        console.log('Node: Fb-Lite Import Failed')
+                        console.log('Node: Fb-Confirm Import Failed')
                     }
                     await delay(5000)
                 }
             } catch (error) {
-                console.log('Node: Fb-Lite Import Failed')
+                console.log('Node: Fb-Confirm Import Failed')
             }
 
             // try {
