@@ -80,36 +80,35 @@ async function startEmulator(name) {
                     let install = await adbAppInstall(mId, 'FbVirtual.apk')
                     if (install) {
                         toolsInstall++
-                        console.log('Node: Fb-FbVirtual Install Success')
+                        console.log('Node: Fb-Virtual Install Success')
                         break
                     } else {
-                        console.log('Node: Fb-FbVirtual Install Failed')
+                        console.log('Node: Fb-Virtual Install Failed')
                     }
                     await delay(5000)
                 }
             } catch (error) {
-                console.log('Node: Fb-FbVirtual Install Failed')
+                console.log('Node: Fb-Virtual Install Failed')
             }
 
-            toolsInstall++
-            // try {
-            //     for (let i = 0; i < 10; i++) {
-            //         let install = await adbPush(mId, 'FbConfirm.apk', '/sdcard/FbConfirm.apk')
-            //         if (install) {
-            //             toolsInstall++
-            //             console.log('Node: Fb-Confirm Import Success')
-            //             break
-            //         } else {
-            //             console.log('Node: Fb-Confirm Import Failed')
-            //         }
-            //         await delay(5000)
-            //     }
-            // } catch (error) {
-            //     console.log('Node: Fb-Confirm Import Failed')
-            // }
+            try {
+                for (let i = 0; i < 15; i++) {
+                    let install = await adbAppInstall(mId, 'Lite.apk')
+                    if (install) {
+                        toolsInstall++
+                        console.log('Node: Fb-Lite Install Success')
+                        break
+                    } else {
+                        console.log('Node: Fb-Lite Install Failed')
+                    }
+                    await delay(5000)
+                }
+            } catch (error) {
+                console.log('Node: Fb-Lite Install Failed')
+            }
 
             try {
-                for (let i = 0; i < 10; i++) {
+                for (let i = 0; i < 15; i++) {
                     let install = await adbPush(mId, 'Facebook.apk', '/sdcard/Facebook.apk')
                     if (install) {
                         toolsInstall++
@@ -125,7 +124,7 @@ async function startEmulator(name) {
             }
 
             try {
-                for (let i = 0; i < 10; i++) {
+                for (let i = 0; i < 15; i++) {
                     let install = await adbAppInstall(mId, 'FbCreator.apk')
                     if (install) {
                         toolsInstall++
