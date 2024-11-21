@@ -146,8 +146,9 @@ async function startEmulator(name) {
                 try {
                     let prevTime = ''
                     let timeout = 0
+                    let completed = false
                     let accountCreate = 0
-        
+                    
                     while (true) {
                         try {
                             let result = await adbShell(mId, 'cat /sdcard/status.txt')
@@ -161,10 +162,12 @@ async function startEmulator(name) {
         
                                     try {
                                         let status = split[1].trim().split(' ')
-                                        accountCreate = parseInt(status[1].trim())
+                                        accountCreate = parseInt(status[2].trim())
 
                                         if (status[0].trim() == 'true' || status[0].trim() == true) {
                                             permission = true
+                                        } else if (status[1].trim() == 'true' || status[1].trim() == true) {
+                                            completed = true
                                         }
                                     } catch (error) {}
         
@@ -204,11 +207,11 @@ async function startEmulator(name) {
                             }
                         } catch (error) {}
 
-                        if (accountCreate > 0) {
+                        if (completed) {
                             console.log('Node: Account Create Completed')
                             await delay(1000)
                             break
-                        } else if (timeout > 120) {
+                        } else if (timeout > 90) {
                             console.log('Node: Emulator did not Response')
                             await delay(1000)
                             break
