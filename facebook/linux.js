@@ -446,10 +446,13 @@ async function adbPull(d_id, path) {
 async function adbPush(d_id, file, target) {
     try {
         let result = await cmdExecute(ADB+'-s '+d_id+' push '+file+' '+target)
+        console.log(result)
         if (result && result.includes('file pushed')) {
             return true
         }
-    } catch (error) {}
+    } catch (error) {
+        console.log(error)
+    }
 
     return false
 }
