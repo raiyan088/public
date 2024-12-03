@@ -2,7 +2,7 @@ const { exec } = require('node:child_process')
 const fs = require('fs')
 
 let ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
-let NAME = 'Rvc64'
+let NAME = 'Pie64'
 
 let ADB = null
 let USER = getUserName()
@@ -32,13 +32,13 @@ async function startServer() {
 
     if (fs.existsSync('localserver')) {
         ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
-        NAME = 'Rvc64_1'
+        NAME = 'Pie64'
     }
 
     await checkStatus()
 
     if (!await isInstallEmulator()) {
-        await waitForInstallEmulator()
+        await waitForInstallEmulator(NAME)
     }
     
     console.log('Node: Emulator Starting...')
@@ -48,7 +48,7 @@ async function startServer() {
 
 async function startEmulator(name) {
     let mId = await waitForStartEmulator(name, true, '127.0.0.1', 5555)
-
+ 
     if (mId) {
         console.log('Node: Device ID: '+mId)
         
@@ -58,54 +58,6 @@ async function startEmulator(name) {
             console.log('Node: Connected Device: '+connected)
 
             let toolsInstall = 0
-
-            try {
-                for (let i = 0; i < 15; i++) {
-                    let install = await adbAppInstall(mId, 'CarlosPlus.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Creator 32-bit Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Creator 32-bit Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } catch (error) {
-                console.log('Node: Fb-Creator 32-bit Install Failed')
-            }
-
-            try {
-                for (let i = 0; i < 15; i++) {
-                    let install = await adbAppInstall(mId, 'FbVirtual.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Virtual Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Virtual Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } catch (error) {
-                console.log('Node: Fb-Virtual Install Failed')
-            }
-
-            try {
-                for (let i = 0; i < 15; i++) {
-                    let install = await adbAppInstall(mId, 'Lite.apk')
-                    if (install) {
-                        toolsInstall++
-                        console.log('Node: Fb-Lite Install Success')
-                        break
-                    } else {
-                        console.log('Node: Fb-Lite Install Failed')
-                    }
-                    await delay(5000)
-                }
-            } catch (error) {
-                console.log('Node: Fb-Lite Install Failed')
-            }
 
             try {
                 for (let i = 0; i < 15; i++) {
@@ -139,7 +91,7 @@ async function startEmulator(name) {
                 console.log('Node: Fb-Creator Install Failed')
             }
 
-            if (toolsInstall >=  5) {
+            if (toolsInstall >=  2) {
                 await delay(2000)
                 await startFbCreator(mId)
         
@@ -243,16 +195,17 @@ async function startEmulator(name) {
 async function startFbCreator(mId) {
     try {
         await adbShell(mId, 'rm -f /sdcard/status.txt')
-        await adbShell(mId, 'appops set --uid com.rr.fb.creator MANAGE_EXTERNAL_STORAGE allow')
+        // await adbShell(mId, 'appops set --uid com.rr.fb.creator MANAGE_EXTERNAL_STORAGE allow')
+        await adbShell(mId, 'pm grant com.rr.fb.creator android.permission.READ_EXTERNAL_STORAGE')
         await adbShell(mId, 'pm grant com.rr.fb.creator android.permission.WRITE_EXTERNAL_STORAGE')
         await adbShell(mId, 'settings put secure enabled_accessibility_services com.rr.fb.creator/com.rr.fb.creator.Accessibility')
         await delay(3000)
-        await adbShell(mId, 'am start -n com.rr.fb.creator/com.rr.fb.creator.MainActivity --es autoStart "ok"')
+        await adbShell(mId, 'am start -n com.rr.fb.creator/com.rr.fb.creator.Emulator --es autoStart "ok"')
     } catch (error) {}
 }
 
-async function waitForInstallEmulator() {
-    cmdExecute('Emulator.exe --defaultImageName Rvc64 --imageToLaunch Rvc64')
+async function waitForInstallEmulator(name) {
+    cmdExecute('Emulator.exe --defaultImageName '+name+' --imageToLaunch '+name)
 
     await waitForTaskRuning('BlueStacksInstaller.exe')
     console.log('Node: Open BlueStacks Installer')
@@ -288,7 +241,7 @@ async function waitForStartEmulator(name, restart, host, port) {
         } catch (error) {}
     
         await delay(2000)
-        cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name+' --cmd launchApp --package "com.rr.fb.tools"')        
+        cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name)        
     }
     
     for (let i = 0; i < 60; i++) {
