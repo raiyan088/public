@@ -8,6 +8,9 @@ let ADB = null
 let mId = null
 let mDocker = false
 
+let ENGINE = 'C:\\ProgramData\\BlueStacks_nxt\\'
+let NAME = 'Rvc64'
+
 let USER = getUserName()
 let FINISH = new Date().getTime()+21000000
 
@@ -84,17 +87,20 @@ async function startServer() {
 
     fs.writeFileSync('url.txt', 'http://'+getIPAddress()+':9099/adb')
 
-    console.log('Node: URL: '+fs.readFileSync('url.txt', 'utf-8'))
-
     mDocker = await isUseDocker()
 
     console.log('Node: Docker: '+mDocker)
+
+    if (fs.existsSync('localserver')) {
+        ENGINE = 'P:\\Program Files\\BlueStacks_nxt\\'
+        NAME = 'Rvc64_1'
+    }
 
     await checkStatus()
     
     console.log('Node: Emulator Starting...')
 
-    mId = await waitForStartEmulator(null, false, '127.0.0.1', 5555)
+    mId = await waitForStartEmulator(NAME, false, '127.0.0.1', 5555)
 
     if (mId) {
         console.log('Node: Device ID: '+mId)
@@ -315,6 +321,30 @@ async function waitForDeviceOnline(d_id) {
 }
 
 async function waitForStartEmulator(name, restart, host, port) {
+    if (restart) {
+        if (!await isInstallEmulator()) {
+            await waitForInstallEmulator(NAME)
+        }
+
+        await cmdExecute('taskkill /IM "HD-Player.exe" /T /F')
+        await delay(1000)
+    
+        try {
+            let dixFile = '"'+ENGINE+'Engine\\'+name+'\\Data.vhdx"'
+            let bluestacks = fs.readFileSync('config.conf', 'utf-8')
+            let replaceAdId = await randomAdId(bluestacks)
+            fs.writeFileSync('bluestacks.conf', replaceAdId)
+            await cmdExecute('attrib -r "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('copy bluestacks.conf  "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('attrib +r "'+ENGINE+'bluestacks.conf"')
+            await cmdExecute('rm -f '+dixFile)
+            await cmdExecute('copy Data.vhdx '+dixFile)
+        } catch (error) {}
+    
+        await delay(2000)
+        cmdExecute('"C:\\Program Files\\BlueStacks_nxt\\HD-Player.exe" --instance '+name)        
+    }
+
     for (let i = 0; i < 60; i++) {
         try {
             let result = await cmdExecute(ADB+'connect '+host+':'+port)
