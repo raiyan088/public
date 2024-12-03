@@ -108,25 +108,6 @@ async function startServer() {
 
             try {
                 for (let i = 0; i < 15; i++) {
-                    let urlPush = await adbPush(mId, 'url.txt', '/sdcard/url.txt')
-                    console.log('Push: '+urlPush)
-                    
-                    if (urlPush) {
-                        toolsInstall++
-                        console.log('Node: Url Push Success')
-                        break
-                    } else {
-                        console.log('Node: Url Push Failed')
-                    }
-                    await delay(5000)
-                }
-            } catch (error) {
-                console.log(error)
-                console.log('Node: Url Push Failed')
-            }
-
-            try {
-                for (let i = 0; i < 15; i++) {
                     let install = await adbAppInstall(mId, 'Facebook.apk')
                     if (install) {
                         toolsInstall++
@@ -158,7 +139,8 @@ async function startServer() {
             }
 
 
-            if (toolsInstall >= 3) {
+            if (toolsInstall >= 2) {
+                await adbPush(mId, 'url.txt', '/sdcard/url.txt')
                 await startFbCreator(mId)
 
                 try {
@@ -445,19 +427,12 @@ async function adbPull(d_id, path) {
 }
 
 async function adbPush(d_id, file, target) {
-    console.log(d_id, file, target);
-    
     try {
-        console.log(ADB+'-s '+d_id+' push '+file+' '+target);
-        
         let result = await cmdExecute(ADB+'-s '+d_id+' push '+file+' '+target)
-        console.log(result)
         if (result && result.includes('file pushed')) {
             return true
         }
-    } catch (error) {
-        console.log(error)
-    }
+    } catch (error) {}
 
     return false
 }
