@@ -84,6 +84,8 @@ async function startServer() {
 
     fs.writeFileSync('url.txt', 'http://'+getIPAddress()+':9099/adb')
 
+    console.log('Node: URL: '+fs.readFileSync('url.txt', 'utf-8'))
+
     mDocker = await isUseDocker()
 
     console.log('Node: Docker: '+mDocker)
