@@ -121,6 +121,7 @@ async function startServer() {
                     await delay(5000)
                 }
             } catch (error) {
+                console.log(error)
                 console.log('Node: Url Push Failed')
             }
 
