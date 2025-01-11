@@ -16,6 +16,8 @@ async function startServer() {
     await cmdExecute('python install.py')
     
     console.log('Node: MuMu Emulator Installing')
+
+    process.exit(0)
 }
 
 async function waitForTaskRuning(taskName, timeout) {
