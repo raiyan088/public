@@ -6,7 +6,7 @@ time.sleep(1)
 dialog = Desktop()['MuMu Player 12']
 dialog.wait('visible', timeout=120)
 
-time.sleep(5)
+time.sleep(10)
 send_keys('{TAB}')
 send_keys('{TAB}')
 send_keys('{TAB}')
