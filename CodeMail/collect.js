@@ -285,6 +285,8 @@ async function loginWithCompleted(number, password, cookies) {
                                 if (url.startsWith('https://myaccount.google.com/signinoptions/rescuephone')) {
                                     mRapt = await getRapt(url)
                                     break
+                                } else if (url.startsWith('https://accounts.google.com/v3/signin/challenge/dp')) {
+                                    break
                                 } else if (url.startsWith('https://accounts.google.com/v3/signin/challenge/selection') && cSelection) {
                                     if (await exists(page, 'div[data-action="selectchallenge"][data-challengetype="13"]')) {
                                         await delay(2000)
@@ -322,6 +324,8 @@ async function loginWithCompleted(number, password, cookies) {
                         } else {
                             console.log('Login Failed: '+number)
                         }
+
+                        break
                     }
                 }
             } catch (error) {}
