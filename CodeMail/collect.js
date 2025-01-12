@@ -306,6 +306,8 @@ async function loginWithCompleted(number, password, cookies) {
                                     console.log('OTP Send: '+mNumber.number)
                                     mCodeSend = true
                                     break
+                                } else {
+                                    console.log(url)
                                 }
                             } catch (error) {}
 
