@@ -362,7 +362,7 @@ async function loginWithCompleted(number, password, cookies) {
                         await page.keyboard.up('Control')
                         await page.keyboard.press('Backspace')
                     }
-                    await page.keyboard.type(mUser+'@gmajl.com')
+                    await page.keyboard.type(mUser+'@gmail10p.com')
                     await delay(500)
                     await page.click('button[type="submit"]')
                     await delay(3000)
