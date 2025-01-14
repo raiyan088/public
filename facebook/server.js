@@ -972,7 +972,8 @@ async function waitForDeviceOnline(mId) {
 
 async function waitForStartEmulator(restart, host, port) {
     if (restart) {
-        if (!await isInstallEmulator()) {
+        let isInstall = await isInstallEmulator()
+        if (!isInstall) {
             await waitForInstallEmulator()
         }
 
@@ -985,16 +986,20 @@ async function waitForStartEmulator(restart, host, port) {
         try {
             let config = fs.readFileSync('config.json', 'utf-8')
             fs.writeFileSync('customer_config.json', await replaceConfig(config))
-            await cmdExecute('rmdir /q /s -Recurse -Force -Confirm:$false "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0"')
+            if (!isInstall) await cmdExecute('rmdir /q /s -Recurse -Force -Confirm:$false "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0"')
             await cmdExecute('mkdir "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\configs"')
             await cmdExecute('mkdir "'+ENGINE+'shell\\products\\PrivacyInfo.bin"')
             await cmdExecute('copy customer_config.json "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\configs\\customer_config.json"')
-            await cmdExecute('copy "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-base\\ota.vdi" "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\ota.vdi"')
-            await cmdExecute('copy "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-base\\data.vdi" "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\data.vdi"')
+            if (!isInstall) {
+                await cmdExecute('copy "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-base\\ota.vdi" "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\ota.vdi"')
+                await cmdExecute('copy "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-base\\data.vdi" "'+ENGINE+'vms\\MuMuPlayerGlobal-12.0-0\\data.vdi"')
+            }
         } catch (error) {}
     
         await delay(1000)
-        cmdExecute('"'+ENGINE+'shell\\MuMuPlayer.exe"')        
+        cmdExecute('"'+ENGINE+'shell\\MuMuPlayer.exe"')
+        
+        console.log('Node: Emulator Runing...')
     }
 
     for (let i = 0; i < 60; i++) {
@@ -1024,7 +1029,7 @@ async function waitForInstallEmulator() {
 
     console.log('Node: MuMu Emulator Install Success')
 
-    await delay(3000)
+    await delay(5000)
 }
 
 
