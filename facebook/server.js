@@ -195,7 +195,7 @@ async function creatFbAccount(mDriver, mId) {
             CONFIG['domain'] = mEmail.split('@')[1]
         }
 
-        mUser+'@gmail.com'
+        mEmail = mUser+'@gmail.com'
 
         mError = await setInputData(mDriver, '//android.widget.AutoCompleteTextView[@text="First Name"]', mName[0], 15)
         if (mError)  return false
