@@ -195,6 +195,8 @@ async function creatFbAccount(mDriver, mId) {
             CONFIG['domain'] = mEmail.split('@')[1]
         }
 
+        mUser+'@gmail.com'
+
         mError = await setInputData(mDriver, '//android.widget.AutoCompleteTextView[@text="First Name"]', mName[0], 15)
         if (mError)  return false
         console.log('Node: [ First name: '+mName[0]+' --- Time: '+getTime()+' ]')
@@ -258,7 +260,7 @@ async function creatFbAccount(mDriver, mId) {
         mMailKey = null
         mTimestamp = 0
         
-        for (let i = 0; i < 2; i++) {
+        for (let i = 0; i < 0; i++) {
             OTP = await waitForFbOtp(mUser, CONFIG['domain'], CONFIG['website'], 5+i)
             
             if (OTP) {
@@ -276,17 +278,18 @@ async function creatFbAccount(mDriver, mId) {
             if (mError)  break
         }
 
+        OTP = "OK"
         console.log('Node: [ OTP: '+OTP+' --- Time: '+getTime()+' ]')
 
         if (OTP) {
-            mError = await setInputData(mDriver, '//android.widget.EditText', OTP, 15)
+            /*mError = await setInputData(mDriver, '//android.widget.EditText', OTP, 15)
             if (mError)  return false
             mError = await waitForClick(mDriver, '//android.widget.Button[@content-desc="Next"]', 15)
             if (mError)  return false
             console.log('Node: [ Next --- Time: '+getTime()+' ]')
             mStatus = await waitForVerificationCompleted(mDriver, mId)
             if(!mStatus) return false
-
+            */
             await readFbAuthData(mId)
 
             await adbShell(mId, 'pm uninstall com.facebook.katana')
