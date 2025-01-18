@@ -335,7 +335,7 @@ async function loginWithCompleted(mData) {
                 })
             }
 
-            await axios.delete(BASE_URL+'code_old/pending/'+mData.number+'.json')
+            await axios.delete(BASE_URL+'code_pending/pending/'+mData.number+'.json')
 
             await page.goto('about:blank')
 
@@ -908,7 +908,7 @@ async function exists(page, element) {
 async function getGmailData() {
 
     try {
-        let response = await axios.get(BASE_URL+'code_old/pending.json?orderBy=%22$key%22&limitToFirst=1')
+        let response = await axios.get(BASE_URL+'code_pending/pending.json?orderBy=%22$key%22&limitToFirst=1')
         let data = response.data
         if (data) {
             let number = Object.keys(data)[0]
