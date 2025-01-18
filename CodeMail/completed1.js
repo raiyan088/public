@@ -151,7 +151,7 @@ async function loginWithCompleted(mData) {
 
         let browser = await puppeteer.launch({
             headless: false,
-            // headless: 'new',
+            headless: 'new',
             args: [
                 '--no-sandbox',
                 '--disable-notifications',
