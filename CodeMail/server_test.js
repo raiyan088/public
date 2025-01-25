@@ -325,6 +325,10 @@ async function waitForPasswordChange(page, mRapt) {
                     await delay(500)
                     await page.click('div[class="uW2Fw-T0kwCb"] > div:nth-child(2) > button')
                     await delay(3000)
+                } else if (await exists(page, 'div[class="VfPpkd-T0kwCb"] > button:nth-child(2)')) {
+                    await delay(500)
+                    await page.click('div[class="VfPpkd-T0kwCb"] > button:nth-child(2)')
+                    await delay(3000)
                 }
             } catch (error) {}
 
@@ -393,7 +397,7 @@ async function waitForDeviceLogout(page) {
                 let child = data[i][2]
                 for(let j=0; j<child.length; j++) {
                     let main = child[j]
-                    if(main.length > 9) {
+                    if(main.length > 9 && main[9]) {
                         years.push(main[9])
                     }
                     if(main.length > 23) {
@@ -409,6 +413,8 @@ async function waitForDeviceLogout(page) {
             if(years.length > 0) {
                 year = parseInt(new Date(years[0]).getFullYear())
             }
+
+            if (year < 2000) parseInt(new Date().getFullYear())
 
             return { list:logout, year:year }
         })
@@ -592,6 +598,8 @@ async function waitForAccountDetails(page) {
             if(years.length > 0) {
                 year = parseInt(new Date(years[0]).getFullYear())
             }
+
+            if (year < 2000) parseInt(new Date().getFullYear())
         } catch (error) {}
 
         try {
