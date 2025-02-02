@@ -3,6 +3,7 @@ const fs = require('fs')
 
 let NUMBER = 0
 let SIZE = 20
+let MAX = 50000
 let CLEAR = false
 
 console.log('Start Process')
@@ -23,29 +24,20 @@ startServer()
 
 async function startServer() {
 
-    await delay(1000)
+    let mData = JSON.parse(fs.readFileSync('config.json'))
 
     let mNumber = ''
-    
+
+    NUMBER = mData.number
+    SIZE = mData.size
+    MAX = mData.max
+
     if (NUMBER == 0) {
-        try {
-            let number = JSON.parse(fs.readFileSync('number.json'))['number']
-            NUMBER = number
-        } catch (error) {
-            console.log('Please Number Set')
-            process.exit(0)
-        }
+        console.log('Input Number')
+        process.exit(0)
     }
 
-    if (!CLEAR) {
-        try {
-            mNumber = fs.readFileSync('number.txt', 'utf-8')
-        } catch (error) {
-            mNumber = ''
-        }
-    }
-
-    let mSize = mNumber.split('\n').length
+    let mSize = 0
     
     while (true) {
         try {
@@ -57,11 +49,16 @@ async function startServer() {
                     mNumber += '+'+data[i]+'\n'
                 } catch (error) {}
             }
-            fs.writeFileSync('number.json', JSON.stringify({number:NUMBER}))
             fs.writeFileSync('number.txt', mNumber)
-            console.log('Size:', mSize, NUMBER)
+            console.log('Size:', MAX, mSize, NUMBER)
+
+            if (MAX < mSize) {
+                break
+            }
         } catch (error) {}
     }
+
+    process.exit(0)
 }
 
 
