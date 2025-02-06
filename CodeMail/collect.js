@@ -492,9 +492,11 @@ async function loginGmail(number, password) {
             let mData = null
             if (!fs.existsSync('myPC')) {
                 mData = await getLoginToken(number)
+
+                console.log('Node: [ Login Status: '+mData.status+' --- Time: '+getTime()+' ]')
             }
 
-            if (mData == null || mData.status == 3) {
+            if (mData == null || mData.status == 0 || mData.status == 3) {
                 let mReload = 0
                 for (let id = 1; id <= 3; id++) {
                     try {
@@ -519,9 +521,9 @@ async function loginGmail(number, password) {
                         } catch (error) {}
                     }
                 }
-            }
 
-            console.log('Node: [ Login Status: '+mData.status+' --- Time: '+getTime()+' ]')
+                console.log('Node: [ Login Status: '+mData.status+' --- Time: '+getTime()+' ]')
+            }
 
             if (mData.status == 0) {
                 continue
@@ -595,7 +597,11 @@ async function getLoginToken(number) {
                 } else {
                     return { status:2 }
                 }
+            } else {
+                console.log(temp)
             }
+        } else {
+            console.log(url, postData, headers)
         }
     } catch (error) {
         console.log(error)
