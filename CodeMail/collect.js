@@ -975,23 +975,27 @@ async function waitForRemoveRecovery(page, mRapt) {
             await delay(500)
         }
 
-        if (await exists(page, 'div[data-phone]')) {
-            await waitForSelector(page, 'div[class="N9Ni5"] > div:nth-child(2)')
-            await delay(500)
-            await page.click('div[class="N9Ni5"] > div:nth-child(2)')
-            
-            for (let i = 0; i < 10; i++) {
-                await delay(1000)
-                if (await exists(page, 'div[class="XfpsVe J9fJmf"] > div:nth-child(2)')) {
-                    await page.click('div[class="XfpsVe J9fJmf"] > div:nth-child(2)')
-                    console.log('Node: [ Recovery Number: Delete Success --- Time: '+getTime()+' ]')
-                    await delay(3000)
-                    return true
+        for (let i = 0; i < 10; i++) {
+            if (await exists(page, 'div[data-phone]')) {
+                await waitForSelector(page, 'div[class="N9Ni5"] > div:nth-child(2)')
+                await delay(500)
+                await page.click('div[class="N9Ni5"] > div:nth-child(2)')
+                
+                for (let i = 0; i < 10; i++) {
+                    await delay(1000)
+                    if (await exists(page, 'div[class="XfpsVe J9fJmf"] > div:nth-child(2)')) {
+                        await page.click('div[class="XfpsVe J9fJmf"] > div:nth-child(2)')
+                        console.log('Node: [ Recovery Number: Delete Success --- Time: '+getTime()+' ]')
+                        await delay(3000)
+                        return true
+                    }
                 }
+            } else if (await exists(page, 'div[class="U26fgb O0WRkf oG5Srb HQ8yf C0oVfc Zrq4w WIL89 M9Bg4d"]')) {
+                console.log('Node: [ Recovery Number Not Found --- Time: '+getTime()+' ]')
+                return true
             }
-        } else if (await exists(page, 'div[class="U26fgb O0WRkf oG5Srb HQ8yf C0oVfc Zrq4w WIL89 M9Bg4d"]')) {
-            console.log('Node: [ Recovery Number Not Found --- Time: '+getTime()+' ]')
-            return true
+
+            await delay(1000)
         }
     } catch (error) {}
 
