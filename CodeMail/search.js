@@ -26,10 +26,12 @@ startServer()
 
 async function startServer() {
     try {
-        let data = JSON.parse(fs.readFileSync('config.json'))
-        NUMBER = data.number
-        SIZE = data.size
-        MAX = data.max
+        if (NUMBER == 0) {
+            let data = JSON.parse(fs.readFileSync('config.json'))
+            NUMBER = data.number
+            SIZE = data.size
+            MAX = data.max
+        }
     } catch (error) {}
 
     let mNumber = ''
