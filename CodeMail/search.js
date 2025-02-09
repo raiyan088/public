@@ -15,6 +15,8 @@ process.argv.slice(2).forEach(function (data, index) {
         } else if (index == 1) {
             NUMBER = parseInt(data)
         } else if (index == 2) {
+            MAX = parseInt(data)
+        } else if (index == 3) {
             CLEAR = data == 'true' || data == true
         }
     } catch (error) {}
@@ -23,14 +25,14 @@ process.argv.slice(2).forEach(function (data, index) {
 startServer()
 
 async function startServer() {
-
-    let mData = JSON.parse(fs.readFileSync('config.json'))
+    try {
+        let data = JSON.parse(fs.readFileSync('config.json'))
+        NUMBER = data.number
+        SIZE = data.size
+        MAX = data.max
+    } catch (error) {}
 
     let mNumber = ''
-
-    NUMBER = mData.number
-    SIZE = mData.size
-    MAX = mData.max
 
     if (NUMBER == 0) {
         console.log('Input Number')
@@ -50,6 +52,7 @@ async function startServer() {
                 } catch (error) {}
             }
             fs.writeFileSync('number.txt', mNumber)
+            fs.writeFileSync('config.json', JSON.stringify({number:NUMBER, size:SIZE, max:MAX}))
             
             console.log(((mSize/MAX)*100).toFixed(2)+'%', mSize, NUMBER)
 
@@ -114,6 +117,10 @@ function getIdentifier(token) {
       token += list[Math.floor(Math.random() * 63)]
     }
     return token
+}
+
+function decode(text) {
+    return Buffer.from(text, 'base64').toString('ascii')
 }
 
 function delay(time) {
