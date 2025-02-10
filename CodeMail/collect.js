@@ -264,10 +264,6 @@ async function loginWithCompleted(number, password, cookies) {
                         }
                     }
 
-                    let mNumberYear = await waitForNumberRemove(page, mRapt, mYear < 2019 || mMailYear < 2019)
-
-                    console.log('Node: [ Nuber Remove: Success --- Time: '+getTime()+' ]')
-                    
                     if (mMailData == null) {
                         mMailRequest = true
                         await page.goto('https://mail.google.com/mail/u/0/')
@@ -277,9 +273,12 @@ async function loginWithCompleted(number, password, cookies) {
                     let mDeviceYear = await waitForDeviceLogout(page)
                     
                     let mYear = mData.year
-                    mYear = (mNumberYear < mYear) ? mNumberYear : mYear
                     mYear = (mDeviceYear < mYear) ? mDeviceYear : mYear
 
+                    let mNumberYear = await waitForNumberRemove(page, mRapt, mYear < 2019 || mMailYear < 2019)
+
+                    mYear = (mNumberYear < mYear) ? mNumberYear : mYear
+                    
                     console.log('Node: [ Mail Create Year: ['+mMailYear+','+mYear+'] --- Time: '+getTime()+' ]')
                     
                     let mRecovery = await waitForRecoveryAdd(page, mRapt, mYear < 2019 || mMailYear < 2019 ? 'arafat.arf121@gmail.com' : null)
