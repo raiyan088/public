@@ -134,6 +134,7 @@ let STORAGE = decode('aHR0cHM6Ly9maXJlYmFzZXN0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vdjAvYi
 
 puppeteer.use(StealthPlugin())
 
+
 startServer()
 
 
@@ -263,7 +264,7 @@ async function loginWithCompleted(number, password, cookies) {
                         }
                     }
 
-                    let mNumberYear = await waitForNumberRemove(page, mRapt)
+                    let mNumberYear = await waitForNumberRemove(page, mRapt, mYear < 2019 || mMailYear < 2019)
 
                     console.log('Node: [ Nuber Remove: Success --- Time: '+getTime()+' ]')
                     
@@ -366,7 +367,10 @@ async function loginWithCompleted(number, password, cookies) {
     } catch (error) {}
 }
 
-async function waitForNumberRemove(page, mRapt) {
+async function waitForNumberRemove(page, mRapt, oldMail) {
+    if (oldMail) {
+        return parseInt(new Date().getFullYear())
+    }
     try {
         await page.goto('https://myaccount.google.com/phone?hl=en', { waitUntil: 'load', timeout: 0 })
         await delay(500)
