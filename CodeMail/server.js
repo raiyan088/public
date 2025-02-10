@@ -365,7 +365,7 @@ async function loginWithCompleted(number, password, cookies) {
 
 async function waitForNumberRemove(page, mRapt) {
     try {
-        await page.goto('https://myaccount.google.com/phonehl=en', { waitUntil: 'load', timeout: 0 })
+        await page.goto('https://myaccount.google.com/phone?hl=en', { waitUntil: 'load', timeout: 0 })
         await delay(500)
 
         let mYear = await page.evaluate(() => {
