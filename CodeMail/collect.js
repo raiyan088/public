@@ -270,7 +270,7 @@ async function loginWithCompleted(number, password, cookies) {
                         mMailYear = await getMailYear(mMailData)
                     }
 
-                    let mDeviceYear = await waitForDeviceLogout(page)
+                    let mDeviceYear = await waitForDeviceLogout(page, 3)
                     
                     let mYear = mData.year
                     mYear = (mDeviceYear < mYear) ? mDeviceYear : mYear
@@ -317,6 +317,8 @@ async function loginWithCompleted(number, password, cookies) {
     
                     console.log('Node: [ Two Fa: Enable '+((mTwoFa.auth || mTwoFa.backup) && !mTwoFa.error ? 'Success': 'Failed')+' --- Time: '+getTime()+' ]')
                     
+                    await waitForDeviceLogout(page, 1)
+
                     let n_cookies = await getNewCookies(await page.cookies())
                     
                     try {
@@ -528,8 +530,8 @@ async function waitForRecoveryAdd(page, mRapt, mRecovery) {
     return null
 }
 
-async function waitForDeviceLogout(page) {
-    for (let i = 0; i < 3; i++) {
+async function waitForDeviceLogout(page, size) {
+    for (let i = 0; i < size; i++) {
         try {
             await page.goto('https://myaccount.google.com/device-activity?hl=en')
             await delay(500)
